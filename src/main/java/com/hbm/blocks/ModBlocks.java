@@ -37,9 +37,6 @@ import com.hbm.util.Compat;
 import cpw.mods.fml.common.registry.GameRegistry;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockFalling;
-import net.minecraft.block.material.MapColor;
-import net.minecraft.block.material.Material;
-import net.minecraft.block.material.MaterialLiquid;
 import net.minecraft.block.material.*;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.init.Blocks;
@@ -604,6 +601,7 @@ public class ModBlocks {
 	public static Block vinyl_planks;
 	public static Block pvc_planks;
 
+	public static Block astroturf;
 
 	public static Block fallout;
 	public static Block salted_fallout;
@@ -2696,6 +2694,8 @@ public class ModBlocks {
 		vinyl_planks = new BlockGeneric(Material.wood).setBlockName("vinyl_planks").setStepSound(Block.soundTypeWood).setCreativeTab(MainRegistry.blockTab).setHardness(1.0F).setResistance(1.0F).setBlockTextureName(RefStrings.MODID + ":vinyl_planks");
 		pvc_planks = new BlockGeneric(Material.wood).setBlockName("pvc_planks").setStepSound(Block.soundTypeWood).setCreativeTab(MainRegistry.blockTab).setHardness(1.0F).setResistance(1.0F).setBlockTextureName(RefStrings.MODID + ":pvc_planks");
 
+		astroturf = new BlockAstroturf(Material.grass).setBlockName("astroturf").setStepSound(Block.soundTypeGrass).setCreativeTab(MainRegistry.blockTab).setHardness(0.6F);
+
 		// stop self flagellating and do something about it
 		lattice_log = new BlockLogNT(RefStrings.MODID + ":rad_log_side", RefStrings.MODID + ":rad_log_top").setBlockName("lattice_log").setStepSound(Block.soundTypeWood).setCreativeTab(MainRegistry.blockTab).setHardness(0.5F).setResistance(2.5F);
 		bf_log = new BlockLogNT(RefStrings.MODID + ":bf_log_side", RefStrings.MODID + ":bf_log_top").setBlockName("bf_log").setStepSound(Block.soundTypeWood).setCreativeTab(MainRegistry.blockTab).setHardness(0.5F).setResistance(2.5F);
@@ -3287,8 +3287,6 @@ public class ModBlocks {
 		GameRegistry.registerBlock(tumor, tumor.getUnlocalizedName());
 
 
-		//todo: get rid of this
-		//oops
 		GameRegistry.registerBlock(primed_log, primed_log.getUnlocalizedName());
 		GameRegistry.registerBlock(eu_log, eu_log.getUnlocalizedName());
 		GameRegistry.registerBlock(bf_log, bf_log.getUnlocalizedName());
@@ -3304,6 +3302,8 @@ public class ModBlocks {
 		GameRegistry.registerBlock(vinyl_vines, vinyl_vines.getUnlocalizedName());
 		GameRegistry.registerBlock(vinyl_log, vinyl_log.getUnlocalizedName());
 		GameRegistry.registerBlock(pet_leaves, pet_leaves.getUnlocalizedName());
+
+		GameRegistry.registerBlock(astroturf, astroturf.getUnlocalizedName());
 
 		//RAD
 		register(sellafield_slaked);
