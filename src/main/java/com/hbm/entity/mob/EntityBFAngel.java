@@ -248,7 +248,6 @@ public class EntityBFAngel extends EntityFlying implements IMob, IBossDisplayDat
 
 			if (this.ticksExisted % 300 < 200) {
 
-
 				if (!this.secondaries.isEmpty()) {
 					Entity e = this.secondaries.get(rand.nextInt(this.secondaries.size()));
 
@@ -274,8 +273,7 @@ public class EntityBFAngel extends EntityFlying implements IMob, IBossDisplayDat
 						gatlingCharge--;
 
 						if (gatlingCharge == 30) {
-							worldObj.playSoundAtEntity(this, "hbm:entity.bfatalk", 10.0F,
-									1.0F);
+							worldObj.playSoundAtEntity(this, "hbm:entity.bfatalk", 10.0F, 1.0F);
 						}
 
 						if (gatlingCharge <= 0) {

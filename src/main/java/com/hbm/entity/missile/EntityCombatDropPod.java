@@ -66,7 +66,7 @@ public class EntityCombatDropPod extends EntityThrowable {
 	
 	@Override
 	public void onUpdate() {
-		motionY = -0.5;
+		motionY = -1;
 		motionX = 0;
 		motionZ = 0;
 		this.lastTickPosX = this.prevPosX = this.posX;
@@ -78,10 +78,10 @@ public class EntityCombatDropPod extends EntityThrowable {
 			if(worldObj.getBlock((int)(posX - 0.5), (int)(posY + 1), (int)(posZ - 0.5)).getMaterial() != Material.air && !worldObj.isRemote) {
 				ExplosionLarge.spawnParticles(worldObj, posX, posY + 1, posZ, 50);
 
-	            this.worldObj.playSoundEffect(this.posX, this.posY, this.posZ, "hbm:entity.oldExplosion", 10.0F, 0.5F + this.rand.nextFloat() * 0.1F);
+	            this.worldObj.playSoundEffect(this.posX, this.posY, this.posZ, "hbm:block.hatchImpact", 10.0F, 0.5F + this.rand.nextFloat() * 0.5F);
 
 	            int x = (int)this.posX;
-	            int y = (int)this.posY + 2;
+	            int y = (int)this.posY + 1;
 	            int z = (int)this.posZ;
 
 	            worldObj.setBlock(x, y, z, ModBlocks.combat_drop);
@@ -94,7 +94,7 @@ public class EntityCombatDropPod extends EntityThrowable {
 
 	                if(this.entityType != null) {
 	                    capsule.setPayload(this.entityType, this.amount, this.color);
-	                    capsule.markDirty();
+	                    worldObj.markBlockForUpdate(x, y, z);
 
 	                } else {
 	                    return;
@@ -103,22 +103,14 @@ public class EntityCombatDropPod extends EntityThrowable {
 			this.setDead();
 			break;
 			}
+			
 
 			this.posX += this.motionX;
 			this.posY += this.motionY;
 			this.posZ += this.motionZ;
 		}
 
-		NBTTagCompound data = new NBTTagCompound();
-		data.setString("type", "exhaust");
-		data.setString("mode", "meteor");
-		data.setInteger("count", 1);
-		data.setDouble("width", 0);
-		data.setDouble("posX", posX);
-		data.setDouble("posY", posY + 1);
-		data.setDouble("posZ", posZ);
-		
-		MainRegistry.proxy.effectNT(data);
+
 	
 	}
 
