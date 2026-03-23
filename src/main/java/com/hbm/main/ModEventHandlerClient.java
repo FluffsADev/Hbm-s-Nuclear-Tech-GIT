@@ -1148,7 +1148,7 @@ public class ModEventHandlerClient {
 			for(CelestialBody body : CelestialBody.getAllBodies()) {
 				if(SolarSystemWorldSavedData.getClientTraits(body.name) != null) {
 					for(CelestialBodyTrait trait : SolarSystemWorldSavedData.getClientTraits(body.name).values()) {
-						trait.update(true);
+						trait.update(true, body);
 					}
 				}
 			}

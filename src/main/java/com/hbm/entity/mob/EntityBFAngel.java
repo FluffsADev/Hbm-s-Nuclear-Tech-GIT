@@ -461,7 +461,7 @@ public class EntityBFAngel extends EntityFlying implements IMob, IBossDisplayDat
 			}
 			if(!worldObj.isRemote) {
 				CelestialBody body = CelestialBody.getBody(worldObj);
-				body.modifyTraits(new CBT_Invasion(0, 1500, false));
+				body.modifyTraits(new CBT_Invasion(0, 122, false));
 			}
 		}
 
