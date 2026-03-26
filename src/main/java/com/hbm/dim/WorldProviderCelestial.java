@@ -100,8 +100,8 @@ public abstract class WorldProviderCelestial extends WorldProviderSurface {
 				for (int i = 0; i < meteors.size(); i++) {
 					meteors.get(i).update();
 				}
-
-				if (rand.nextInt(Math.max(1, 4 - invasion.wave)) == 0 && invasion.isInvading) {
+				
+				if (rand.nextInt(Math.max(1, 5 - invasion.wave)) == 0 && invasion.isInvading) {
 					Meteor meteor = new Meteor((player.posX + rand.nextInt(16000)) - 8000, 2017,(player.posZ + rand.nextInt(16000)) - 8000);
 					meteors.add(meteor);
 				}

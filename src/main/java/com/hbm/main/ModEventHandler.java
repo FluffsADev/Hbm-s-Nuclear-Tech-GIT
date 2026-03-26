@@ -40,6 +40,7 @@ import com.hbm.entity.missile.EntityRideableRocket;
 import com.hbm.entity.missile.EntityRideableRocket.RocketState;
 import com.hbm.entity.mob.EntityCreeperTainted;
 import com.hbm.entity.mob.EntityCyberCrab;
+import com.hbm.entity.mob.EntityUFO;
 import com.hbm.entity.mob.siege.EntitySiegeCraft;
 import com.hbm.entity.mob.siege.EntitySiegeUFO;
 import com.hbm.entity.projectile.EntityBulletBaseMK4;
@@ -388,18 +389,44 @@ public class ModEventHandler {
 				player.triggerAchievement(MainRegistry.bobHidden);
 			}
 		}
+		CelestialBody body = CelestialBody.getBody(event.entity.worldObj);
 
-		if(event.entity instanceof EntitySiegeCraft || event.entity instanceof EntitySiegeUFO) {
+		CBT_Invasion alien = body.getTrait(CBT_Invasion.class);
+		if(alien != null) {
+			if(event.entity instanceof EntitySiegeUFO) {
 
-			CelestialBody body = CelestialBody.getBody(event.entity.worldObj);
-			CBT_Invasion alien = body.getTrait(CBT_Invasion.class);
+				alien.kills++;
 
-			if(alien == null) return;
-			alien.kills++;
+				body.modifyTraits(alien);
+			}else if (event.entity instanceof EntitySiegeCraft) {
+				alien.kills += 3;
+				
+				body.modifyTraits(alien);
+			}
+			
+			if(alien.wave >= 4 && event.entity instanceof EntityUFO) {
+				HashMap<Class<? extends CelestialBodyTrait>, CelestialBodyTrait> currentTraits = body.getTraits(event.entity.worldObj);
 
-			body.modifyTraits(alien);
+				currentTraits.remove(CBT_Invasion.class);
+
+			        for (Object obj : event.entity.worldObj.playerEntities) {
+			            if (obj instanceof EntityPlayer) {
+			                EntityPlayer player = (EntityPlayer) obj;
+			                player.addChatComponentMessage(
+			                    new ChatComponentText("The Invasion Is Over!")
+			                        .setChatStyle(new ChatStyle().setColor(EnumChatFormatting.YELLOW))
+			                );
+			            }
+			        }
+			   
+				
+				body.setTraits(event.entity.worldObj, currentTraits);
+
+
+			}
 		}
-		
+
+
 		if(!event.entityLiving.worldObj.isRemote) {
 
 			if(event.source==ModDamageSource.eve)

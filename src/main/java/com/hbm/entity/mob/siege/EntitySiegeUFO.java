@@ -6,7 +6,6 @@ import com.hbm.entity.projectile.EntitySiegeLaser;
 import com.hbm.items.weapon.sedna.factory.XFactoryEnergy;
 
 import api.hbm.entity.IRadiationImmune;
-import net.minecraft.entity.IEntityLivingData;
 import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
@@ -22,6 +21,10 @@ public class EntitySiegeUFO extends EntityUFOBase implements IRadiationImmune {
 	private double lastTargetX;
 	private double lastTargetY;
 	private double lastTargetZ;
+	
+	private int lifetime = 0;
+	private boolean isRetreating = false;
+	private static final int MAX_LIFETIME = 60 * 2 * 20;
 	
 	public EntitySiegeUFO(World world) {
 		super(world);
@@ -60,7 +63,6 @@ public class EntitySiegeUFO extends EntityUFOBase implements IRadiationImmune {
 			return false;
 		}
 		
-		//noFF can't be harmed by other mobs
 		if(tier.noFriendlyFire && source instanceof EntityDamageSource && !(((EntityDamageSource) source).getEntity() instanceof EntityPlayer))
 			return false;
 		
@@ -78,6 +80,24 @@ public class EntitySiegeUFO extends EntityUFOBase implements IRadiationImmune {
 
 	@Override
 	protected void updateEntityActionState() {
+		
+		if(!worldObj.isRemote) {
+			lifetime++;
+			if(lifetime > MAX_LIFETIME) {
+				isRetreating = true;
+			}
+
+			if(isRetreating) {
+				this.target = null;
+				this.setWaypoint((int)posX, 255, (int)posZ);
+				approachPosition(20);
+				if(this.posY > 250 || lifetime > MAX_LIFETIME + 300) {
+					this.setDead();
+					return;
+				}
+			}
+		}
+
 		super.updateEntityActionState();
 
 		if(this.courseChangeCooldown > 0) {
@@ -88,89 +108,79 @@ public class EntitySiegeUFO extends EntityUFOBase implements IRadiationImmune {
 		}
 		
 		if(!worldObj.isRemote) {
-		        if(this.attackCooldown > 0) {
-		            this.attackCooldown--;
-		        }
+			if(this.attackCooldown > 0) {
+				this.attackCooldown--;
+			}
 
-		        if(this.target != null) {
+			if(!isRetreating && this.target != null) {
 
-		            if(this.lastTargetX == 0 && this.lastTargetY == 0 && this.lastTargetZ == 0) {
-		                this.lastTargetX = this.target.posX;
-		                this.lastTargetY = this.target.posY + this.target.getEyeHeight();
-		                this.lastTargetZ = this.target.posZ;
-		            }
+				if(this.lastTargetX == 0 && this.lastTargetY == 0 && this.lastTargetZ == 0) {
+					this.lastTargetX = this.target.posX;
+					this.lastTargetY = this.target.posY + this.target.getEyeHeight();
+					this.lastTargetZ = this.target.posZ;
+				}
 
-		            if(rand.nextInt(10) == 0) {
-		                this.lastTargetX = this.target.posX;
-		                this.lastTargetY = this.target.posY + this.target.getEyeHeight();
-		                this.lastTargetZ = this.target.posZ;
-		            }
-		        }
-
-		        if(this.attackCooldown == 0 && this.target != null) {
-			     this.attackCooldown = 20 + rand.nextInt(25);
-
-
-		            double spawnX = this.posX;
-		            double spawnY = this.posY;
-		            double spawnZ = this.posZ;
-
-		            double x = this.lastTargetX;
-		            double y = this.lastTargetY;
-		            double z = this.lastTargetZ;
-
-		            EntityBulletBeamBase bullet = new EntityBulletBeamBase(
-		                    this,
-		                    XFactoryEnergy.energy_emerald_overcharge.setKnockback(0),
-		                    8F
-		            );
-
-		            bullet.setPosition(spawnX, spawnY, spawnZ);
-
-		            Vec3 delta = Vec3.createVectorHelper(
-		                    x - spawnX,
-		                    y - spawnY,
-		                    z - spawnZ
-		            );
-
-		            bullet.setRotationsFromVector(delta);
-		            bullet.performHitscanExternal(250D);
-
-		            this.worldObj.spawnEntityInWorld(bullet);
-		            this.playSound("hbm:entity.bfashoot", 2.0F, 1.0F);
-		        }
-		    }
+				if(rand.nextInt(10) == 0) {
+					this.lastTargetX = this.target.posX;
+					this.lastTargetY = this.target.posY + this.target.getEyeHeight();
+					this.lastTargetZ = this.target.posZ;
+				}
+				
+				if(this.attackCooldown == 0 && this.target != null) {
+					this.attackCooldown = 20 + rand.nextInt(5);
+					
+					double x = posX;
+					double y = posY;
+					double z = posZ;
+					
+					Vec3 vec = Vec3.createVectorHelper(target.posX - x, target.posY + target.height * 0.5 - y, target.posZ - z).normalize();
+					SiegeTier tier = this.getTier();
+					
+					EntitySiegeLaser laser = new EntitySiegeLaser(worldObj, this);
+					laser.setPosition(x, y, z);
+					laser.setThrowableHeading(vec.xCoord, vec.yCoord, vec.zCoord, 1F, 0.15F);
+					laser.setColor(0x802000);
+					laser.setDamage(tier.damageMod);
+					laser.setExplosive(tier.laserExplosive);
+					laser.setBreakChance(tier.laserBreak);
+					worldObj.spawnEntityInWorld(laser);
+					this.playSound("hbm:weapon.ballsLaser", 2.0F, 1.0F);
+				}
+			}
+		}
 		
 		if(this.courseChangeCooldown > 0) {
-			approachPosition(this.target == null ? 0.25D : 0.5D + this.getEntityAttribute(SharedMonsterAttributes.movementSpeed).getAttributeValue() * 1);
-		}
+			    double speed = this.target == null ? 0.5D : 1.0D + (this.getEntityAttribute(SharedMonsterAttributes.movementSpeed).getAttributeValue() * 1.0D);
+			    
+			    if(isRetreating) speed *= 2.0D; 
+			    
+			    approachPosition(speed);
+			}
+		
+		
 	}
 
 	@Override
 	public void writeEntityToNBT(NBTTagCompound nbt) {
 		super.writeEntityToNBT(nbt);
 		nbt.setInteger("siegeTier", this.getTier().id);
+		nbt.setInteger("lifetime", this.lifetime);
+		nbt.setBoolean("isRetreating", this.isRetreating);
 	}
 
 	@Override
 	public void readEntityFromNBT(NBTTagCompound nbt) {
 		super.readEntityFromNBT(nbt);
 		this.setTier(SiegeTier.tiers[nbt.getInteger("siegeTier")]);
-	}
-
-	@Override
-	public IEntityLivingData onSpawnWithEgg(IEntityLivingData data) {
-		this.setTier(SiegeTier.tiers[rand.nextInt(SiegeTier.getLength())]);
-		return super.onSpawnWithEgg(data);
+		this.lifetime = nbt.getInteger("lifetime");
+		this.isRetreating = nbt.getBoolean("isRetreating");
 	}
 
 	@Override
 	protected void dropFewItems(boolean byPlayer, int fortune) {
-		
-		if(byPlayer) {
-			for(ItemStack drop : this.getTier().dropItem) {
-				this.entityDropItem(drop.copy(), 0F);
-			}
+		for (ItemStack drop : this.getTier().dropItem) {
+			this.entityDropItem(drop.copy(), 0F);
+
 		}
 	}
 }

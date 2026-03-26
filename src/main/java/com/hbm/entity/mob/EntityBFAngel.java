@@ -108,7 +108,7 @@ public class EntityBFAngel extends EntityFlying implements IMob, IBossDisplayDat
 	@Override
 	protected void applyEntityAttributes() {
 		super.applyEntityAttributes();
-		this.getEntityAttribute(SharedMonsterAttributes.maxHealth).setBaseValue(20000.0D);
+		this.getEntityAttribute(SharedMonsterAttributes.maxHealth).setBaseValue(10000.0D);
 	}
 
 	@Override
@@ -456,13 +456,16 @@ public class EntityBFAngel extends EntityFlying implements IMob, IBossDisplayDat
 			
 			for(EntityPlayer player : players) {
 				player.addChatComponentMessage(new ChatComponentText("Stars are starting to flicker...").setChatStyle(new ChatStyle().setColor(EnumChatFormatting.RED)));
-				player.triggerAchievement(MainRegistry.bossUFO);
-				player.inventory.addItemStackToInventory(new ItemStack(ModItems.coin_ufo));
 			}
-			if(!worldObj.isRemote) {
-				CelestialBody body = CelestialBody.getBody(worldObj);
-				body.modifyTraits(new CBT_Invasion(0, 122, false));
-			}
+			CelestialBody body = CelestialBody.getBody(worldObj);
+
+			CBT_Invasion invasion = body.getTrait(CBT_Invasion.class);
+
+			if (invasion != null)
+				return;
+
+			body.modifyTraits(new CBT_Invasion(0, 122, false));
+			
 		}
 
 		super.onDeathUpdate();
