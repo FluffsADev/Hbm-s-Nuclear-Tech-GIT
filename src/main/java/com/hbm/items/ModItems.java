@@ -1807,6 +1807,7 @@ public class ModItems {
 	public static Item cube_power;
 	public static Item battery_spark;
 	public static Item battery_trixite;
+	public static Item core_angel;
 
 	@Deprecated public static Item battery_sc_uranium;
 	@Deprecated public static Item battery_sc_technetium;
@@ -4291,6 +4292,7 @@ public class ModItems {
 		battery_pack = new ItemBatteryPack().setUnlocalizedName("battery_pack").setTextureName(RefStrings.MODID + ":battery_generic_new");
 		battery_creative = new ItemBatteryCreative().setUnlocalizedName("battery_creative").setMaxStackSize(1).setCreativeTab(MainRegistry.controlTab).setTextureName(RefStrings.MODID + ":battery_creative_new");
 		cube_power = new ItemBattery(1000000000000000000L, 1000000000000000L, 1000000000000000L).setUnlocalizedName("cube_power").setMaxStackSize(1).setCreativeTab(MainRegistry.controlTab).setTextureName(RefStrings.MODID + ":cube_power");
+		core_angel = new ItemBattery(16_000_000L, 16_000_000L, 800_000L).setUnlocalizedName("core_angel").setMaxStackSize(1).setCreativeTab(MainRegistry.controlTab).setTextureName(RefStrings.MODID + ":core_angel");
 
 		battery_sc_uranium = new ItemSelfcharger(5).setUnlocalizedName("battery_sc_uranium").setMaxStackSize(1).setCreativeTab(null).setTextureName(RefStrings.MODID + ":battery_sc_uranium");
 		battery_sc_technetium = new ItemSelfcharger(25).setUnlocalizedName("battery_sc_technetium").setMaxStackSize(1).setCreativeTab(null).setTextureName(RefStrings.MODID + ":battery_sc_technetium");
@@ -5929,6 +5931,7 @@ public class ModItems {
 		GameRegistry.registerItem(battery_sc, battery_sc.getUnlocalizedName());
 		GameRegistry.registerItem(battery_creative, battery_creative.getUnlocalizedName());
 		GameRegistry.registerItem(cube_power, cube_power.getUnlocalizedName());
+		GameRegistry.registerItem(core_angel, core_angel.getUnlocalizedName());
 
 		GameRegistry.registerItem(battery_potato, battery_potato.getUnlocalizedName());
 		GameRegistry.registerItem(battery_potatos, battery_potatos.getUnlocalizedName());

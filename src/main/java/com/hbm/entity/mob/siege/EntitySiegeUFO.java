@@ -2,10 +2,10 @@ package com.hbm.entity.mob.siege;
 
 import com.hbm.entity.mob.EntityUFOBase;
 import com.hbm.entity.projectile.EntityBulletBeamBase;
-import com.hbm.entity.projectile.EntitySiegeLaser;
 import com.hbm.items.weapon.sedna.factory.XFactoryEnergy;
 
 import api.hbm.entity.IRadiationImmune;
+import net.minecraft.entity.IEntityLivingData;
 import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
@@ -126,25 +126,32 @@ public class EntitySiegeUFO extends EntityUFOBase implements IRadiationImmune {
 					this.lastTargetZ = this.target.posZ;
 				}
 				
-				if(this.attackCooldown == 0 && this.target != null) {
-					this.attackCooldown = 20 + rand.nextInt(5);
-					
-					double x = posX;
-					double y = posY;
-					double z = posZ;
-					
-					Vec3 vec = Vec3.createVectorHelper(target.posX - x, target.posY + target.height * 0.5 - y, target.posZ - z).normalize();
-					SiegeTier tier = this.getTier();
-					
-					EntitySiegeLaser laser = new EntitySiegeLaser(worldObj, this);
-					laser.setPosition(x, y, z);
-					laser.setThrowableHeading(vec.xCoord, vec.yCoord, vec.zCoord, 1F, 0.15F);
-					laser.setColor(0x802000);
-					laser.setDamage(tier.damageMod);
-					laser.setExplosive(tier.laserExplosive);
-					laser.setBreakChance(tier.laserBreak);
-					worldObj.spawnEntityInWorld(laser);
-					this.playSound("hbm:weapon.ballsLaser", 2.0F, 1.0F);
+				if(this.attackCooldown == 0) {
+					this.attackCooldown = 20 + rand.nextInt(25);
+
+					double spawnX = this.posX;
+					double spawnY = this.posY;
+					double spawnZ = this.posZ;
+
+					EntityBulletBeamBase bullet = new EntityBulletBeamBase(
+							this,
+							XFactoryEnergy.energy_emerald_overcharge.setKnockback(0),
+							8F
+					);
+
+					bullet.setPosition(spawnX, spawnY, spawnZ);
+
+					Vec3 delta = Vec3.createVectorHelper(
+							lastTargetX - spawnX,
+							lastTargetY - spawnY,
+							lastTargetZ - spawnZ
+					);
+
+					bullet.setRotationsFromVector(delta);
+					bullet.performHitscanExternal(250D);
+
+					this.worldObj.spawnEntityInWorld(bullet);
+					this.playSound("hbm:entity.bfashoot", 2.0F, 1.0F);
 				}
 			}
 		}
@@ -160,6 +167,13 @@ public class EntitySiegeUFO extends EntityUFOBase implements IRadiationImmune {
 		
 	}
 
+	
+	@Override
+	public IEntityLivingData onSpawnWithEgg(IEntityLivingData data) {
+		this.setTier(SiegeTier.tiers[rand.nextInt(SiegeTier.getLength())]);
+		return super.onSpawnWithEgg(data);
+	}
+	
 	@Override
 	public void writeEntityToNBT(NBTTagCompound nbt) {
 		super.writeEntityToNBT(nbt);

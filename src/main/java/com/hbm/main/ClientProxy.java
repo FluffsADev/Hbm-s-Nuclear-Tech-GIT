@@ -594,6 +594,8 @@ public class ClientProxy extends ServerProxy {
 		MinecraftForgeClient.registerItemRenderer(ModItems.missile_shuttle, new ItemRenderMissileGeneric(RenderMissileType.TYPE_ROBIN));
 
 		MinecraftForgeClient.registerItemRenderer(ModItems.battery_pack, new ItemRenderBatteryPack());
+		MinecraftForgeClient.registerItemRenderer(ModItems.core_angel, new ItemRenderAngelCore());
+
 		//templates
 		MinecraftForgeClient.registerItemRenderer(ModItems.crucible_template, new ItemRenderTemplate());
 		//hot stuff

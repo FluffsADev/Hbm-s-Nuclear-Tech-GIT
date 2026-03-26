@@ -448,8 +448,12 @@ public class EntityBFAngel extends EntityFlying implements IMob, IBossDisplayDat
 		}
 
 		if(this.deathTime == 19 && !worldObj.isRemote) {
-			worldObj.newExplosion(this, posX, posY, posZ, 10F, true, true);
-			ExplosionNukeSmall.explode(worldObj, posX, posY, posZ, ExplosionNukeSmall.PARAMS_MEDIUM);
+			NBTTagCompound data = new NBTTagCompound();
+			data.setString("type", "tinytot");
+			PacketThreading.createAllAroundThreadedPacket(new AuxParticlePacketNT(data, posX, posY + 0.5, posZ), new TargetPoint(this.dimension, posX, posY, posZ, 250));
+			worldObj.playSoundEffect(posX, posY, posZ, "hbm:weapon.mukeExplosion", 15.0F, 1.0F);
+			
+			this.entityDropItem(new ItemStack(ModItems.core_angel, 1, 0), 1);
 
 			List<EntityPlayer> players = worldObj.getEntitiesWithinAABB(EntityPlayer.class, this.boundingBox.expand(200, 200, 200));
 
@@ -457,14 +461,16 @@ public class EntityBFAngel extends EntityFlying implements IMob, IBossDisplayDat
 			for(EntityPlayer player : players) {
 				player.addChatComponentMessage(new ChatComponentText("Stars are starting to flicker...").setChatStyle(new ChatStyle().setColor(EnumChatFormatting.RED)));
 			}
+			
 			CelestialBody body = CelestialBody.getBody(worldObj);
 
 			CBT_Invasion invasion = body.getTrait(CBT_Invasion.class);
 
-			if (invasion != null)
-				return;
+			if (invasion == null) {
+				body.modifyTraits(new CBT_Invasion(0, 122, false));
 
-			body.modifyTraits(new CBT_Invasion(0, 122, false));
+			}
+
 			
 		}
 
