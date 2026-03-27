@@ -6845,7 +6845,7 @@ tile.stone_resource.conglomerate.name=Конгломерат
 
 // Minmus //
 tile.minmus_smooth.name=Гладкий камень Минмуса
-tile.minmus_smooth.desc=Он кажется... освежающим?
+tile.minmus_smooth.desc=Пахнет... освежающе?
 tile.minmus_regolith.name=Реголит Минмуса
 tile.minmus_stone.name=Камень Минмуса
 
@@ -6854,7 +6854,6 @@ item.chocolate_mint_billet.name=Мятное печенье
 item.ingot_menthol.name=Ментоловые кристаллы
 item.mint_leaves.name=Листья мяты
 item.nugget_menthol.name=Кусочек ментола
-
 item.min_cream.name=Мятное мороженое (Прямиком с Минмуса!)
 
 tile.crop_mint.name=Мята
@@ -6889,7 +6888,6 @@ tile.laythe_coral_block.name=Блок кораллов Лейта
 tile.tumor.name=Мясистая масса
 
 // Tekto
-
 tile.ore_tekto.name=Нефтяной карман Текто
 tile.ore_tekto_empty.name=Пустой нефтяной карман Текто
 tile.crop_paraffin=Воскоцвет
@@ -6989,6 +6987,7 @@ tile.machine_atmo_emitter.name=Атмосферный источник
 tile.machine_htrf4neo.name=Ракетный двигатель HTR-F4
 tile.machine_htrf4neo.desc=Используется для орбитальных перелётов.$Для работы подключите к работающему$термоядерному реактору.$Требуются энергия и охлаждение!
 tile.astroturf.name=Астродёрн
+tile.combat_drop.name=Боевая десантная капсула
 
 // Items
 item.atmosphere_scanner.name=Анализатор атмосферы
@@ -7363,31 +7362,8 @@ entity.hbm.entity_siftereel.name=Угорь-просейщик
 entity.hbm.entity_tankbot.name=Танкбот
 entity.hbm.entity_war_behemoth.name=Машина войны
 entity.hbm.entity_ntm_bfa.name=Жар-Ангел
-entity.hbm.entity_micro_ufo.name=Макро НЛО
-entity.hbm.entity_meme_ufo.name=Мини НЛО
-
-// Templates (Old) //
-chem.ANIMAN=Синтез литературного ужаса
-chem.HYDRAZINE=Производство гидразина
-chem.NITROACID=Производство азотной кислоты
-chem.BLOODFUEL=Производство кровавого топлива
-chem.AMMONIUM=Замешивание нитрата аммония
-chem.AMONGUS=Производство аммиака
-chem.NMASSII=Изменение полярности материи
-chem.NMASSIII=Изотропизация N-Масс доли углерода
-chem.ELBOWS=Смазывание локтей
-chem.HCL=Производство соляной кислоты
-chem.MASS_CAKE=Испечение тортов
-chem.BUTTER=Взбивание сливочного масла
-chem.STRAWICE=Производство клубничного мороженного
-chem.ARSENIDE=Производство арсенида галлия
-chem.URANIUM_BROMIDE=Производство бромида урана
-chem.PLUTONIUM_BROMIDE=Производство бромида плутония
-chem.SCHRABIDIUM_BROMIDE=Производство бромида шрабидия
-chem.THORIUM_BROMIDE=Производство бромида тория
-chem.CHLOROMETHANE=Галогенирование природного газа
-chem.SOIL=Производство почвы
-chem.HYDRAPISS=Производство гидрозина с использованием мочи
+entity.hbm.entity_micro_ufo.name=Макро-НЛО
+entity.hbm.entity_meme_ufo.name=Мини-НЛО
 
 // Chem And Assembly //
 chem.nitricacidalt=Азотная кислота из аммиака
@@ -7486,4 +7462,6 @@ desc.util.warhead=Боеголовка
 desc.util.chip_inaccuracy=Неточность чипа
 desc.util.fin_inaccuracy=Неточность стабилизатора
 
+// Vitya Note: Здесь небольшой беспорядок в файле.
+// В следующем обновлении это исправлю...
 // last updated marth 27th, 2026 by KimiKimi //
