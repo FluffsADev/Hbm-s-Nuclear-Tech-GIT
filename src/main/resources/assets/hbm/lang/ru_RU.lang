@@ -6839,13 +6839,13 @@ tile.eve_rock.name=Камень Евы
 tile.mercury_block.name=Ртуть
 
 // Moon //
-tile.moon_turf.name=Грунт Луны
-tile.moon_rock.name=Камень Луны
+tile.moon_turf.name=Лунный грунт
+tile.moon_rock.name=Лунный камень
 tile.stone_resource.conglomerate.name=Конгломерат
 
 // Minmus //
 tile.minmus_smooth.name=Гладкий камень Минмуса
-tile.minmus_smooth.desc=Пахнет... освежающе?
+tile.minmus_smooth.desc=Он кажется... освежающим?
 tile.minmus_regolith.name=Реголит Минмуса
 tile.minmus_stone.name=Камень Минмуса
 
