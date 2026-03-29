@@ -202,11 +202,6 @@ public class TileEntityFusionTorus extends TileEntityCooledBase implements IGUIP
 							long powerReceived = (long) Math.ceil(this.plasmaEnergy * outputIntensity);
 							((IFusionPowerReceiver) entry.getKey()).receiveFusionPower(powerReceived, outputFlux, r, g, b);
 						}
-
-						// Hack, sends recipe information so we can colour our thruster trail
-						if(entry.getKey() instanceof TileEntityMachineHTRNeo) {
-							((TileEntityMachineHTRNeo) entry.getKey()).recipe = recipe;
-						}
 					}
 				}
 			}
