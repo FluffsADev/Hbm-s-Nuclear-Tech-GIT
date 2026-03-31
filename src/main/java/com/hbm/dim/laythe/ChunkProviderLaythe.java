@@ -10,6 +10,7 @@ import com.hbm.dim.ChunkProviderCelestial;
 import com.hbm.dim.laythe.biome.BiomeGenBaseLaythe;
 import com.hbm.dim.mapgen.MapGenGreg;
 import com.hbm.dim.mapgen.MapGenTiltedSpires;
+import com.hbm.dim.mapgen.MapgenRavineButBased;
 import com.hbm.entity.mob.EntityCreeperFlesh;
 import com.hbm.world.gen.terrain.MapGenBubble;
 
@@ -21,6 +22,7 @@ import net.minecraft.world.biome.BiomeGenBase.SpawnListEntry;
 public class ChunkProviderLaythe extends ChunkProviderCelestial {
 
 	private MapGenGreg caveGenV3 = new MapGenGreg();
+	private MapgenRavineButBased rgen = new MapgenRavineButBased();
 
 	private MapGenTiltedSpires spires = new MapGenTiltedSpires(2, 14, 0.75F);
 	private MapGenTiltedSpires snowires = new MapGenTiltedSpires(2, 14, 0.75F);
@@ -31,6 +33,15 @@ public class ChunkProviderLaythe extends ChunkProviderCelestial {
 
 	public ChunkProviderLaythe(World world, long seed, boolean hasMapFeatures) {
 		super(world, seed, hasMapFeatures);
+
+		rgen.yMin = 32;
+		rgen.frequency = 20;
+		rgen.strataFreq = 3;
+		rgen.strataScale = 8.0F;
+		rgen.width = 12.0D;
+		rgen.taper = 8.0D;
+		rgen.allowUnderwater = true;
+		rgen.height = 5.0D;
 
 		snowires.rock = Blocks.packed_ice;
 		snowires.regolith = Blocks.snow;
@@ -63,6 +74,7 @@ public class ChunkProviderLaythe extends ChunkProviderCelestial {
 			spires.func_151539_a(this, worldObj, x, z, buffer.blocks);
 		}
 		caveGenV3.func_151539_a(this, worldObj, x, z, buffer.blocks);
+		rgen.func_151539_a(this, worldObj, x, z, buffer.blocks);
 		oil.func_151539_a(this, worldObj, x, z, buffer.blocks);
 
 		return buffer;
