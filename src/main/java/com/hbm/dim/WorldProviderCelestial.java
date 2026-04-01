@@ -15,6 +15,7 @@ import com.hbm.dim.trait.CBT_Invasion;
 import com.hbm.handler.ImpactWorldHandler;
 import com.hbm.handler.atmosphere.ChunkAtmosphereManager;
 import com.hbm.inventory.FluidStack;
+import com.hbm.inventory.fluid.FluidType;
 import com.hbm.inventory.fluid.Fluids;
 import com.hbm.main.MainRegistry;
 import com.hbm.saveddata.SatelliteSavedData;
@@ -236,6 +237,42 @@ public abstract class WorldProviderCelestial extends WorldProviderSurface {
 		return apparentSize * 0.0017D + Math.sqrt(apparentSize * 0.00003D);
 	}
 
+	// Might refactor all the separate fluid color calcs into using just this one (but they all vary slightly so not yet)
+	// For now, it'll go here, next to the other fluid color stuff, so we don't forget about it
+	// also, lightning sky tinting doesn't actually work outside of earth air/oxygen/nitrogen so uh yeah we should fix that lmao
+	public static Vec3 getAtmosphereFluidColor(FluidType fluid) {
+		if(fluid == null) {
+			return Vec3.createVectorHelper(1.0D, 1.0D, 1.0D);
+		}
+
+		if(fluid == Fluids.EVEAIR) {
+			return Vec3.createVectorHelper(53F / 255F, 32F / 255F, 74F / 255F);
+		}
+
+		// Slightly redder "red sand" tint for Duna-like atmospheres.
+		if(fluid == Fluids.DUNAAIR) {
+			return Vec3.createVectorHelper(198F / 255F, 96F / 255F, 64F / 255F);
+		}
+
+		// Neutral/desaturated CO2 tint.
+		if(fluid == Fluids.CARBONDIOXIDE) {
+			return Vec3.createVectorHelper(188F / 255F, 192F / 255F, 198F / 255F);
+		}
+
+		if(fluid == Fluids.EARTHAIR || fluid == Fluids.OXYGEN || fluid == Fluids.NITROGEN) {
+			return Vec3.createVectorHelper(0.7529412F, 0.84705883F, 1.0F);
+		}
+
+		return getColorFromHex(fluid.getColor());
+	}
+
+	private static Vec3 getColorFromHex(int hexColor) {
+		float red = ((hexColor >> 16) & 0xFF) / 255.0F;
+		float green = ((hexColor >> 8) & 0xFF) / 255.0F;
+		float blue = (hexColor & 0xFF) / 255.0F;
+		return Vec3.createVectorHelper(red, green, blue);
+	}
+
 	@Override
 	@SideOnly(Side.CLIENT)
 	public Vec3 getFogColor(float solarAngle, float y) {
@@ -453,13 +490,6 @@ public abstract class WorldProviderCelestial extends WorldProviderSurface {
 		}
 
 		return color;
-	}
-
-	private Vec3 getColorFromHex(int hexColor) {
-		float red = ((hexColor >> 16) & 0xFF) / 255.0F;
-		float green = ((hexColor >> 8) & 0xFF) / 255.0F;
-		float blue = (hexColor & 0xFF) / 255.0F;
-		return Vec3.createVectorHelper(red, green, blue);
 	}
 
 	@Override

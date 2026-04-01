@@ -8,8 +8,8 @@ import org.lwjgl.opengl.GL11;
 
 import com.hbm.dim.SolarSystem.AstroMetric;
 import com.hbm.dim.orbit.OrbitalStation;
-import com.hbm.dim.thatmo.WorldProviderThatmo.MeteorType;
 import com.hbm.dim.trait.CBT_Atmosphere;
+import com.hbm.dim.trait.CBT_Atmosphere.FluidEntry;
 import com.hbm.dim.trait.CBT_Dyson;
 import com.hbm.dim.trait.CelestialBodyTrait.CBT_COMPROMISED;
 import com.hbm.dim.trait.CBT_War;
@@ -29,7 +29,6 @@ import net.minecraft.client.renderer.RenderGlobal;
 import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.entity.RenderManager;
-import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.util.MathHelper;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.Vec3;
@@ -41,7 +40,6 @@ import org.lwjgl.opengl.GLContext;
 
 import com.hbm.dim.trait.CBT_Impact;
 import com.hbm.dim.trait.CBT_Lights;
-import com.hbm.main.ModEventHandler;
 import com.hbm.main.ModEventHandlerClient;
 import com.hbm.main.ModEventHandlerRenderer;
 
@@ -263,6 +261,7 @@ public class SkyProviderCelestial extends IRenderHandler {
 		render3DModel(partialTicks, world, mc);
 
 		// TODO: fix EVERYTHING 
+		// k lmao
 		
 		CBT_War war = body.getTrait(CBT_War.class);
 		if(war != null) {
@@ -308,16 +307,20 @@ public class SkyProviderCelestial extends IRenderHandler {
 				}
 			}
 		}
+
 		double playerX = mc.thePlayer.prevPosX + (mc.thePlayer.posX - mc.thePlayer.prevPosX) * partialTicks;
 		double playerY = mc.thePlayer.prevPosY + (mc.thePlayer.posY - mc.thePlayer.prevPosY) * partialTicks;
 		double playerZ = mc.thePlayer.prevPosZ + (mc.thePlayer.posZ - mc.thePlayer.prevPosZ) * partialTicks;
-		for(com.hbm.dim.WorldProviderCelestial.Meteor meteor : WorldProviderCelestial.meteors) {
+
+		float rainStrength = world.getRainStrength(partialTicks);
+
+		for(WorldProviderCelestial.Meteor meteor : WorldProviderCelestial.meteors) {
 			GL11.glPushMatrix();
 
 			// optimised 3 sqrt per meteor to just 1
 			Vec3 offset = Vec3.createVectorHelper(meteor.posX - playerX, meteor.posY - playerY, meteor.posZ - playerZ);
 			double offsetLength = offset.lengthVector();
-			double distance = Math.min(Minecraft.getMinecraft().gameSettings.renderDistanceChunks * 16, offsetLength);
+			double distance = Math.min(mc.gameSettings.renderDistanceChunks * 16, offsetLength);
 			Vec3 offsetNormal = offsetLength >= 1.0E-4D ? Vec3.createVectorHelper(offset.xCoord / offsetLength, offset.yCoord / offsetLength, offset.zCoord / offsetLength) : offset;
 			Vec3 renderOffset = Vec3.createVectorHelper(offsetNormal.xCoord * distance, offsetNormal.yCoord * distance, offsetNormal.zCoord * distance);
 
@@ -329,12 +332,14 @@ public class SkyProviderCelestial extends IRenderHandler {
 			float scalar = (float) (quadratic / offsetLength);
 			GL11.glScaled(scalar, scalar, scalar);
 
-			if(meteor.type == com.hbm.dim.WorldProviderCelestial.MeteorType.SMOKE) {
+			if(meteor.type == WorldProviderCelestial.MeteorType.SMOKE) {
 				GL11.glColor4d(1, 0, 0, 1);
-				renderSmoke(particleBase, meteor.age);
+				mc.renderEngine.bindTexture(particleBase);
+				renderSmoke(meteor.age);
 			} else {
 				GL11.glColor4d(1, 1, 1, 1);
-				renderGlow(shockFlareTexture, 1, 1, 1, partialTicks);
+				mc.renderEngine.bindTexture(shockFlareTexture);
+				renderGlow(1, 1, 1, rainStrength);
 			}
 
 			GL11.glPopMatrix();
@@ -989,6 +994,8 @@ public class SkyProviderCelestial extends IRenderHandler {
 
 					} else {
 
+						renderAtmosphereGlow(tessellator, mc, metric.body, size, visibility);
+
 						GL11.glDisable(GL11.GL_BLEND);
 						GL11.glColor4f(1.0F, 1.0F, 1.0F, visibility);
 						mc.renderEngine.bindTexture(metric.body.texture);
@@ -1163,6 +1170,137 @@ public class SkyProviderCelestial extends IRenderHandler {
 		}
 	}
 
+	private void renderAtmosphereGlow(Tessellator tessellator, Minecraft mc, CelestialBody body, double size, float visibility) {
+		float glowAlpha = getAtmosphereGlowAlpha(body) * visibility;
+		if(glowAlpha <= 0.001F) {
+			return;
+		}
+
+		Vec3 atmo = getBodyAtmosphereColor(body);
+		float r = MathHelper.clamp_float((float)atmo.xCoord * 1.15F, 0.0F, 1.0F);
+		float g = MathHelper.clamp_float((float)atmo.yCoord * 1.15F, 0.0F, 1.0F);
+		float b = MathHelper.clamp_float((float)atmo.zCoord * 1.15F, 0.0F, 1.0F);
+
+		double innerSize = size * 0.98D;
+		double outerSize = size * 1.2D;
+
+		GL11.glEnable(GL11.GL_BLEND);
+		OpenGlHelper.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ZERO);
+		GL11.glDisable(GL11.GL_TEXTURE_2D);
+		GL11.glDisable(GL11.GL_CULL_FACE);
+		GL11.glShadeModel(GL11.GL_SMOOTH);
+
+		tessellator.startDrawingQuads();
+
+		// Top band
+		tessellator.setColorRGBA_F(r, g, b, 0.0F);
+		tessellator.addVertex(-outerSize, 100.0D, -outerSize);
+		tessellator.setColorRGBA_F(r, g, b, 0.0F);
+		tessellator.addVertex(outerSize, 100.0D, -outerSize);
+		tessellator.setColorRGBA_F(r, g, b, glowAlpha);
+		tessellator.addVertex(innerSize, 100.0D, -innerSize);
+		tessellator.setColorRGBA_F(r, g, b, glowAlpha);
+		tessellator.addVertex(-innerSize, 100.0D, -innerSize);
+
+		// Right band
+		tessellator.setColorRGBA_F(r, g, b, 0.0F);
+		tessellator.addVertex(outerSize, 100.0D, -outerSize);
+		tessellator.setColorRGBA_F(r, g, b, 0.0F);
+		tessellator.addVertex(outerSize, 100.0D, outerSize);
+		tessellator.setColorRGBA_F(r, g, b, glowAlpha);
+		tessellator.addVertex(innerSize, 100.0D, innerSize);
+		tessellator.setColorRGBA_F(r, g, b, glowAlpha);
+		tessellator.addVertex(innerSize, 100.0D, -innerSize);
+
+		// Bottom band
+		tessellator.setColorRGBA_F(r, g, b, 0.0F);
+		tessellator.addVertex(outerSize, 100.0D, outerSize);
+		tessellator.setColorRGBA_F(r, g, b, 0.0F);
+		tessellator.addVertex(-outerSize, 100.0D, outerSize);
+		tessellator.setColorRGBA_F(r, g, b, glowAlpha);
+		tessellator.addVertex(-innerSize, 100.0D, innerSize);
+		tessellator.setColorRGBA_F(r, g, b, glowAlpha);
+		tessellator.addVertex(innerSize, 100.0D, innerSize);
+
+		// Left band
+		tessellator.setColorRGBA_F(r, g, b, 0.0F);
+		tessellator.addVertex(-outerSize, 100.0D, outerSize);
+		tessellator.setColorRGBA_F(r, g, b, 0.0F);
+		tessellator.addVertex(-outerSize, 100.0D, -outerSize);
+		tessellator.setColorRGBA_F(r, g, b, glowAlpha);
+		tessellator.addVertex(-innerSize, 100.0D, -innerSize);
+		tessellator.setColorRGBA_F(r, g, b, glowAlpha);
+		tessellator.addVertex(-innerSize, 100.0D, innerSize);
+
+		tessellator.draw();
+
+		GL11.glShadeModel(GL11.GL_FLAT);
+		GL11.glEnable(GL11.GL_CULL_FACE);
+		GL11.glEnable(GL11.GL_TEXTURE_2D);
+		OpenGlHelper.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ZERO);
+	}
+
+	private float getAtmosphereGlowAlpha(CelestialBody body) {
+		if(body == null) {
+			return 0.0F;
+		}
+
+		if(body.gas != null) {
+			return 0.28F;
+		}
+
+		CBT_Atmosphere atmosphere = body.getTrait(CBT_Atmosphere.class);
+		if(atmosphere != null) {
+			float pressure = MathHelper.clamp_float((float)atmosphere.getPressure(), 0.0F, 3.0F);
+			if(pressure <= 0.02F) {
+				return 0.0F;
+			}
+			return MathHelper.clamp_float(0.08F + pressure * 0.16F, 0.08F, 0.5F);
+		}
+
+		return 0.0F;
+	}
+
+	private Vec3 getBodyAtmosphereColor(CelestialBody body) {
+		if(body == null) {
+			return Vec3.createVectorHelper(1.0D, 1.0D, 1.0D);
+		}
+
+		if(body.gas != null) {
+			return WorldProviderCelestial.getAtmosphereFluidColor(body.gas);
+		}
+
+		CBT_Atmosphere atmosphere = body.getTrait(CBT_Atmosphere.class);
+		if(atmosphere != null && !atmosphere.fluids.isEmpty()) {
+			double totalPressure = 0.0D;
+			double r = 0.0D;
+			double g = 0.0D;
+			double b = 0.0D;
+
+			for(FluidEntry entry : atmosphere.fluids) {
+				if(entry == null || entry.fluid == null || entry.pressure <= 0.0D) {
+					continue;
+				}
+
+				Vec3 fluidColor = WorldProviderCelestial.getAtmosphereFluidColor(entry.fluid);
+				r += fluidColor.xCoord * entry.pressure;
+				g += fluidColor.yCoord * entry.pressure;
+				b += fluidColor.zCoord * entry.pressure;
+				totalPressure += entry.pressure;
+			}
+
+			if(totalPressure > 0.0D) {
+				return Vec3.createVectorHelper(
+					MathHelper.clamp_double(r / totalPressure, 0.0D, 1.0D),
+					MathHelper.clamp_double(g / totalPressure, 0.0D, 1.0D),
+					MathHelper.clamp_double(b / totalPressure, 0.0D, 1.0D)
+				);
+			}
+		}
+
+		return Vec3.createVectorHelper(1.0D, 1.0D, 1.0D);
+	}
+
 	protected void renderRings(float partialTicks, WorldClient world, Minecraft mc, float ringTilt, float[] ringColor, float ringSize, float visibility) {
 		Tessellator tessellator = Tessellator.instance;
 
@@ -1293,56 +1431,55 @@ public class SkyProviderCelestial extends IRenderHandler {
 		GL11.glPopMatrix();
 	}
 	
-	public void renderSmoke(ResourceLocation loc1, long age) {
+	public void renderSmoke(long age) {
 		GL11.glPushMatrix();
 		GL11.glEnable(GL11.GL_BLEND);
+
 		float f4 = 1.0F;
 		float f5 = 0.5F;
 		float f6 = 0.25F;
 		float dark = 1f - Math.min(((float)(age) / (float)(100f * 0.35F)), 1f);
+
 		GL11.glRotatef(180.0F - RenderManager.instance.playerViewY, 0.0F, 1.0F, 0.0F);
 		GL11.glRotatef(-RenderManager.instance.playerViewX, 1.0F, 0.0F, 0.0F);
-		GL11.glColor4d(0.6*dark+0.0, 0.6*dark+0.0, 1*dark+0.0, 1);
+		GL11.glColor4f(0.6F * dark + 0.0F, 0.6F * dark + 0.0F, 1F * dark + 0.0F, 1F);
+
 		Tessellator tess = Tessellator.instance;
-		TextureManager tex = Minecraft.getMinecraft().getTextureManager();
 		tess.startDrawingQuads();
 		tess.setNormal(0.0F, 1.0F, 0.0F);
 		tess.addVertexWithUV(0.0F - f5, 0.0F - f6, 0.0D, 1, 0);
 		tess.addVertexWithUV(f4 - f5, 0.0F - f6, 0.0D, 0, 0);
 		tess.addVertexWithUV(f4 - f5, f4 - f6, 0.0D, 0, 1);
 		tess.addVertexWithUV(0.0F - f5, f4 - f6, 0.0D, 1, 1);
-		tex.bindTexture(loc1);
 		tess.draw();
+
 		GL11.glDisable(GL11.GL_BLEND);
 		GL11.glPopMatrix();
 	}
 
-	public void renderGlow(ResourceLocation loc1, double x, double y, double z, float partialTicks) {
+	public void renderGlow(double x, double y, double z, float rainStrength) {
 		GL11.glPushMatrix();
 		GL11.glEnable(GL11.GL_BLEND);
+
 		float f4 = 1.0F;
 		float f5 = 0.5F;
 		float f6 = 0.25F;
+		double near = 0.51d * (Math.min(40000f, Math.max(0d, y - 35000d)) / 40000d);
+		double entry = near * (1d - rainStrength) + (1d - (Math.min(200d, Math.max(0d, x - 2017d)) / 200f));
+
 		GL11.glRotatef(180.0F - RenderManager.instance.playerViewY, 0.0F, 1.0F, 0.0F);
 		GL11.glRotatef(-RenderManager.instance.playerViewX, 1.0F, 0.0F, 0.0F);
-		// double distant = 1d-(Math.min(6300000f, Math.max(0d, y-40000f))/6300000f);
-		//  double sf = 1d-(Math.min(400000f, Math.max(0d, y-350000f))/400000f);
-		//
-		//double near = distant*(Math.min(40000f, Math.max(0d, y-35000f))/40000f)*Math.min(1d,Minecraft.getMinecraft().thePlayer.worldObj.getStarBrightness(partialTicks)+sf);
-		double near = 0.51d*(Math.min(40000f, Math.max(0d, y-35000d))/40000d);
-		//  System.out.println((1d-(Math.min(200d, Math.max(0d, y-2017d))/200f)));
-		double entry = near*(1d-Minecraft.getMinecraft().thePlayer.worldObj.getRainStrength(partialTicks))+(1d-(Math.min(200d, Math.max(0d, x-2017d))/200f));
 		GL11.glColor4d(entry, entry, entry, entry);
+
 		Tessellator tess = Tessellator.instance;
-		TextureManager tex = Minecraft.getMinecraft().getTextureManager();
 		tess.startDrawingQuads();
 		tess.setNormal(0.0F, 1.0F, 0.0F);
 		tess.addVertexWithUV(0.0F - f5, 0.0F - f6, 0.0D, 1, 0);
 		tess.addVertexWithUV(f4 - f5, 0.0F - f6, 0.0D, 0, 0);
 		tess.addVertexWithUV(f4 - f5, f4 - f6, 0.0D, 0, 1);
 		tess.addVertexWithUV(0.0F - f5, f4 - f6, 0.0D, 1, 1);
-		tex.bindTexture(loc1);
 		tess.draw();
+		
 		GL11.glDisable(GL11.GL_BLEND);
 		GL11.glPopMatrix();
 	}
