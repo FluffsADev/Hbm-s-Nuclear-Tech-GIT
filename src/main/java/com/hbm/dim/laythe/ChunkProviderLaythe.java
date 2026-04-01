@@ -15,6 +15,7 @@ import com.hbm.dim.mapgen.MapgenRavineButBased;
 import com.hbm.entity.mob.EntityCreeperFlesh;
 import com.hbm.world.gen.terrain.MapGenBubble;
 
+import net.minecraft.block.Block;
 import net.minecraft.entity.EnumCreatureType;
 import net.minecraft.init.Blocks;
 import net.minecraft.world.World;
@@ -33,8 +34,8 @@ public class ChunkProviderLaythe extends ChunkProviderCelestial {
 
 	private List<SpawnListEntry> spawnedOfFlesh = new ArrayList<SpawnListEntry>();
 
-	public ChunkProviderLaythe(World world, long seed, boolean hasMapFeatures) {
-		super(world, seed, hasMapFeatures);
+	public ChunkProviderLaythe(World world, long seed) {
+		super(world, seed);
 
 		rgen.yMin = 32;
 		rgen.frequency = 20;
@@ -63,6 +64,14 @@ public class ChunkProviderLaythe extends ChunkProviderCelestial {
 		// seaLevel = 96;
 
 		spawnedOfFlesh.add(new SpawnListEntry(EntityCreeperFlesh.class, 10, 4, 4));
+	}
+
+	@Override
+	protected Block getFlatWorldBlock(Block block) {
+		if(block == Blocks.grass || block == Blocks.sand || block == Blocks.water || block == Blocks.flowing_water) return Blocks.water;
+		if(block == Blocks.dirt || block == Blocks.stone || block == Blocks.sandstone) return ModBlocks.laythe_silt;
+		if(block == Blocks.snow_layer) return Blocks.snow_layer;
+		return block;
 	}
 
 	@Override
