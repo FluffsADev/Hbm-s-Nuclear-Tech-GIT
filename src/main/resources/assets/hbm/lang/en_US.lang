@@ -5919,6 +5919,7 @@ tile.cm_tank.steel.name=Steel Tank
 tile.cm_tank.tcalloy.name=Technetium Steel Tank
 tile.cmb_brick.name=CMB Steel Tile
 tile.cmb_brick_reinforced.name=Reinforced CMB Bricks
+tile.combat_drop.name=Combat Drop Pod
 tile.compact_launcher.name=Compact Launch Pad
 tile.concrete.name=Concrete Tile
 tile.concrete_asbestos.name=Asbestos Concrete
