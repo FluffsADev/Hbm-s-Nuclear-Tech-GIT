@@ -1176,8 +1176,9 @@ public class SkyProviderCelestial extends IRenderHandler {
 			return;
 		}
 
-		float leadingGlow = glowAlpha * MathHelper.clamp_float((float)Math.abs(0.5 - phase) * 2, 0, 1);
-		float trailingGlow = glowAlpha * MathHelper.clamp_float((float)Math.abs(-0.5 - phase) * 2, 0, 1);
+		// until I can figure out how to make a four way quad lerp not look like shit I'm disabling this
+		float leadingGlow = glowAlpha;// * MathHelper.clamp_float((float)Math.abs(0.5 - phase) * 2, 0, 1);
+		float trailingGlow = glowAlpha;// * MathHelper.clamp_float((float)Math.abs(-0.5 - phase) * 2, 0, 1);
 
 		Vec3 atmo = getBodyAtmosphereColor(body);
 		float r = MathHelper.clamp_float((float)atmo.xCoord * 1.15F, 0.0F, 1.0F);
