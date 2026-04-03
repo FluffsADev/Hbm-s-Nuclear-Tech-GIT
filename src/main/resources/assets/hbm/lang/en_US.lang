@@ -227,6 +227,7 @@ battery.priority.recommended=Recommended for:
 battery.redstone.off=Redstone OFF
 battery.redstone.on=Redstone ON
 
+body.kerbol=Kerbol
 body.kerbin=Earth
 body.mun=Mun
 body.minmus=Minmus
