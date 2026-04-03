@@ -994,7 +994,7 @@ public class SkyProviderCelestial extends IRenderHandler {
 
 					} else {
 
-						renderAtmosphereGlow(tessellator, mc, metric.body, size, visibility);
+						renderAtmosphereGlow(tessellator, mc, metric.body, size, visibility, metric.phase);
 
 						GL11.glDisable(GL11.GL_BLEND);
 						GL11.glColor4f(1.0F, 1.0F, 1.0F, visibility);
@@ -1170,11 +1170,14 @@ public class SkyProviderCelestial extends IRenderHandler {
 		}
 	}
 
-	private void renderAtmosphereGlow(Tessellator tessellator, Minecraft mc, CelestialBody body, double size, float visibility) {
+	private void renderAtmosphereGlow(Tessellator tessellator, Minecraft mc, CelestialBody body, double size, float visibility, double phase) {
 		float glowAlpha = getAtmosphereGlowAlpha(body) * visibility;
 		if(glowAlpha <= 0.001F) {
 			return;
 		}
+
+		float leadingGlow = glowAlpha * MathHelper.clamp_float((float)Math.abs(0.5 - phase) * 2, 0, 1);
+		float trailingGlow = glowAlpha * MathHelper.clamp_float((float)Math.abs(-0.5 - phase) * 2, 0, 1);
 
 		Vec3 atmo = getBodyAtmosphereColor(body);
 		float r = MathHelper.clamp_float((float)atmo.xCoord * 1.15F, 0.0F, 1.0F);
@@ -1198,27 +1201,30 @@ public class SkyProviderCelestial extends IRenderHandler {
 		tessellator.setColorRGBA_F(r, g, b, 0.0F);
 		tessellator.addVertex(-outerSize, 100.0D, -outerSize);
 		tessellator.addVertex(outerSize, 100.0D, -outerSize);
-		tessellator.setColorRGBA_F(r, g, b, glowAlpha / 2);
+		tessellator.setColorRGBA_F(r, g, b, leadingGlow / 2);
 		tessellator.addVertex(middleSize, 100.0D, -middleSize);
+		tessellator.setColorRGBA_F(r, g, b, trailingGlow / 2);
 		tessellator.addVertex(-middleSize, 100.0D, -middleSize);
 
 		tessellator.addVertex(-middleSize, 100.0D, -middleSize);
+		tessellator.setColorRGBA_F(r, g, b, leadingGlow / 2);
 		tessellator.addVertex(middleSize, 100.0D, -middleSize);
-		tessellator.setColorRGBA_F(r, g, b, glowAlpha);
+		tessellator.setColorRGBA_F(r, g, b, leadingGlow);
 		tessellator.addVertex(innerSize, 100.0D, -innerSize);
+		tessellator.setColorRGBA_F(r, g, b, trailingGlow);
 		tessellator.addVertex(-innerSize, 100.0D, -innerSize);
 
-		// Right band
+		// Left band
 		tessellator.setColorRGBA_F(r, g, b, 0.0F);
 		tessellator.addVertex(outerSize, 100.0D, -outerSize);
 		tessellator.addVertex(outerSize, 100.0D, outerSize);
-		tessellator.setColorRGBA_F(r, g, b, glowAlpha / 2);
+		tessellator.setColorRGBA_F(r, g, b, leadingGlow / 2);
 		tessellator.addVertex(middleSize, 100.0D, middleSize);
 		tessellator.addVertex(middleSize, 100.0D, -middleSize);
 
 		tessellator.addVertex(middleSize, 100.0D, -middleSize);
 		tessellator.addVertex(middleSize, 100.0D, middleSize);
-		tessellator.setColorRGBA_F(r, g, b, glowAlpha);
+		tessellator.setColorRGBA_F(r, g, b, leadingGlow);
 		tessellator.addVertex(innerSize, 100.0D, innerSize);
 		tessellator.addVertex(innerSize, 100.0D, -innerSize);
 
@@ -1226,27 +1232,30 @@ public class SkyProviderCelestial extends IRenderHandler {
 		tessellator.setColorRGBA_F(r, g, b, 0.0F);
 		tessellator.addVertex(outerSize, 100.0D, outerSize);
 		tessellator.addVertex(-outerSize, 100.0D, outerSize);
-		tessellator.setColorRGBA_F(r, g, b, glowAlpha / 2);
+		tessellator.setColorRGBA_F(r, g, b, trailingGlow / 2);
 		tessellator.addVertex(-middleSize, 100.0D, middleSize);
+		tessellator.setColorRGBA_F(r, g, b, leadingGlow / 2);
 		tessellator.addVertex(middleSize, 100.0D, middleSize);
 		
 		tessellator.addVertex(middleSize, 100.0D, middleSize);
+		tessellator.setColorRGBA_F(r, g, b, trailingGlow / 2);
 		tessellator.addVertex(-middleSize, 100.0D, middleSize);
-		tessellator.setColorRGBA_F(r, g, b, glowAlpha);
+		tessellator.setColorRGBA_F(r, g, b, trailingGlow);
 		tessellator.addVertex(-innerSize, 100.0D, innerSize);
+		tessellator.setColorRGBA_F(r, g, b, leadingGlow);
 		tessellator.addVertex(innerSize, 100.0D, innerSize);
 
-		// Left band
+		// Right band
 		tessellator.setColorRGBA_F(r, g, b, 0.0F);
 		tessellator.addVertex(-outerSize, 100.0D, outerSize);
 		tessellator.addVertex(-outerSize, 100.0D, -outerSize);
-		tessellator.setColorRGBA_F(r, g, b, glowAlpha / 2);
+		tessellator.setColorRGBA_F(r, g, b, trailingGlow / 2);
 		tessellator.addVertex(-middleSize, 100.0D, -middleSize);
 		tessellator.addVertex(-middleSize, 100.0D, middleSize);
 		
 		tessellator.addVertex(-middleSize, 100.0D, middleSize);
 		tessellator.addVertex(-middleSize, 100.0D, -middleSize);
-		tessellator.setColorRGBA_F(r, g, b, glowAlpha);
+		tessellator.setColorRGBA_F(r, g, b, trailingGlow);
 		tessellator.addVertex(-innerSize, 100.0D, -innerSize);
 		tessellator.addVertex(-innerSize, 100.0D, innerSize);
 
