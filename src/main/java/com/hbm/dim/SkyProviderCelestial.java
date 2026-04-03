@@ -92,6 +92,8 @@ public class SkyProviderCelestial extends IRenderHandler {
 
 	private static boolean gl13;
 
+	private static float currentFov = 70;
+
 	public SkyProviderCelestial() {
 		if(!displayListsInitialized) {
 			initializeDisplayLists();
@@ -130,6 +132,7 @@ public class SkyProviderCelestial extends IRenderHandler {
 		}
 
 		float fogIntensity = ModEventHandlerRenderer.lastFogDensity * 30;
+		currentFov = mc.entityRenderer.getFOVModifier(partialTicks, true);
 
 		CelestialBody body = CelestialBody.getBody(world);
 		CelestialBody sun = body.getStar();
@@ -308,9 +311,7 @@ public class SkyProviderCelestial extends IRenderHandler {
 			}
 		}
 
-		double playerX = mc.thePlayer.prevPosX + (mc.thePlayer.posX - mc.thePlayer.prevPosX) * partialTicks;
-		double playerY = mc.thePlayer.prevPosY + (mc.thePlayer.posY - mc.thePlayer.prevPosY) * partialTicks;
-		double playerZ = mc.thePlayer.prevPosZ + (mc.thePlayer.posZ - mc.thePlayer.prevPosZ) * partialTicks;
+		Vec3 pos = mc.thePlayer.getPosition(partialTicks);
 
 		float rainStrength = world.getRainStrength(partialTicks);
 
@@ -318,7 +319,7 @@ public class SkyProviderCelestial extends IRenderHandler {
 			GL11.glPushMatrix();
 
 			// optimised 3 sqrt per meteor to just 1
-			Vec3 offset = Vec3.createVectorHelper(meteor.posX - playerX, meteor.posY - playerY, meteor.posZ - playerZ);
+			Vec3 offset = Vec3.createVectorHelper(meteor.posX - pos.xCoord, meteor.posY - pos.yCoord, meteor.posZ - pos.zCoord);
 			double offsetLength = offset.lengthVector();
 			double distance = Math.min(mc.gameSettings.renderDistanceChunks * 16, offsetLength);
 			Vec3 offsetNormal = offsetLength >= 1.0E-4D ? Vec3.createVectorHelper(offset.xCoord / offsetLength, offset.yCoord / offsetLength, offset.zCoord / offsetLength) : offset;
@@ -400,7 +401,6 @@ public class SkyProviderCelestial extends IRenderHandler {
 		GL11.glDisable(GL11.GL_TEXTURE_2D);
 		GL11.glColor3f(0.0F, 0.0F, 0.0F);
 
-		Vec3 pos = mc.thePlayer.getPosition(partialTicks);
 		double heightAboveHorizon = pos.yCoord - world.getHorizon();
 
 		if(heightAboveHorizon < 0.0D) {
@@ -751,7 +751,7 @@ public class SkyProviderCelestial extends IRenderHandler {
 		// swarm members render as pixels, which can vary based on screen resolution
 		// because of this, we make the pixels more transparent based on their apparent size, which varies by a fair few factors
 		// this isn't a foolproof solution, analyzing the projection matrices would be best, but it works for now.
-		float swarmScreenSize = (float)((mc.displayHeight / mc.gameSettings.fovSetting) * swarmRadius * 0.002);
+		float swarmScreenSize = (float)((mc.displayHeight / currentFov) * swarmRadius * 0.002);
 		float time = ((float)world.getWorldTime() + partialTicks) / 800.0F;
 
 		swarmShader.setUniform1f("iTime", time);
@@ -841,7 +841,7 @@ public class SkyProviderCelestial extends IRenderHandler {
 		Tessellator tessellator = Tessellator.instance;
 		float blendDarken = 0.1F;
 
-		double transitionMinSize = 0.1D;
+		double transitionMinSize = 0.01D;
 		double transitionMaxSize = 0.5D;
 
 		for(AstroMetric metric : metrics) {
@@ -1382,7 +1382,7 @@ public class SkyProviderCelestial extends IRenderHandler {
 
 			mc.renderEngine.bindTexture(digammaStar);
 
-			float digamma = HbmLivingProps.getDigamma(Minecraft.getMinecraft().thePlayer);
+			float digamma = HbmLivingProps.getDigamma(mc.thePlayer);
 			var12 = 1F * (1 + digamma * 0.25F);
 			dist = 100D - digamma * 2.5;
 
