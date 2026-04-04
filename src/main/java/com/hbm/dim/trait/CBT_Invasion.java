@@ -1,5 +1,6 @@
 package com.hbm.dim.trait;
 
+import java.util.HashMap;
 import java.util.Random;
 
 import com.hbm.dim.CelestialBody;
@@ -18,19 +19,22 @@ import com.hbm.main.MainRegistry;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLiving;
+import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.IEntityLivingData;
+import net.minecraft.entity.boss.IBossDisplayData;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.ChatStyle;
 import net.minecraft.util.EnumChatFormatting;
+import net.minecraft.util.IChatComponent;
 import net.minecraft.util.MathHelper;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldType;
 import net.minecraftforge.common.DimensionManager;
 
-public class CBT_Invasion extends CelestialBodyTrait {
+public class CBT_Invasion extends CelestialBodyTrait implements IBossDisplayData {
 
 	// while i could polymorphize to the heavens, this event is more-or-less
 	// "scripted"
@@ -79,10 +83,13 @@ public class CBT_Invasion extends CelestialBodyTrait {
 	public void update(boolean isRemote, CelestialBody body) {
 		if(!isRemote) {
 			prepare();
-			World world = DimensionManager.getWorld(body.dimensionId);
+
 			if(isInvading) {
+				World world = DimensionManager.getWorld(body.dimensionId);
+
 				if(world == null || world.playerEntities.isEmpty())
 					return;
+
 				logicTick(world);
 				handleBurstSpawning(world);
 				spawnAttempt(world);
@@ -193,7 +200,7 @@ public class CBT_Invasion extends CelestialBodyTrait {
 			advanceWave(world);
 			break;
 		case 1:
-			killreq = 80;
+			killreq = 20;
 			if(kills >= killreq)
 				advanceWave(world);
 			break;
@@ -284,6 +291,33 @@ public class CBT_Invasion extends CelestialBodyTrait {
 		}
 	}
 
+	public void onKill(EntityLivingBase entity, CelestialBody body) {
+		if(entity instanceof EntitySiegeUFO) {
+			// GOLD and above are worth 2 kills
+			int value = entity.getMaxHealth() >= 100 * 0.25 ? 2 : 1;
+			kills += value;
+			body.modifyTraits(this);
+		} else if (entity instanceof EntitySiegeCraft) {
+			kills += 10;
+			body.modifyTraits(this);
+		}
+		
+		if(wave >= 4 && entity instanceof EntityUFO) {
+			HashMap<Class<? extends CelestialBodyTrait>, CelestialBodyTrait> currentTraits = body.getTraits();
+
+			currentTraits.remove(CBT_Invasion.class);
+
+			for(Object obj : entity.worldObj.playerEntities) {
+				if(obj instanceof EntityPlayer) {
+					EntityPlayer player = (EntityPlayer) obj;
+					player.addChatComponentMessage(new ChatComponentText("The Invasion Is Over!").setChatStyle(new ChatStyle().setColor(EnumChatFormatting.YELLOW)));
+				}
+			}
+
+			body.setTraits(currentTraits);
+		}
+	}
+
 	private void spawnBoss(World world) {
 		EntityPlayer player = (EntityPlayer) world.playerEntities.get(world.rand.nextInt(world.playerEntities.size()));
 		EntityUFO entity = new EntityUFO(world);
@@ -355,5 +389,20 @@ public class CBT_Invasion extends CelestialBodyTrait {
 		podBurstCounter = buf.readInt();
 		podCooldown = buf.readInt();
 		bossSpawned = buf.readBoolean();
+	}
+
+	@Override
+	public float getMaxHealth() {
+		return killreq;
+	}
+
+	@Override
+	public float getHealth() {
+		return killreq - kills;
+	}
+
+	@Override
+	public IChatComponent func_145748_c_() {
+		return new ChatComponentText("Wave " + wave);
 	}
 }

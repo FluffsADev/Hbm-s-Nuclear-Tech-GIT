@@ -107,6 +107,7 @@ import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.entity.RenderPlayer;
 import net.minecraft.client.settings.GameSettings;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.boss.BossStatus;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
@@ -1040,12 +1041,10 @@ public class ModEventHandlerClient {
 			}
 			
 			CelestialBody body = CelestialBody.getBody(mc.theWorld);
-			CBT_Invasion invasion = body.getTrait(Minecraft.getMinecraft().thePlayer.worldObj, CBT_Invasion.class);
-			
-			if(invasion != null) {
-				if (invasion.isInvading && invasion.wave < 4 && body.hasTrait(Minecraft.getMinecraft().thePlayer.worldObj, CBT_Invasion.class)) {
-					MainRegistry.proxy.displayTooltip(EnumChatFormatting.GREEN + "Kills Left: " + (invasion.killreq - invasion.kills), 14);
-				}	
+			CBT_Invasion invasion = body.getTrait(CBT_Invasion.class);
+
+			if(invasion != null && invasion.isInvading && invasion.wave < 4) {
+				BossStatus.setBossStatus(invasion, false);
 			}
 
 		}

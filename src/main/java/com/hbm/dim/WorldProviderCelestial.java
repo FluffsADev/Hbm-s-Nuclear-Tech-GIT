@@ -89,21 +89,17 @@ public abstract class WorldProviderCelestial extends WorldProviderSurface {
 		// Will prevent water from existing, will be unset immediately before using a bucket if inside a pressurized room
 		isHellWorld = !worldObj.isRemote && pressure <= 0.2F && !Loader.isModLoaded(Compat.MOD_COFH);
 
-		
-		Random rand = new Random();
-		CBT_Invasion invasion = CelestialBody.getTrait(worldObj, CBT_Invasion.class);
-
-		if (worldObj.isRemote) {
+		if(worldObj.isRemote) {
 			EntityPlayer player = MainRegistry.proxy.me();
+			CBT_Invasion invasion = CelestialBody.getTrait(worldObj, CBT_Invasion.class);
 
-			if (invasion != null) {
-
-				for (int i = 0; i < meteors.size(); i++) {
+			if(invasion != null) {
+				for(int i = 0; i < meteors.size(); i++) {
 					meteors.get(i).update();
 				}
 				
-				if (rand.nextInt(Math.max(1, 5 - invasion.wave)) == 0 && invasion.isInvading) {
-					Meteor meteor = new Meteor((player.posX + rand.nextInt(16000)) - 8000, 2017,(player.posZ + rand.nextInt(16000)) - 8000);
+				if(worldObj.rand.nextInt(Math.max(1, 5 - invasion.wave)) == 0 && invasion.isInvading) {
+					Meteor meteor = new Meteor((player.posX + worldObj.rand.nextInt(16000)) - 8000, 2017,(player.posZ + worldObj.rand.nextInt(16000)) - 8000);
 					meteors.add(meteor);
 				}
 
@@ -111,8 +107,8 @@ public abstract class WorldProviderCelestial extends WorldProviderSurface {
 			} else {
 				meteors.removeAll(meteors);
 			}
-
 		}
+
 		if(pressure > 0.5F) {
 			super.updateWeather();
 			return;
@@ -122,9 +118,6 @@ public abstract class WorldProviderCelestial extends WorldProviderSurface {
 		worldObj.rainingStrength = 0.0F;
 		worldObj.prevThunderingStrength = 0.0F;
 		worldObj.thunderingStrength = 0.0F;
-
-		
-		
 	}
 	
 
@@ -513,7 +506,7 @@ public abstract class WorldProviderCelestial extends WorldProviderSurface {
 			float f3 = MathHelper.cos((solarAngle) * (float)Math.PI * 2.0F) - 0.0F;
 			float f4 = -0.0F;
 
-			if (f3 >= f4 - f2 && f3 <= f4 + f2) {
+			if(f3 >= f4 - f2 && f3 <= f4 + f2) {
 				float f5 = (f3 - f4) / f2 * 0.5F + 0.5F;
 				float f6 = 1.0F - (1.0F - MathHelper.sin(f5 * (float)Math.PI)) * 0.99F;
 				f6 *= f6;
@@ -597,7 +590,7 @@ public abstract class WorldProviderCelestial extends WorldProviderSurface {
 		float insideBrightness = 0;
 
 		for(Map.Entry<Integer, Satellite> entry : SatelliteSavedData.getClientSats().entrySet()) {
-			if (entry instanceof SatelliteWar) {
+			if(entry instanceof SatelliteWar) {
 				SatelliteWar war = (SatelliteWar) entry.getValue();
 				float flame = war.getInterp();
 				float alpd = 1.0F - Math.min(1.0F, flame / 100);
