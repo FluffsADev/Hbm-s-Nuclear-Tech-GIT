@@ -249,7 +249,7 @@ public class GUIMachineStardar extends GuiInfoContainer {
 				if (slotStack == null) {
 					fontRendererObj.drawString("Insert drive", 10, 148, 0x00FF00);
 				} else if (slotStack.getItem() == ModItems.hard_drive) {
-					fontRendererObj.drawString("Click focused body again to land", 10, 148, 0x00FF00);
+					fontRendererObj.drawString("Click again to land", 10, 148, 0x00FF00);
 				} else {
 					fontRendererObj.drawString("Insert drive", 10, 148, 0x00FF00);
 				}
