@@ -393,37 +393,7 @@ public class ModEventHandler {
 
 		CBT_Invasion alien = body.getTrait(CBT_Invasion.class);
 		if(alien != null) {
-			if(event.entity instanceof EntitySiegeUFO) {
-
-				alien.kills++;
-
-				body.modifyTraits(alien);
-			}else if (event.entity instanceof EntitySiegeCraft) {
-				alien.kills += 3;
-				
-				body.modifyTraits(alien);
-			}
-			
-			if(alien.wave >= 4 && event.entity instanceof EntityUFO) {
-				HashMap<Class<? extends CelestialBodyTrait>, CelestialBodyTrait> currentTraits = body.getTraits(event.entity.worldObj);
-
-				currentTraits.remove(CBT_Invasion.class);
-
-			        for (Object obj : event.entity.worldObj.playerEntities) {
-			            if (obj instanceof EntityPlayer) {
-			                EntityPlayer player = (EntityPlayer) obj;
-			                player.addChatComponentMessage(
-			                    new ChatComponentText("The Invasion Is Over!")
-			                        .setChatStyle(new ChatStyle().setColor(EnumChatFormatting.YELLOW))
-			                );
-			            }
-			        }
-			   
-				
-				body.setTraits(event.entity.worldObj, currentTraits);
-
-
-			}
+			alien.onKill(event.entityLiving, body);
 		}
 
 
