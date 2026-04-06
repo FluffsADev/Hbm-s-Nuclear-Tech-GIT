@@ -73,7 +73,7 @@ public class SkyProviderCelestial extends IRenderHandler {
 
 	private static final ResourceLocation particleBase = new ResourceLocation(RefStrings.MODID + ":textures/particle/particle_base.png");
 
-	
+
 	private static final ResourceLocation[] citylights = new ResourceLocation[] {
 		new ResourceLocation(RefStrings.MODID, "textures/misc/space/citylights_0.png"),
 		new ResourceLocation(RefStrings.MODID, "textures/misc/space/citylights_1.png"),
@@ -263,9 +263,9 @@ public class SkyProviderCelestial extends IRenderHandler {
 
 		render3DModel(partialTicks, world, mc);
 
-		// TODO: fix EVERYTHING 
+		// TODO: fix EVERYTHING
 		// k lmao
-		
+
 		CBT_War war = body.getTrait(CBT_War.class);
 		if(war != null) {
 			for(int i = 0; i < war.getProjectiles().size(); i++) {
@@ -743,7 +743,7 @@ public class SkyProviderCelestial extends IRenderHandler {
 
 		// bloodseeking, parasitic, ecstatically tracing decay
 		// thriving in the glow that death emits, the warm perfume it radiates
-		
+
 		//perfume makes my eyes water -j
 
 		swarmShader.use();
@@ -1028,6 +1028,8 @@ public class SkyProviderCelestial extends IRenderHandler {
 						planetShader.use();
 						planetShader.setUniform1f("phase", (float)-metric.phase);
 						planetShader.setUniform1f("offset", (float)uvOffset);
+						planetShader.setUniform1i("bodyTex", 0);
+						planetShader.setUniform1i("useBodyAlphaMask", 0);
 						planetShader.setUniform1i("lights", 0);
 						planetShader.setUniform1i("cityMask", 1);
 						planetShader.setUniform1i("blackouts", activeBlackouts);
@@ -1458,7 +1460,7 @@ public class SkyProviderCelestial extends IRenderHandler {
 		}
 		GL11.glPopMatrix();
 	}
-	
+
 	public void renderSmoke(long age) {
 		GL11.glPushMatrix();
 		GL11.glEnable(GL11.GL_BLEND);
@@ -1507,7 +1509,7 @@ public class SkyProviderCelestial extends IRenderHandler {
 		tess.addVertexWithUV(f4 - f5, f4 - f6, 0.0D, 0, 1);
 		tess.addVertexWithUV(0.0F - f5, f4 - f6, 0.0D, 1, 1);
 		tess.draw();
-		
+
 		GL11.glDisable(GL11.GL_BLEND);
 		GL11.glPopMatrix();
 	}
