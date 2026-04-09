@@ -5,9 +5,9 @@ import com.hbm.main.MainRegistry;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.world.World;
 
-public class SatelliteRelay extends Satellite {
+public class SatelliteFoeq extends Satellite {
 
-	public SatelliteRelay() {
+	public SatelliteFoeq() {
 		this.satIface = Interfaces.NONE;
 	}
 

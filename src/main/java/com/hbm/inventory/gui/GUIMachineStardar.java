@@ -4,7 +4,6 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -35,7 +34,7 @@ import com.hbm.saveddata.satellites.SatelliteLaser;
 import com.hbm.saveddata.satellites.SatelliteMapper;
 import com.hbm.saveddata.satellites.SatelliteMiner;
 import com.hbm.saveddata.satellites.SatelliteRadar;
-import com.hbm.saveddata.satellites.SatelliteRelay;
+import com.hbm.saveddata.satellites.SatelliteFoeq;
 import com.hbm.saveddata.satellites.SatelliteResonator;
 import com.hbm.saveddata.satellites.SatelliteScanner;
 import com.hbm.tileentity.machine.TileEntityMachineStardar;
@@ -83,7 +82,7 @@ public class GUIMachineStardar extends GuiInfoContainer {
 		satelliteTextureByClass.put(SatelliteRadar.class, satelliteTextureRadar);
 		satelliteTextureByClass.put(SatelliteLaser.class, satelliteTextureLaser);
 		satelliteTextureByClass.put(SatelliteResonator.class, satelliteTextureResonator);
-		satelliteTextureByClass.put(SatelliteRelay.class, satelliteTextureFoeq);
+		satelliteTextureByClass.put(SatelliteFoeq.class, satelliteTextureFoeq);
 		satelliteTextureByClass.put(SatelliteMiner.class, satelliteTextureMiner);
 	}
 

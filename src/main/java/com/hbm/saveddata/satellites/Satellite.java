@@ -1,5 +1,6 @@
 package com.hbm.saveddata.satellites;
 
+import com.hbm.dim.SolarSystem;
 import com.hbm.items.ModItems;
 import com.hbm.lib.RefStrings;
 import com.hbm.saveddata.SatelliteSavedData;
@@ -13,6 +14,8 @@ import net.minecraft.item.Item;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
+import net.minecraft.world.WorldServer;
+import net.minecraftforge.common.DimensionManager;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -55,7 +58,7 @@ public abstract class Satellite {
 		registerSatellite(SatelliteRadar.class, ModItems.sat_radar);
 		registerSatellite(SatelliteLaser.class, ModItems.sat_laser);
 		registerSatellite(SatelliteResonator.class, ModItems.sat_resonator);
-		registerSatellite(SatelliteRelay.class, ModItems.sat_foeq);
+		registerSatellite(SatelliteFoeq.class, ModItems.sat_foeq);
 		registerSatellite(SatelliteMiner.class, ModItems.sat_miner);
 		registerSatellite(SatelliteLunarMiner.class, ModItems.sat_lunar_miner);
 		registerSatellite(SatelliteDysonRelay.class, ModItems.sat_dyson_relay);
@@ -83,6 +86,8 @@ public abstract class Satellite {
 		Satellite sat = create(id);
 
 		if(sat != null) {
+			if(sat instanceof SatelliteFoeq) world = DimensionManager.getWorld(SolarSystem.Body.DUNA.getDimensionId());
+
 			SatelliteSavedData data = SatelliteSavedData.getData(world, (int)x, (int)z);
 			data.sats.put(freq, sat);
 			sat.onOrbit(world, x, y, z);
