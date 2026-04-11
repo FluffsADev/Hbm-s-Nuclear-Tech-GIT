@@ -20,6 +20,7 @@ import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.DimensionManager;
+import org.lwjgl.input.Keyboard;
 
 public class ItemSatellite extends ItemCustomMissilePart implements ISatChip {
 
@@ -59,10 +60,15 @@ public class ItemSatellite extends ItemCustomMissilePart implements ISatChip {
 	public void addInformation(ItemStack itemstack, EntityPlayer player, List list, boolean bool) {
 		super.addInformation(itemstack, player, list, bool);
 
-		list.add(I18nUtil.resolveKey("item.sat.desc.frequency") + ": " + getFreq(itemstack));
-		list.add(I18nUtil.resolveKey("item.sat.desc.owner") + ": " + Satellite.getOwner(itemstack));
-		list.add(I18nUtil.resolveKey("item.sat.desc.inclination") + ": " + formatValue(Satellite.getInclination(itemstack)) + "°");
-		list.add(I18nUtil.resolveKey("item.sat.desc.altitude") + ": " + formatValue(Satellite.getAltitude(itemstack)) + "km");
+		if(Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) || Keyboard.isKeyDown(Keyboard.KEY_RSHIFT)) {
+			list.add(EnumChatFormatting.YELLOW + I18nUtil.resolveKey("item.sat.desc.frequency") + ": " + getFreq(itemstack));
+			list.add(EnumChatFormatting.YELLOW + I18nUtil.resolveKey("item.sat.desc.owner") + ": " + Satellite.getOwner(itemstack));
+			list.add(EnumChatFormatting.YELLOW + I18nUtil.resolveKey("item.sat.desc.inclination") + ": " + formatValue(Satellite.getInclination(itemstack)) + "°");
+			list.add(EnumChatFormatting.YELLOW + I18nUtil.resolveKey("item.sat.desc.altitude") + ": " + formatValue(Satellite.getAltitude(itemstack)) + "km");
+		} else {
+			list.add(EnumChatFormatting.DARK_GRAY + "" + EnumChatFormatting.ITALIC + "Hold <" + EnumChatFormatting.YELLOW + "" + EnumChatFormatting.ITALIC + "LSHIFT" + EnumChatFormatting.DARK_GRAY
+					+ "" + EnumChatFormatting.ITALIC + "> to display more info");
+		}
 
 		if(this == ModItems.sat_foeq)
 			list.add(I18nUtil.resolveKey("item.sat.desc.foeq"));
