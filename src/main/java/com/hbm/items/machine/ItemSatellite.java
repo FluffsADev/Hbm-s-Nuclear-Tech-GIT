@@ -9,7 +9,11 @@ import com.hbm.items.weapon.ItemCustomMissilePart;
 import com.hbm.saveddata.satellites.Satellite;
 
 import com.hbm.util.i18n.I18nUtil;
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
+import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
@@ -34,12 +38,31 @@ public class ItemSatellite extends ItemCustomMissilePart implements ISatChip {
 		makeWarhead(type, 15F, mass, PartSize.SIZE_20);
 	}
 
+	@Override
+	public void onCreated(ItemStack stack, World world, EntityPlayer player) {
+		Satellite.ensureItemData(stack);
+	}
+
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	@Override
+	@SideOnly(Side.CLIENT)
+	public void getSubItems(Item item, CreativeTabs tab, List list) {
+		int start = list.size();
+		super.getSubItems(item, tab, list);
+		for(int i = start; i < list.size(); i++) {
+			Satellite.ensureItemData((ItemStack) list.get(i));
+		}
+	}
+
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Override
 	public void addInformation(ItemStack itemstack, EntityPlayer player, List list, boolean bool) {
 		super.addInformation(itemstack, player, list, bool);
 
 		list.add(I18nUtil.resolveKey("item.sat.desc.frequency") + ": " + getFreq(itemstack));
+		list.add(I18nUtil.resolveKey("item.sat.desc.owner") + ": " + Satellite.getOwner(itemstack));
+		list.add(I18nUtil.resolveKey("item.sat.desc.inclination") + ": " + formatValue(Satellite.getInclination(itemstack)) + "°");
+		list.add(I18nUtil.resolveKey("item.sat.desc.altitude") + ": " + formatValue(Satellite.getAltitude(itemstack)) + "km");
 
 		if(this == ModItems.sat_foeq)
 			list.add(I18nUtil.resolveKey("item.sat.desc.foeq"));
@@ -100,7 +123,7 @@ public class ItemSatellite extends ItemCustomMissilePart implements ISatChip {
 				if(targetWorld == null) return stack;
 			}
 
-			Satellite.orbit(targetWorld, Satellite.getIDFromItem(stack.getItem()), getFreq(stack), player.posX, player.posY, player.posZ);
+			Satellite.orbit(targetWorld, Satellite.getIDFromItem(stack.getItem()), getFreq(stack), player.posX, player.posY, player.posZ, stack);
 
 			player.addChatMessage(new ChatComponentText("Satellite launched successfully!"));
 		}
@@ -108,6 +131,11 @@ public class ItemSatellite extends ItemCustomMissilePart implements ISatChip {
 		stack.stackSize--;
 
 		return stack;
+	}
+
+	private static String formatValue(float value) {
+		if(value == (int)value) return Integer.toString((int)value);
+		return Float.toString(value);
 	}
 
 }

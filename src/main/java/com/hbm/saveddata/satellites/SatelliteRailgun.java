@@ -39,10 +39,12 @@ public class SatelliteRailgun extends SatelliteWar {
 	private CelestialBody target;
 
 	public void writeToNBT(NBTTagCompound nbt) {
+		super.writeToNBT(nbt);
 		nbt.setLong("lastOp", lastOp);
 	}
 
 	public void readFromNBT(NBTTagCompound nbt) {
+		super.readFromNBT(nbt);
 		lastOp = nbt.getLong("lastOp");
 	}
 
@@ -120,12 +122,14 @@ public class SatelliteRailgun extends SatelliteWar {
 	}
 	@Override
 	public void serialize(ByteBuf buf) {
+		super.serialize(buf);
 		buf.writeFloat(interp);
 
 	}
 
 	@Override
 	public void deserialize(ByteBuf buf) {
+		super.deserialize(buf);
 		this.interp = buf.readFloat();
 	}
 

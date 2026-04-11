@@ -89,6 +89,9 @@ public class EntityRideableRocket extends EntityMissileBaseNT implements ILookOv
 	private boolean willExplode = false;
 
 	private int satFreq = 0;
+	private float satInclination = Satellite.DEFAULT_INCLINATION;
+	private float satAltitude = Satellite.DEFAULT_ALTITUDE_KM;
+	private String satOwner = Satellite.DEFAULT_OWNER;
 
 	private TileEntityOrbitalStation targetPort;
 
@@ -118,6 +121,9 @@ public class EntityRideableRocket extends EntityMissileBaseNT implements ILookOv
 		super(world, x, y, z, (int)x + 10000, (int)z);
 		RocketStruct rocket = ItemCustomRocket.get(stack);
 		satFreq = ISatChip.getFreqS(stack);
+		satInclination = Satellite.getInclination(stack);
+		satAltitude = Satellite.getAltitude(stack);
+		satOwner = Satellite.getOwner(stack);
 
 		setRocket(rocket);
 		setSize(2, (float)rocket.getHeight() + 1);
@@ -197,7 +203,9 @@ public class EntityRideableRocket extends EntityMissileBaseNT implements ILookOv
 						targetWorld = DimensionManager.getWorld(targetDimensionId);
 					}
 					if(targetWorld != null) {
-						Satellite.orbit(targetWorld, Satellite.getIDFromItem(rocket.capsule.part), satFreq, posX, posY, posZ);
+						ItemStack stack = new ItemStack(rocket.capsule.part);
+						applySatData(stack);
+						Satellite.orbit(targetWorld, Satellite.getIDFromItem(rocket.capsule.part), satFreq, posX, posY, posZ, stack);
 					}
 				} else if(rocket.capsule.part == ModItems.rp_station_core_20) {
 					// We mark the station as travellable, but we don't actually add the station until the player travels to it
@@ -691,9 +699,11 @@ public class EntityRideableRocket extends EntityMissileBaseNT implements ILookOv
 		RocketStruct rocket = getRocket();
 		if(rocket.stages.size() == 0) {
 			ItemStack stack = new ItemStack(rocket.capsule.part);
+			if(Satellite.isSatelliteItem(stack.getItem())) applySatData(stack);
 			entityDropItem(stack, 0.0F);
 		} else {
 			ItemStack stack = ItemCustomRocket.build(rocket, true);
+			if(Satellite.isSatelliteItem(rocket.capsule.part)) applySatData(stack);
 			entityDropItem(stack, 0.0F);
 		}
 
@@ -856,6 +866,10 @@ public class EntityRideableRocket extends EntityMissileBaseNT implements ILookOv
 		}
 
 		satFreq = nbt.getInteger("freq");
+		satInclination = nbt.hasKey(Satellite.NBT_INCLINATION) ? nbt.getFloat(Satellite.NBT_INCLINATION) : Satellite.DEFAULT_INCLINATION;
+		satAltitude = nbt.hasKey(Satellite.NBT_ALTITUDE) ? nbt.getFloat(Satellite.NBT_ALTITUDE) : Satellite.DEFAULT_ALTITUDE_KM;
+		satOwner = nbt.hasKey(Satellite.NBT_OWNER) ? nbt.getString(Satellite.NBT_OWNER) : Satellite.DEFAULT_OWNER;
+		if(satOwner == null || satOwner.isEmpty()) satOwner = Satellite.DEFAULT_OWNER;
 
 		if(nbt.getBoolean("hasOverride")) {
 			SolarSystem.Body body = CelestialBody.getBody(nbt.getInteger("overrideDim")).getEnum();
@@ -884,6 +898,9 @@ public class EntityRideableRocket extends EntityMissileBaseNT implements ILookOv
 		}
 
 		nbt.setInteger("freq", satFreq);
+		nbt.setFloat(Satellite.NBT_INCLINATION, satInclination);
+		nbt.setFloat(Satellite.NBT_ALTITUDE, satAltitude);
+		nbt.setString(Satellite.NBT_OWNER, satOwner);
 
 		if(destinationOverride != null) {
 			nbt.setBoolean("hasOverride", true);
@@ -891,6 +908,12 @@ public class EntityRideableRocket extends EntityMissileBaseNT implements ILookOv
 			nbt.setInteger("overrideX", destinationOverride.x);
 			nbt.setInteger("overrideZ", destinationOverride.z);
 		}
+	}
+
+	private void applySatData(ItemStack stack) {
+		Satellite.setInclination(stack, satInclination);
+		Satellite.setAltitude(stack, satAltitude);
+		Satellite.setOwner(stack, satOwner);
 	}
 
 	@Override

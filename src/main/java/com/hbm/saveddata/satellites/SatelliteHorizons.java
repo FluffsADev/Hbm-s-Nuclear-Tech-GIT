@@ -27,10 +27,12 @@ public class SatelliteHorizons extends Satellite {
 	}
 
 	public void writeToNBT(NBTTagCompound nbt) {
+		super.writeToNBT(nbt);
 		nbt.setBoolean("used", used);
 	}
 
 	public void readFromNBT(NBTTagCompound nbt) {
+		super.readFromNBT(nbt);
 		used = nbt.getBoolean("used");
 	}
 

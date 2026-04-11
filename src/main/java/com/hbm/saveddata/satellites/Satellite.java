@@ -4,6 +4,8 @@ import com.hbm.dim.SolarSystem;
 import com.hbm.items.ModItems;
 import com.hbm.lib.RefStrings;
 import com.hbm.saveddata.SatelliteSavedData;
+import com.hbm.util.AstronomyUtil;
+import com.hbm.util.BufferUtil;
 
 import io.netty.buffer.ByteBuf;
 import net.minecraft.client.Minecraft;
@@ -11,6 +13,7 @@ import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
@@ -27,6 +30,12 @@ public abstract class Satellite {
 
 	public static final List<Class<? extends Satellite>> satellites = new ArrayList<>();
 	public static final HashMap<Item, Class<? extends Satellite>> itemToClass = new HashMap<>();
+	public static final String NBT_INCLINATION = "satInclination";
+	public static final String NBT_ALTITUDE = "satAltitude";
+	public static final String NBT_OWNER = "satOwner";
+	public static final float DEFAULT_INCLINATION = 0F;
+	public static final float DEFAULT_ALTITUDE_KM = AstronomyUtil.DEFAULT_ALTITUDE_KM;
+	public static final String DEFAULT_OWNER = "None";
 
 	private static final ResourceLocation satelliteTexture = new ResourceLocation(RefStrings.MODID, "textures/misc/space/satellite.png");
 
@@ -51,6 +60,9 @@ public abstract class Satellite {
 	public List<InterfaceActions> ifaceAcs = new ArrayList<>();
 	public List<CoordActions> coordAcs = new ArrayList<>();
 	public Interfaces satIface = Interfaces.NONE;
+	public float inclination = DEFAULT_INCLINATION;
+	public float altitude = DEFAULT_ALTITUDE_KM;
+	public String owner = DEFAULT_OWNER;
 
 	public static void register() {
 		registerSatellite(SatelliteMapper.class, ModItems.sat_mapper);
@@ -78,7 +90,56 @@ public abstract class Satellite {
 		}
 	}
 
-	public static void orbit(World world, int id, int freq, double x, double y, double z) {
+	public static boolean isSatelliteItem(Item item) {
+		return itemToClass.containsKey(item);
+	}
+
+	public static void ensureItemData(ItemStack stack) {
+		getItemData(stack);
+	}
+
+	private static NBTTagCompound getItemData(ItemStack stack) {
+		if(stack.stackTagCompound == null) {
+			stack.stackTagCompound = new NBTTagCompound();
+			stack.stackTagCompound.setFloat(NBT_INCLINATION, DEFAULT_INCLINATION);
+			stack.stackTagCompound.setFloat(NBT_ALTITUDE, DEFAULT_ALTITUDE_KM);
+			stack.stackTagCompound.setString(NBT_OWNER, DEFAULT_OWNER);
+		}
+		return stack.stackTagCompound;
+	}
+
+	public static float getInclination(ItemStack stack) {
+		return getItemData(stack).getFloat(NBT_INCLINATION);
+	}
+
+	public static float getAltitude(ItemStack stack) {
+		return getItemData(stack).getFloat(NBT_ALTITUDE);
+	}
+
+	public static String getOwner(ItemStack stack) {
+		return getItemData(stack).getString(NBT_OWNER);
+	}
+
+	public static void setInclination(ItemStack stack, float inclination) {
+		getItemData(stack).setFloat(NBT_INCLINATION, inclination);
+	}
+
+	public static void setAltitude(ItemStack stack, float altitude) {
+		getItemData(stack).setFloat(NBT_ALTITUDE, altitude);
+	}
+
+	public static void setOwner(ItemStack stack, String owner) {
+		getItemData(stack).setString(NBT_OWNER, owner);
+	}
+
+	public static void copyItemData(ItemStack from, ItemStack to) {
+		if(to == null) return;
+		setInclination(to, getInclination(from));
+		setAltitude(to, getAltitude(from));
+		setOwner(to, getOwner(from));
+	}
+
+	public static void orbit(World world, int id, int freq, double x, double y, double z, ItemStack stack) {
 		if(world.isRemote) {
 			return;
 		}
@@ -87,6 +148,9 @@ public abstract class Satellite {
 
 		if(sat != null) {
 			if(sat instanceof SatelliteFoeq) world = DimensionManager.getWorld(SolarSystem.Body.DUNA.getDimensionId());
+			sat.inclination = getInclination(stack);
+			sat.altitude = getAltitude(stack);
+			sat.owner = getOwner(stack);
 
 			SatelliteSavedData data = SatelliteSavedData.getData(world, (int)x, (int)z);
 			data.sats.put(freq, sat);
@@ -118,11 +182,27 @@ public abstract class Satellite {
 		return satellites.indexOf(this.getClass());
 	}
 
-	public void writeToNBT(NBTTagCompound nbt) { }
-	public void readFromNBT(NBTTagCompound nbt) { }
+	public void writeToNBT(NBTTagCompound nbt) {
+		nbt.setFloat(NBT_INCLINATION, inclination);
+		nbt.setFloat(NBT_ALTITUDE, altitude);
+		nbt.setString(NBT_OWNER, owner);
+	}
+	public void readFromNBT(NBTTagCompound nbt) {
+		inclination = nbt.getFloat(NBT_INCLINATION);
+		altitude = nbt.hasKey(NBT_ALTITUDE) ? nbt.getFloat(NBT_ALTITUDE) : DEFAULT_ALTITUDE_KM;
+		owner = nbt.hasKey(NBT_OWNER) ? nbt.getString(NBT_OWNER) : DEFAULT_OWNER;
+	}
 
-	public void serialize(ByteBuf buf) { }
-	public void deserialize(ByteBuf buf) { }
+	public void serialize(ByteBuf buf) {
+		buf.writeFloat(inclination);
+		buf.writeFloat(altitude);
+		BufferUtil.writeString(buf, owner);
+	}
+	public void deserialize(ByteBuf buf) {
+		inclination = buf.readFloat();
+		altitude = buf.readFloat();
+		owner = BufferUtil.readString(buf);
+	}
 
 	/**
 	 * Called when the satellite reaches space, used to trigger achievements and other funny stuff.
