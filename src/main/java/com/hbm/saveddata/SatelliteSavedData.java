@@ -103,6 +103,25 @@ public class SatelliteSavedData extends WorldSavedData {
 		return getData(worldObj);
 	}
 
+	public static SatelliteSavedData getDataFromFreq(World worldObj, int x, int z, int freq) {
+		SatelliteSavedData data = getData(worldObj, x, z);
+		if(data.getSatFromFreq(freq) != null) {
+			return data;
+		}
+
+		for(CelestialBody body : CelestialBody.getLandableBodies()) {
+			World bodyWorld = DimensionManager.getWorld(body.dimensionId);
+			if(bodyWorld == null) continue;
+
+			SatelliteSavedData bodyData = getData(bodyWorld);
+			if(bodyData.getSatFromFreq(freq) != null) {
+				return bodyData;
+			}
+		}
+
+		return data;
+	}
+
 	public static HashMap<Integer, Satellite> clientSats = new HashMap<>();
 
 	@SideOnly(Side.CLIENT)

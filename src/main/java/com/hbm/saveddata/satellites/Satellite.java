@@ -182,7 +182,10 @@ public abstract class Satellite {
 		Satellite sat = create(id);
 
 		if(sat != null) {
-			if(sat instanceof SatelliteFoeq) world = DimensionManager.getWorld(SolarSystem.Body.DUNA.getDimensionId());
+			if(sat instanceof SatelliteFoeq) world = DimensionManager.getWorld(SolarSystem.Body.DUNA.getDimensionId()); // dunaian probe goes to duna
+			if(sat instanceof SatelliteLunarMiner) world = DimensionManager.getWorld(SolarSystem.Body.MUN.getDimensionId()); // lunar miner goes to mun
+			if(sat instanceof SatelliteMiner) world = DimensionManager.getWorld(SolarSystem.Body.DRES.getDimensionId()); // asteroid miner goes to dres, logical explanation is to mine the dres' asteroid ring
+			
 			sat.inclination = getInclination(stack);
 			sat.altitude = getAltitude(stack);
 			sat.owner = getOwner(stack);
