@@ -69,11 +69,11 @@ public class ItemSatellite extends ItemCustomMissilePart implements ISatChip, IG
 		super.addInformation(itemstack, player, list, bool);
 
 		if(Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) || Keyboard.isKeyDown(Keyboard.KEY_RSHIFT)) {
-			list.add(EnumChatFormatting.YELLOW + I18nUtil.resolveKey("item.sat.desc.frequency") + ": " + getFreq(itemstack));
-			list.add(EnumChatFormatting.YELLOW + I18nUtil.resolveKey("item.sat.desc.owner") + ": " + Satellite.getOwner(itemstack));
-			list.add(EnumChatFormatting.YELLOW + I18nUtil.resolveKey("item.sat.desc.inclination") + ": " + formatValue(Satellite.getInclination(itemstack)) + "°");
-			list.add(EnumChatFormatting.YELLOW + I18nUtil.resolveKey("item.sat.desc.altitude") + ": " + formatValue(Satellite.getAltitude(itemstack)) + "km");
-			list.add(EnumChatFormatting.YELLOW + I18nUtil.resolveKey("item.sat.desc.color") + ": " + getHexColor(itemstack));
+			list.add(formatTooltipEntry(I18nUtil.resolveKey("item.sat.desc.frequency"), Integer.toString(getFreq(itemstack))));
+			list.add(formatTooltipEntry(I18nUtil.resolveKey("item.sat.desc.owner"), Satellite.getOwner(itemstack)));
+			list.add(formatTooltipEntry(I18nUtil.resolveKey("item.sat.desc.inclination"), formatValue(Satellite.getInclination(itemstack)) + "°"));
+			list.add(formatTooltipEntry(I18nUtil.resolveKey("item.sat.desc.altitude"), formatValue(Satellite.getAltitude(itemstack)) + "km"));
+			list.add(formatTooltipEntry(I18nUtil.resolveKey("item.sat.desc.color"), getHexColor(itemstack)));
 		} else {
 			list.add(EnumChatFormatting.DARK_GRAY + "" + EnumChatFormatting.ITALIC + "Hold <" + EnumChatFormatting.YELLOW + "" + EnumChatFormatting.ITALIC + "LSHIFT" + EnumChatFormatting.DARK_GRAY
 					+ "" + EnumChatFormatting.ITALIC + "> to display more info");
@@ -199,6 +199,11 @@ public class ItemSatellite extends ItemCustomMissilePart implements ISatChip, IG
 		int g = MathHelper.clamp_int(Math.round(Satellite.getColorG(stack) * 255F), 0, 255);
 		int b = MathHelper.clamp_int(Math.round(Satellite.getColorB(stack) * 255F), 0, 255);
 		return String.format(Locale.ROOT, "#%02X%02X%02X", r, g, b);
+	}
+
+	private static String formatTooltipEntry(String key, String value) {
+		String safeValue = value != null ? value : "";
+		return EnumChatFormatting.YELLOW + key + ": " + EnumChatFormatting.GOLD + safeValue;
 	}
 
 }

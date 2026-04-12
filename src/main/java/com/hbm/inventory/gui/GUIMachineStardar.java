@@ -49,6 +49,7 @@ import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.MathHelper;
 import net.minecraft.util.ResourceLocation;
 
@@ -504,7 +505,7 @@ public class GUIMachineStardar extends GuiInfoContainer {
 		}
 
 		// Moon orbit lines are visible only when the parent body (or one of its moons) is focused.
-		CelestialBody activeFocus = getRenderFocusBody();
+		CelestialBody activeFocus = getOrbitRuleFocusBody();
 		return activeFocus != null && (activeFocus == parent || activeFocus.parent == parent);
 	}
 
@@ -712,7 +713,7 @@ public class GUIMachineStardar extends GuiInfoContainer {
 			return;
 		}
 
-		CelestialBody activeFocus = getRenderFocusBody();
+		CelestialBody activeFocus = getOrbitRuleFocusBody();
 		boolean drawOrbitLines = activeFocus != null && (activeFocus == body || activeFocus.parent == body);
 		if (drawOrbitLines) {
 			for (Satellite satellite : satellites.values()) {
@@ -1797,11 +1798,16 @@ public class GUIMachineStardar extends GuiInfoContainer {
 	}
 
 	private void drawSatelliteTooltip(int mouseX, int mouseY) {
-		if (landingMode || !isMouseInsideMap(mouseX, mouseY)) {
+		if (landingMode) {
 			return;
 		}
 
-		SatelliteRenderInfo satelliteInfo = hoveredSatellite != null ? hoveredSatellite : focusedSatellite;
+		boolean focusedTooltip = focusedSatelliteFrequency != null && focusedSatellite != null;
+		if (!focusedTooltip && !isMouseInsideMap(mouseX, mouseY)) {
+			return;
+		}
+
+		SatelliteRenderInfo satelliteInfo = focusedTooltip ? focusedSatellite : hoveredSatellite;
 		if (satelliteInfo == null || satelliteInfo.satellite == null) {
 			return;
 		}
@@ -1809,14 +1815,36 @@ public class GUIMachineStardar extends GuiInfoContainer {
 		Satellite satellite = satelliteInfo.satellite;
 		String owner = satellite.owner != null && !satellite.owner.isEmpty() ? satellite.owner : Satellite.DEFAULT_OWNER;
 		List<String> tooltip = new ArrayList<String>(3);
-		tooltip.add(I18nUtil.resolveKey("item.sat.desc.owner") + ": " + owner);
-		tooltip.add(I18nUtil.resolveKey("item.sat.desc.altitude") + ": " + formatValue(Satellite.sanitizeAltitude(satellite.altitude)) + "km");
-		tooltip.add(I18nUtil.resolveKey("item.sat.desc.inclination") + ": " + formatValue(Satellite.sanitizeInclination(satellite.inclination)) + "\u00B0");
-		func_146283_a(tooltip, mouseX, mouseY);
+		tooltip.add(EnumChatFormatting.YELLOW + I18nUtil.resolveKey("item.sat.desc.owner") + ": " + EnumChatFormatting.GOLD + owner);
+		tooltip.add(EnumChatFormatting.YELLOW + I18nUtil.resolveKey("item.sat.desc.altitude") + ": " + EnumChatFormatting.GOLD + formatValue(Satellite.sanitizeAltitude(satellite.altitude)) + "km");
+		tooltip.add(EnumChatFormatting.YELLOW + I18nUtil.resolveKey("item.sat.desc.inclination") + ": " + EnumChatFormatting.GOLD + formatValue(Satellite.sanitizeInclination(satellite.inclination)) + "\u00B0");
+
+		int tooltipX = mouseX;
+		int tooltipY = mouseY;
+		if (focusedTooltip) {
+			float screenX = mapToScreenX(satelliteInfo.mapU, satelliteInfo.mapV);
+			float screenY = mapToScreenY(satelliteInfo.mapU, satelliteInfo.mapV);
+			float half = satelliteInfo.drawSize * 0.5F;
+			tooltipX = Math.round(screenX + half);
+			tooltipY = Math.round(screenY - half);
+		}
+
+		func_146283_a(tooltip, tooltipX, tooltipY);
 	}
 
 	private boolean isMouseInsideMap(int mouseX, int mouseY) {
 		return mouseX >= guiLeft + MAP_X && mouseX < guiLeft + MAP_X + MAP_W && mouseY >= guiTop + MAP_Y && mouseY < guiTop + MAP_Y + MAP_H;
+	}
+
+	private CelestialBody getOrbitRuleFocusBody() {
+		CelestialBody activeFocus = getRenderFocusBody();
+		if (activeFocus != null) {
+			return activeFocus;
+		}
+		if (focusedSatelliteFrequency != null) {
+			return currentBody;
+		}
+		return null;
 	}
 
 	private boolean hasBodyFocusContext() {
