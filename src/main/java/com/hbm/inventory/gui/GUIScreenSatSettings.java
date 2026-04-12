@@ -506,9 +506,12 @@ public class GUIScreenSatSettings extends GuiScreen {
 		float v1 = frontHalf ? 0.5F : 0F;
 		float v2 = frontHalf ? 1F : 0.5F;
 
+		GL11.glEnable(GL11.GL_BLEND);
+		GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
 		GL11.glColor4f(r, g, b, a);
 		mc.getTextureManager().bindTexture(ringTexture);
 		drawPartialTex(drawX, drawY, drawW, drawH, 0F, v1, 1F, v2);
+		GL11.glDisable(GL11.GL_BLEND);
 		GL11.glColor4f(1F, 1F, 1F, 1F);
 	}
 
