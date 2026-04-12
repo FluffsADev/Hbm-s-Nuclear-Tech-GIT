@@ -24,6 +24,7 @@ import net.minecraftforge.common.DimensionManager;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Random;
 
 import org.lwjgl.opengl.GL11;
 
@@ -40,6 +41,8 @@ public abstract class Satellite {
 	public static final float DEFAULT_BLINK_PERIOD = 0.0F;
 	public static final float MIN_BLINK_PERIOD = 0.3F;
 	public static final String DEFAULT_OWNER = "None";
+	private static final float ORBIT_SPEED_MIN = 0.9F;
+	private static final float ORBIT_SPEED_RANGE = 0.2F;
 
 	private static final ResourceLocation satelliteTexture = new ResourceLocation(RefStrings.MODID, "textures/misc/space/satellite.png");
 
@@ -306,10 +309,11 @@ public abstract class Satellite {
 		renderDefault(partialTicks, world, mc, solarAngle, id, colorR, colorG, colorB, inclination, altitude, blinkPeriod);
 	}
 
-	public static void renderDefault(float partialTicks, WorldClient world, Minecraft mc, float solarAngle, long ignoredSeed, float r, float g, float b, float inclination, float altitude, float blinkPeriod) {
+	public static void renderDefault(float partialTicks, WorldClient world, Minecraft mc, float solarAngle, long seed, float r, float g, float b, float inclination, float altitude, float blinkPeriod) {
 		Tessellator tessellator = Tessellator.instance;
 
 		double ticks = (double)(System.currentTimeMillis() % (600 * 50)) / 50;
+		float orbitAngle = applyFrequencyToOrbitAngle(seed, (float)((ticks / 600.0D) * -360.0D), 360.0F);
 		float renderAltitude = Math.max(1.0F, altitude);
 
 		GL11.glPushMatrix();
@@ -317,7 +321,7 @@ public abstract class Satellite {
 
 			GL11.glRotatef(solarAngle * -360.0F, 1.0F, 0.0F, 0.0F);
 			GL11.glRotatef(inclination, 0.0F, 0.0F, 1.0F);
-			GL11.glRotated((ticks / 600.0D) * -360.0D, 1.0F, 0.0F, 0.0F);
+			GL11.glRotated(orbitAngle, 1.0F, 0.0F, 0.0F);
 
 			GL11.glColor4f(r, g, b, getBlinkAlpha(blinkPeriod));
 
@@ -334,6 +338,11 @@ public abstract class Satellite {
 
 		}
 		GL11.glPopMatrix();
+	}
+
+	public static float applyFrequencyToOrbitAngle(long frequency, float baseAngle, float fullRotation) {
+		Random random = new Random(frequency);
+		return baseAngle * (ORBIT_SPEED_MIN + random.nextFloat() * ORBIT_SPEED_RANGE) + random.nextFloat() * fullRotation;
 	}
 
 	// killing myself

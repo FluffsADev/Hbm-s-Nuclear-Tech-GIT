@@ -716,12 +716,15 @@ public class GUIMachineStardar extends GuiInfoContainer {
 		float angle = getArtificialSatelliteAngle();
 
 		GL11.glColor4f(1F, 1F, 1F, 1F);
-		for (Satellite satellite : satellites.values()) {
-			if (satellite == null) {
+		for (Map.Entry<Integer, Satellite> entry : satellites.entrySet()) {
+			Integer frequency = entry.getKey();
+			Satellite satellite = entry.getValue();
+			if (frequency == null || satellite == null) {
 				continue;
 			}
 
-			SatelliteOrbitPoint orbitPoint = getArtificialSatelliteOrbitPoint(satellite, angle, baseOrbitRadiusMapPx);
+			float satelliteAngle = Satellite.applyFrequencyToOrbitAngle(frequency, angle, (float)(2D * Math.PI));
+			SatelliteOrbitPoint orbitPoint = getArtificialSatelliteOrbitPoint(satellite, satelliteAngle, baseOrbitRadiusMapPx);
 			float screenX = mapToScreenX(bodyMapU + orbitPoint.offsetU, bodyMapV + orbitPoint.offsetV);
 			float screenY = mapToScreenY(bodyMapU + orbitPoint.offsetU, bodyMapV + orbitPoint.offsetV);
 			if ((orbitPoint.depth <= 0F) != frontHalf) {
@@ -825,8 +828,8 @@ public class GUIMachineStardar extends GuiInfoContainer {
 	}
 
 	private SatelliteOrbitPoint getArtificialSatelliteOrbitPoint(Satellite satellite, float angle, float baseRadiusMapPx) {
-		float altitude = satellite != null ? Math.max(1.0F, satellite.altitude) : Satellite.DEFAULT_ALTITUDE_KM;
-		double inclination = Math.toRadians(satellite != null ? satellite.inclination : Satellite.DEFAULT_INCLINATION);
+		float altitude = satellite != null ? Satellite.sanitizeAltitude(satellite.altitude) : Satellite.DEFAULT_ALTITUDE_KM;
+		double inclination = Math.toRadians(satellite != null ? Satellite.sanitizeInclination(satellite.inclination) : Satellite.DEFAULT_INCLINATION);
 		double radiusMapPx = baseRadiusMapPx * (altitude / Satellite.DEFAULT_ALTITUDE_KM);
 
 		double x = radiusMapPx * MathHelper.cos(angle);

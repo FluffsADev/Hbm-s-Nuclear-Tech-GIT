@@ -13,6 +13,7 @@ import com.hbm.dim.CelestialBody;
 import com.hbm.dim.SolarSystem;
 import com.hbm.dim.trait.CBT_Impact;
 import com.hbm.dim.trait.CBT_Lights;
+import com.hbm.items.ISatChip;
 import com.hbm.lib.Library;
 import com.hbm.lib.RefStrings;
 import com.hbm.packet.PacketDispatcher;
@@ -258,6 +259,7 @@ public class GUIScreenSatSettings extends GuiScreen {
 		float bodySize = MathHelper.clamp_float(bodySizeAt1x * renderZoom, 8F, 96F);
 		float iconSize = MathHelper.clamp_float(bodySize * 0.75F * 0.25F, 0.4F, 9.0F);
 		float angle = getArtificialSatelliteAngle();
+		int heldFrequency = ISatChip.getFreqS(held);
 
 		float heldAltitude = Satellite.getAltitude(held);
 		float heldInclination = Satellite.getInclination(held);
@@ -277,12 +279,12 @@ public class GUIScreenSatSettings extends GuiScreen {
 
 		drawOwnedSatellites(satellites, owner, centerX, centerY, baseOrbitRadiusMapPx, renderZoom, angle, iconSize, false);
 		drawSatelliteOrbitHalf(centerX, centerY, baseOrbitRadiusMapPx, renderZoom, heldAltitude, heldInclination, heldR, heldG, heldB, false, 0.45F);
-		drawSatelliteIcon(heldTexture, centerX, centerY, baseOrbitRadiusMapPx, renderZoom, heldAltitude, heldInclination, angle, false, iconSize * 1.2F);
+		drawSatelliteIcon(heldTexture, centerX, centerY, baseOrbitRadiusMapPx, renderZoom, heldFrequency, heldAltitude, heldInclination, angle, false, iconSize * 1.2F);
 		drawBodyPreview(body, centerX, centerY, bodySize, dayTicks, bodyPosition, parentPosition);
 
 		drawOwnedSatellites(satellites, owner, centerX, centerY, baseOrbitRadiusMapPx, renderZoom, angle, iconSize, true);
 		drawSatelliteOrbitHalf(centerX, centerY, baseOrbitRadiusMapPx, renderZoom, heldAltitude, heldInclination, heldR, heldG, heldB, true, 0.45F);
-		drawSatelliteIcon(heldTexture, centerX, centerY, baseOrbitRadiusMapPx, renderZoom, heldAltitude, heldInclination, angle, true, iconSize * 1.2F);
+		drawSatelliteIcon(heldTexture, centerX, centerY, baseOrbitRadiusMapPx, renderZoom, heldFrequency, heldAltitude, heldInclination, angle, true, iconSize * 1.2F);
 
 		GL11.glDisable(GL11.GL_SCISSOR_TEST);
 		GL11.glColor4f(1F, 1F, 1F, 1F);
@@ -320,10 +322,11 @@ public class GUIScreenSatSettings extends GuiScreen {
 			drawSatelliteOrbitHalf(centerX, centerY, baseOrbitRadiusMapPx, zoom, satellite.altitude, satellite.inclination, satellite.colorR, satellite.colorG, satellite.colorB, frontHalf, 0.25F);
 		}
 
-		for(Satellite satellite : satellites.values()) {
+		for(Map.Entry<Integer, Satellite> entry : satellites.entrySet()) {
+			Satellite satellite = entry.getValue();
 			if(!owner.equals(satellite.owner)) continue;
 
-			drawSatelliteIcon(getSatelliteTextureByType(satellite.getClass()), centerX, centerY, baseOrbitRadiusMapPx, zoom, satellite.altitude, satellite.inclination, angle, frontHalf, iconSize);
+			drawSatelliteIcon(getSatelliteTextureByType(satellite.getClass()), centerX, centerY, baseOrbitRadiusMapPx, zoom, entry.getKey(), satellite.altitude, satellite.inclination, angle, frontHalf, iconSize);
 		}
 	}
 
@@ -408,8 +411,9 @@ public class GUIScreenSatSettings extends GuiScreen {
 		GL11.glColor4f(1F, 1F, 1F, 1F);
 	}
 
-	private void drawSatelliteIcon(ResourceLocation texture, float centerX, float centerY, float baseRadiusMapPx, float zoom, float altitude, float inclination, float angle, boolean frontHalf, float size) {
-		SatelliteOrbitPoint orbitPoint = getArtificialSatelliteOrbitPoint(altitude, inclination, angle, baseRadiusMapPx);
+	private void drawSatelliteIcon(ResourceLocation texture, float centerX, float centerY, float baseRadiusMapPx, float zoom, int frequency, float altitude, float inclination, float angle, boolean frontHalf, float size) {
+		float satelliteAngle = Satellite.applyFrequencyToOrbitAngle(frequency, angle, (float)(2D * Math.PI));
+		SatelliteOrbitPoint orbitPoint = getArtificialSatelliteOrbitPoint(altitude, inclination, satelliteAngle, baseRadiusMapPx);
 		float screenX = mapToScreenX(centerX, orbitPoint.offsetU, orbitPoint.offsetV, zoom);
 		float screenY = mapToScreenY(centerY, orbitPoint.offsetU, orbitPoint.offsetV, zoom);
 		if((orbitPoint.depth <= 0F) != frontHalf) return;
