@@ -13,7 +13,6 @@ import com.hbm.dim.CelestialBody;
 import com.hbm.dim.SolarSystem;
 import com.hbm.dim.trait.CBT_Impact;
 import com.hbm.dim.trait.CBT_Lights;
-import com.hbm.items.ISatChip;
 import com.hbm.lib.Library;
 import com.hbm.lib.RefStrings;
 import com.hbm.packet.PacketDispatcher;
@@ -260,7 +259,6 @@ public class GUIScreenSatSettings extends GuiScreen {
 		float iconSize = MathHelper.clamp_float(bodySize * 0.75F * 0.25F, 0.4F, 9.0F);
 		float angle = getArtificialSatelliteAngle();
 
-		int heldFrequency = ISatChip.getFreqS(held);
 		float heldAltitude = Satellite.getAltitude(held);
 		float heldInclination = Satellite.getInclination(held);
 		float heldR = Satellite.getColorR(held);
@@ -278,13 +276,13 @@ public class GUIScreenSatSettings extends GuiScreen {
 		drawStarmapBackground();
 
 		drawOwnedSatellites(satellites, owner, centerX, centerY, baseOrbitRadiusMapPx, renderZoom, angle, iconSize, false);
-		drawSatelliteOrbitHalf(centerX, centerY, baseOrbitRadiusMapPx, renderZoom, heldFrequency, heldAltitude, heldInclination, heldR, heldG, heldB, false, 0.45F);
-		drawSatelliteIcon(heldTexture, centerX, centerY, baseOrbitRadiusMapPx, renderZoom, heldFrequency, heldAltitude, heldInclination, angle, false, iconSize * 1.2F);
+		drawSatelliteOrbitHalf(centerX, centerY, baseOrbitRadiusMapPx, renderZoom, heldAltitude, heldInclination, heldR, heldG, heldB, false, 0.45F);
+		drawSatelliteIcon(heldTexture, centerX, centerY, baseOrbitRadiusMapPx, renderZoom, heldAltitude, heldInclination, angle, false, iconSize * 1.2F);
 		drawBodyPreview(body, centerX, centerY, bodySize, dayTicks, bodyPosition, parentPosition);
 
 		drawOwnedSatellites(satellites, owner, centerX, centerY, baseOrbitRadiusMapPx, renderZoom, angle, iconSize, true);
-		drawSatelliteOrbitHalf(centerX, centerY, baseOrbitRadiusMapPx, renderZoom, heldFrequency, heldAltitude, heldInclination, heldR, heldG, heldB, true, 0.45F);
-		drawSatelliteIcon(heldTexture, centerX, centerY, baseOrbitRadiusMapPx, renderZoom, heldFrequency, heldAltitude, heldInclination, angle, true, iconSize * 1.2F);
+		drawSatelliteOrbitHalf(centerX, centerY, baseOrbitRadiusMapPx, renderZoom, heldAltitude, heldInclination, heldR, heldG, heldB, true, 0.45F);
+		drawSatelliteIcon(heldTexture, centerX, centerY, baseOrbitRadiusMapPx, renderZoom, heldAltitude, heldInclination, angle, true, iconSize * 1.2F);
 
 		GL11.glDisable(GL11.GL_SCISSOR_TEST);
 		GL11.glColor4f(1F, 1F, 1F, 1F);
@@ -316,22 +314,20 @@ public class GUIScreenSatSettings extends GuiScreen {
 	}
 
 	private void drawOwnedSatellites(Map<Integer, Satellite> satellites, String owner, float centerX, float centerY, float baseOrbitRadiusMapPx, float zoom, float angle, float iconSize, boolean frontHalf) {
-		for(Map.Entry<Integer, Satellite> entry : satellites.entrySet()) {
-			Satellite satellite = entry.getValue();
+		for(Satellite satellite : satellites.values()) {
 			if(!owner.equals(satellite.owner)) continue;
 
-			drawSatelliteOrbitHalf(centerX, centerY, baseOrbitRadiusMapPx, zoom, entry.getKey(), satellite.altitude, satellite.inclination, satellite.colorR, satellite.colorG, satellite.colorB, frontHalf, 0.25F);
+			drawSatelliteOrbitHalf(centerX, centerY, baseOrbitRadiusMapPx, zoom, satellite.altitude, satellite.inclination, satellite.colorR, satellite.colorG, satellite.colorB, frontHalf, 0.25F);
 		}
 
-		for(Map.Entry<Integer, Satellite> entry : satellites.entrySet()) {
-			Satellite satellite = entry.getValue();
+		for(Satellite satellite : satellites.values()) {
 			if(!owner.equals(satellite.owner)) continue;
 
-			drawSatelliteIcon(getSatelliteTextureByType(satellite.getClass()), centerX, centerY, baseOrbitRadiusMapPx, zoom, entry.getKey(), satellite.altitude, satellite.inclination, angle, frontHalf, iconSize);
+			drawSatelliteIcon(getSatelliteTextureByType(satellite.getClass()), centerX, centerY, baseOrbitRadiusMapPx, zoom, satellite.altitude, satellite.inclination, angle, frontHalf, iconSize);
 		}
 	}
 
-	private void drawSatelliteOrbitHalf(float centerX, float centerY, float baseRadiusMapPx, float zoom, int frequency, float altitude, float inclination, float r, float g, float b, boolean frontHalf, float alpha) {
+	private void drawSatelliteOrbitHalf(float centerX, float centerY, float baseRadiusMapPx, float zoom, float altitude, float inclination, float r, float g, float b, boolean frontHalf, float alpha) {
 		GL11.glDisable(GL11.GL_TEXTURE_2D);
 		GL11.glLineWidth(1F);
 
@@ -349,7 +345,7 @@ public class GUIScreenSatSettings extends GuiScreen {
 
 		for(int i = 0; i <= 64; i++) {
 			float orbitAngle = (float) (2D * Math.PI * ((double) i / 64D));
-			SatelliteOrbitPoint orbitPoint = getArtificialSatelliteOrbitPoint(altitude, inclination, frequency, orbitAngle, baseRadiusMapPx);
+			SatelliteOrbitPoint orbitPoint = getArtificialSatelliteOrbitPoint(altitude, inclination, orbitAngle, baseRadiusMapPx);
 			float currX = mapToScreenX(centerX, orbitPoint.offsetU, orbitPoint.offsetV, zoom);
 			float currY = mapToScreenY(centerY, orbitPoint.offsetU, orbitPoint.offsetV, zoom);
 			float currDepth = orbitPoint.depth;
@@ -412,8 +408,8 @@ public class GUIScreenSatSettings extends GuiScreen {
 		GL11.glColor4f(1F, 1F, 1F, 1F);
 	}
 
-	private void drawSatelliteIcon(ResourceLocation texture, float centerX, float centerY, float baseRadiusMapPx, float zoom, int frequency, float altitude, float inclination, float angle, boolean frontHalf, float size) {
-		SatelliteOrbitPoint orbitPoint = getArtificialSatelliteOrbitPoint(altitude, inclination, frequency, angle, baseRadiusMapPx);
+	private void drawSatelliteIcon(ResourceLocation texture, float centerX, float centerY, float baseRadiusMapPx, float zoom, float altitude, float inclination, float angle, boolean frontHalf, float size) {
+		SatelliteOrbitPoint orbitPoint = getArtificialSatelliteOrbitPoint(altitude, inclination, angle, baseRadiusMapPx);
 		float screenX = mapToScreenX(centerX, orbitPoint.offsetU, orbitPoint.offsetV, zoom);
 		float screenY = mapToScreenY(centerY, orbitPoint.offsetU, orbitPoint.offsetV, zoom);
 		if((orbitPoint.depth <= 0F) != frontHalf) return;
@@ -713,20 +709,15 @@ public class GUIScreenSatSettings extends GuiScreen {
 		return centerY + (mapU + mapV) * zoom * 0.35F;
 	}
 
-	private SatelliteOrbitPoint getArtificialSatelliteOrbitPoint(float altitude, float inclination, int frequency, float angle, float baseRadiusMapPx) {
+	private SatelliteOrbitPoint getArtificialSatelliteOrbitPoint(float altitude, float inclination, float angle, float baseRadiusMapPx) {
 		float satAltitude = Satellite.sanitizeAltitude(altitude);
 		double satInclination = Math.toRadians(Satellite.sanitizeInclination(inclination));
-		double ascendingNode = Math.toRadians((frequency % 360 + 360) % 360);
 		double radiusMapPx = baseRadiusMapPx * (satAltitude / Satellite.DEFAULT_ALTITUDE_KM);
 
 		double x = radiusMapPx * MathHelper.cos(angle);
 		double y = radiusMapPx * MathHelper.sin(angle);
 		double z = Math.sin(satInclination) * y;
 		y = Math.cos(satInclination) * y;
-
-		double px = x;
-		x = Math.cos(ascendingNode) * px - Math.sin(ascendingNode) * y;
-		y = Math.sin(ascendingNode) * px + Math.cos(ascendingNode) * y;
 
 		y -= z * 0.35D;
 		y *= 0.8D;

@@ -699,13 +699,11 @@ public class GUIMachineStardar extends GuiInfoContainer {
 		CelestialBody activeFocus = getRenderFocusBody();
 		boolean drawOrbitLines = activeFocus != null && (activeFocus == body || activeFocus.parent == body);
 		if (drawOrbitLines) {
-			for (Map.Entry<Integer, Satellite> entry : satellites.entrySet()) {
-				Integer frequency = entry.getKey();
-				Satellite satellite = entry.getValue();
-				if (frequency == null || satellite == null) {
+			for (Satellite satellite : satellites.values()) {
+				if (satellite == null) {
 					continue;
 				}
-				drawArtificialSatelliteOrbitHalf(bodyMapU, bodyMapV, baseOrbitRadiusMapPx, frequency, satellite, frontHalf);
+				drawArtificialSatelliteOrbitHalf(bodyMapU, bodyMapV, baseOrbitRadiusMapPx, satellite, frontHalf);
 			}
 		}
 
@@ -718,14 +716,12 @@ public class GUIMachineStardar extends GuiInfoContainer {
 		float angle = getArtificialSatelliteAngle();
 
 		GL11.glColor4f(1F, 1F, 1F, 1F);
-		for (Map.Entry<Integer, Satellite> entry : satellites.entrySet()) {
-			Integer frequency = entry.getKey();
-			Satellite satellite = entry.getValue();
-			if (frequency == null || satellite == null) {
+		for (Satellite satellite : satellites.values()) {
+			if (satellite == null) {
 				continue;
 			}
 
-			SatelliteOrbitPoint orbitPoint = getArtificialSatelliteOrbitPoint(satellite, frequency, angle, baseOrbitRadiusMapPx);
+			SatelliteOrbitPoint orbitPoint = getArtificialSatelliteOrbitPoint(satellite, angle, baseOrbitRadiusMapPx);
 			float screenX = mapToScreenX(bodyMapU + orbitPoint.offsetU, bodyMapV + orbitPoint.offsetV);
 			float screenY = mapToScreenY(bodyMapU + orbitPoint.offsetU, bodyMapV + orbitPoint.offsetV);
 			if ((orbitPoint.depth <= 0F) != frontHalf) {
@@ -744,7 +740,7 @@ public class GUIMachineStardar extends GuiInfoContainer {
 		return body != null && currentBody != null && body == currentBody;
 	}
 
-	private void drawArtificialSatelliteOrbitHalf(float bodyMapU, float bodyMapV, float baseRadiusMapPx, int frequency, Satellite satellite, boolean frontHalf) {
+	private void drawArtificialSatelliteOrbitHalf(float bodyMapU, float bodyMapV, float baseRadiusMapPx, Satellite satellite, boolean frontHalf) {
 		float r = MathHelper.clamp_float(satellite.colorR, 0F, 1F);
 		float g = MathHelper.clamp_float(satellite.colorG, 0F, 1F);
 		float b = MathHelper.clamp_float(satellite.colorB, 0F, 1F);
@@ -762,7 +758,7 @@ public class GUIMachineStardar extends GuiInfoContainer {
 
 		for (int i = 0; i <= 64; i++) {
 			float angle = (float) (2D * Math.PI * ((double) i / 64D));
-			SatelliteOrbitPoint orbitPoint = getArtificialSatelliteOrbitPoint(satellite, frequency, angle, baseRadiusMapPx);
+			SatelliteOrbitPoint orbitPoint = getArtificialSatelliteOrbitPoint(satellite, angle, baseRadiusMapPx);
 			float currX = mapToScreenX(bodyMapU + orbitPoint.offsetU, bodyMapV + orbitPoint.offsetV);
 			float currY = mapToScreenY(bodyMapU + orbitPoint.offsetU, bodyMapV + orbitPoint.offsetV);
 			float currDepth = orbitPoint.depth;
@@ -828,20 +824,15 @@ public class GUIMachineStardar extends GuiInfoContainer {
 		GL11.glColor4f(1F, 1F, 1F, 1F);
 	}
 
-	private SatelliteOrbitPoint getArtificialSatelliteOrbitPoint(Satellite satellite, int frequency, float angle, float baseRadiusMapPx) {
+	private SatelliteOrbitPoint getArtificialSatelliteOrbitPoint(Satellite satellite, float angle, float baseRadiusMapPx) {
 		float altitude = satellite != null ? Math.max(1.0F, satellite.altitude) : Satellite.DEFAULT_ALTITUDE_KM;
 		double inclination = Math.toRadians(satellite != null ? satellite.inclination : Satellite.DEFAULT_INCLINATION);
-		double ascendingNode = Math.toRadians(positiveMod(frequency, 360));
 		double radiusMapPx = baseRadiusMapPx * (altitude / Satellite.DEFAULT_ALTITUDE_KM);
 
 		double x = radiusMapPx * MathHelper.cos(angle);
 		double y = radiusMapPx * MathHelper.sin(angle);
 		double z = Math.sin(inclination) * y;
 		y = Math.cos(inclination) * y;
-
-		double px = x;
-		x = Math.cos(ascendingNode) * px - Math.sin(ascendingNode) * y;
-		y = Math.sin(ascendingNode) * px + Math.cos(ascendingNode) * y;
 
 		y -= z * 0.35D;
 		y *= 0.8D;
@@ -853,11 +844,6 @@ public class GUIMachineStardar extends GuiInfoContainer {
 		long cycle = SATELLITE_CYCLE_MS;
 		double progress = (double) (System.currentTimeMillis() % cycle) / (double) cycle;
 		return (float) (-progress * 2D * Math.PI);
-	}
-
-	private int positiveMod(int value, int mod) {
-		int out = value % mod;
-		return out < 0 ? out + mod : out;
 	}
 
 	private ResourceLocation getArtificialSatelliteTexture(Satellite satellite) {

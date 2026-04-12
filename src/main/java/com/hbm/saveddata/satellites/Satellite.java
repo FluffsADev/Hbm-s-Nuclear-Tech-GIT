@@ -306,7 +306,7 @@ public abstract class Satellite {
 		renderDefault(partialTicks, world, mc, solarAngle, id, colorR, colorG, colorB, inclination, altitude, blinkPeriod);
 	}
 
-	public static void renderDefault(float partialTicks, WorldClient world, Minecraft mc, float solarAngle, long seed, float r, float g, float b, float inclination, float altitude, float blinkPeriod) {
+	public static void renderDefault(float partialTicks, WorldClient world, Minecraft mc, float solarAngle, long ignoredSeed, float r, float g, float b, float inclination, float altitude, float blinkPeriod) {
 		Tessellator tessellator = Tessellator.instance;
 
 		double ticks = (double)(System.currentTimeMillis() % (600 * 50)) / 50;
@@ -316,9 +316,8 @@ public abstract class Satellite {
 		{
 
 			GL11.glRotatef(solarAngle * -360.0F, 1.0F, 0.0F, 0.0F);
-			GL11.glRotatef((float)(seed % 360), 0.0F, 1.0F, 0.0F);
 			GL11.glRotatef(inclination, 0.0F, 0.0F, 1.0F);
-			GL11.glRotated((ticks / 600.0D) * -360.0D + (seed % 360), 1.0F, 0.0F, 0.0F);
+			GL11.glRotated((ticks / 600.0D) * -360.0D, 1.0F, 0.0F, 0.0F);
 
 			GL11.glColor4f(r, g, b, getBlinkAlpha(blinkPeriod));
 
