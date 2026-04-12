@@ -42,9 +42,4 @@ public class SatelliteLaser extends Satellite {
     	}
 	}
 
-	@Override
-	protected float[] getColor() {
-		return new float[] { 0.221F, 0.663F, 1.0F, 1.0F };
-	}
-
 }

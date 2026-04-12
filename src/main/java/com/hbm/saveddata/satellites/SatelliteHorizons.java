@@ -62,9 +62,4 @@ public class SatelliteHorizons extends Satellite {
 		}
 	}
 
-	@Override
-	protected float[] getColor() {
-		return new float[] { 0.0F, 0.0F, 0.0F, 0.0F };
-	}
-
 }

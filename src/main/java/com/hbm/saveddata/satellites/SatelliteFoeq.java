@@ -17,9 +17,4 @@ public class SatelliteFoeq extends Satellite {
 			((EntityPlayer)p).triggerAchievement(MainRegistry.achFOEQ);
 	}
 
-	@Override
-	protected float[] getColor() {
-		return new float[] { 0.0F, 0.0F, 0.0F, 0.0F };
-	}
-
 }

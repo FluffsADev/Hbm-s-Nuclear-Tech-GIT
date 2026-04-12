@@ -30,9 +30,13 @@ public abstract class Satellite {
 
 	public static final List<Class<? extends Satellite>> satellites = new ArrayList<>();
 	public static final HashMap<Item, Class<? extends Satellite>> itemToClass = new HashMap<>();
+	private static final HashMap<Class<? extends Satellite>, float[]> satelliteColors = new HashMap<>();
 	public static final String NBT_INCLINATION = "satInclination";
 	public static final String NBT_ALTITUDE = "satAltitude";
 	public static final String NBT_OWNER = "satOwner";
+	public static final String NBT_COLOR_R = "satColorR";
+	public static final String NBT_COLOR_G = "satColorG";
+	public static final String NBT_COLOR_B = "satColorB";
 	public static final float DEFAULT_INCLINATION = 0F;
 	public static final float DEFAULT_ALTITUDE_KM = AstronomyUtil.DEFAULT_ALTITUDE_KM;
 	public static final String DEFAULT_OWNER = "None";
@@ -63,19 +67,22 @@ public abstract class Satellite {
 	public float inclination = DEFAULT_INCLINATION;
 	public float altitude = DEFAULT_ALTITUDE_KM;
 	public String owner = DEFAULT_OWNER;
+	public float colorR;
+	public float colorG;
+	public float colorB;
 
 	public static void register() {
-		registerSatellite(SatelliteMapper.class, ModItems.sat_mapper);
-		registerSatellite(SatelliteScanner.class, ModItems.sat_scanner);
-		registerSatellite(SatelliteRadar.class, ModItems.sat_radar);
-		registerSatellite(SatelliteLaser.class, ModItems.sat_laser);
-		registerSatellite(SatelliteResonator.class, ModItems.sat_resonator);
-		registerSatellite(SatelliteFoeq.class, ModItems.sat_foeq);
-		registerSatellite(SatelliteMiner.class, ModItems.sat_miner);
-		registerSatellite(SatelliteLunarMiner.class, ModItems.sat_lunar_miner);
-		registerSatellite(SatelliteDysonRelay.class, ModItems.sat_dyson_relay);
-		registerSatellite(SatelliteHorizons.class, ModItems.sat_gerald);
-		registerSatellite(SatelliteRailgun.class, ModItems.sat_war);
+		registerSatellite(SatelliteMapper.class, ModItems.sat_mapper, 0.538F, 1.0F, 0.523F);
+		registerSatellite(SatelliteScanner.class, ModItems.sat_scanner, 0.544F, 0.680F, 1.0F);
+		registerSatellite(SatelliteRadar.class, ModItems.sat_radar, 0.134F, 1.0F, 0.134F);
+		registerSatellite(SatelliteLaser.class, ModItems.sat_laser, 0.221F, 0.663F, 1.0F);
+		registerSatellite(SatelliteResonator.class, ModItems.sat_resonator, 1.0F, 0.646F, 0.181F);
+		registerSatellite(SatelliteFoeq.class, ModItems.sat_foeq, 0.0F, 0.0F, 0.0F);
+		registerSatellite(SatelliteMiner.class, ModItems.sat_miner, 0.0F, 0.0F, 0.0F);
+		registerSatellite(SatelliteLunarMiner.class, ModItems.sat_lunar_miner, 0.0F, 0.0F, 0.0F);
+		registerSatellite(SatelliteDysonRelay.class, ModItems.sat_dyson_relay, 1.0F, 0.9F, 0.8F);
+		registerSatellite(SatelliteHorizons.class, ModItems.sat_gerald, 0.0F, 0.0F, 0.0F);
+		registerSatellite(SatelliteRailgun.class, ModItems.sat_war, 0.0F, 0.0F, 0.0F);
 	}
 
 	/**
@@ -83,10 +90,11 @@ public abstract class Satellite {
 	 * @param sat - Satellite class
 	 * @param item - Satellite item (which will be placed in a rocket)
 	 */
-	public static void registerSatellite(Class<? extends Satellite> sat, Item item) {
+	public static void registerSatellite(Class<? extends Satellite> sat, Item item, float r, float g, float b) {
 		if(!itemToClass.containsKey(item) && !itemToClass.containsValue(sat)) {
 			satellites.add(sat);
 			itemToClass.put(item, sat);
+			satelliteColors.put(sat, new float[] { r, g, b });
 		}
 	}
 
@@ -99,13 +107,20 @@ public abstract class Satellite {
 	}
 
 	private static NBTTagCompound getItemData(ItemStack stack) {
-		if(stack.stackTagCompound == null) {
-			stack.stackTagCompound = new NBTTagCompound();
-			stack.stackTagCompound.setFloat(NBT_INCLINATION, DEFAULT_INCLINATION);
-			stack.stackTagCompound.setFloat(NBT_ALTITUDE, DEFAULT_ALTITUDE_KM);
-			stack.stackTagCompound.setString(NBT_OWNER, DEFAULT_OWNER);
+		NBTTagCompound nbt = stack.stackTagCompound;
+		if(nbt == null) {
+			nbt = new NBTTagCompound();
+			float[] color = getRegisteredColor(stack.getItem());
+			nbt.setFloat(NBT_INCLINATION, DEFAULT_INCLINATION);
+			nbt.setFloat(NBT_ALTITUDE, DEFAULT_ALTITUDE_KM);
+			nbt.setString(NBT_OWNER, DEFAULT_OWNER);
+			nbt.setFloat(NBT_COLOR_R, color[0]);
+			nbt.setFloat(NBT_COLOR_G, color[1]);
+			nbt.setFloat(NBT_COLOR_B, color[2]);
+			stack.stackTagCompound = nbt;
 		}
-		return stack.stackTagCompound;
+
+		return nbt;
 	}
 
 	public static float getInclination(ItemStack stack) {
@@ -120,6 +135,18 @@ public abstract class Satellite {
 		return getItemData(stack).getString(NBT_OWNER);
 	}
 
+	public static float getColorR(ItemStack stack) {
+		return getItemData(stack).getFloat(NBT_COLOR_R);
+	}
+
+	public static float getColorG(ItemStack stack) {
+		return getItemData(stack).getFloat(NBT_COLOR_G);
+	}
+
+	public static float getColorB(ItemStack stack) {
+		return getItemData(stack).getFloat(NBT_COLOR_B);
+	}
+
 	public static void setInclination(ItemStack stack, float inclination) {
 		getItemData(stack).setFloat(NBT_INCLINATION, inclination);
 	}
@@ -132,11 +159,19 @@ public abstract class Satellite {
 		getItemData(stack).setString(NBT_OWNER, owner);
 	}
 
+	public static void setColor(ItemStack stack, float r, float g, float b) {
+		NBTTagCompound nbt = getItemData(stack);
+		nbt.setFloat(NBT_COLOR_R, r);
+		nbt.setFloat(NBT_COLOR_G, g);
+		nbt.setFloat(NBT_COLOR_B, b);
+	}
+
 	public static void copyItemData(ItemStack from, ItemStack to) {
 		if(to == null) return;
 		setInclination(to, getInclination(from));
 		setAltitude(to, getAltitude(from));
 		setOwner(to, getOwner(from));
+		setColor(to, getColorR(from), getColorG(from), getColorB(from));
 	}
 
 	public static void orbit(World world, int id, int freq, double x, double y, double z, ItemStack stack) {
@@ -151,6 +186,9 @@ public abstract class Satellite {
 			sat.inclination = getInclination(stack);
 			sat.altitude = getAltitude(stack);
 			sat.owner = getOwner(stack);
+			sat.colorR = getColorR(stack);
+			sat.colorG = getColorG(stack);
+			sat.colorB = getColorB(stack);
 
 			SatelliteSavedData data = SatelliteSavedData.getData(world, (int)x, (int)z);
 			data.sats.put(freq, sat);
@@ -165,6 +203,10 @@ public abstract class Satellite {
 		try {
 			Class<? extends Satellite> c = satellites.get(id);
 			sat = c.newInstance();
+			float[] color = getRegisteredColor(c);
+			sat.colorR = color[0];
+			sat.colorG = color[1];
+			sat.colorB = color[2];
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
@@ -186,22 +228,35 @@ public abstract class Satellite {
 		nbt.setFloat(NBT_INCLINATION, inclination);
 		nbt.setFloat(NBT_ALTITUDE, altitude);
 		nbt.setString(NBT_OWNER, owner);
+		nbt.setFloat(NBT_COLOR_R, colorR);
+		nbt.setFloat(NBT_COLOR_G, colorG);
+		nbt.setFloat(NBT_COLOR_B, colorB);
 	}
 	public void readFromNBT(NBTTagCompound nbt) {
 		inclination = nbt.getFloat(NBT_INCLINATION);
 		altitude = nbt.hasKey(NBT_ALTITUDE) ? nbt.getFloat(NBT_ALTITUDE) : DEFAULT_ALTITUDE_KM;
 		owner = nbt.hasKey(NBT_OWNER) ? nbt.getString(NBT_OWNER) : DEFAULT_OWNER;
+		float[] registeredColor = getRegisteredColor(getClass());
+		colorR = nbt.hasKey(NBT_COLOR_R) ? nbt.getFloat(NBT_COLOR_R) : registeredColor[0];
+		colorG = nbt.hasKey(NBT_COLOR_G) ? nbt.getFloat(NBT_COLOR_G) : registeredColor[1];
+		colorB = nbt.hasKey(NBT_COLOR_B) ? nbt.getFloat(NBT_COLOR_B) : registeredColor[2];
 	}
 
 	public void serialize(ByteBuf buf) {
 		buf.writeFloat(inclination);
 		buf.writeFloat(altitude);
 		BufferUtil.writeString(buf, owner);
+		buf.writeFloat(colorR);
+		buf.writeFloat(colorG);
+		buf.writeFloat(colorB);
 	}
 	public void deserialize(ByteBuf buf) {
 		inclination = buf.readFloat();
 		altitude = buf.readFloat();
 		owner = BufferUtil.readString(buf);
+		colorR = buf.readFloat();
+		colorG = buf.readFloat();
+		colorB = buf.readFloat();
 	}
 
 	/**
@@ -228,39 +283,35 @@ public abstract class Satellite {
 	public void onCoordAction(World world, EntityPlayer player, int x, int y, int z) { }
 
 
-	protected abstract float[] getColor();
-
 	public void render(float partialTicks, WorldClient world, Minecraft mc, float solarAngle, long id) {
-		renderDefault(partialTicks, world, mc, solarAngle, id, getColor());
+		renderDefault(partialTicks, world, mc, solarAngle, id, colorR, colorG, colorB, inclination, altitude);
 	}
 
-	public static void renderDefault(float partialTicks, WorldClient world, Minecraft mc, float solarAngle, long seed, float[] color) {
-		if(color[3] <= 0.0F) return;
-
+	public static void renderDefault(float partialTicks, WorldClient world, Minecraft mc, float solarAngle, long seed, float r, float g, float b, float inclination, float altitude) {
 		Tessellator tessellator = Tessellator.instance;
 
 		double ticks = (double)(System.currentTimeMillis() % (600 * 50)) / 50;
+		float renderAltitude = Math.max(1.0F, altitude);
 
 		GL11.glPushMatrix();
 		{
 
 			GL11.glRotatef(solarAngle * -360.0F, 1.0F, 0.0F, 0.0F);
-			GL11.glRotatef(-40.0F + (float)(seed % 800) * 0.1F - 5.0F, 1.0F, 0.0F, 0.0F);
-			GL11.glRotatef((float)(seed % 50) * 0.1F - 20.0F, 0.0F, 1.0F, 0.0F);
-			GL11.glRotatef((float)(seed % 80) * 0.1F - 2.5F, 0.0F, 0.0F, 1.0F);
-			GL11.glRotated((ticks / 600.0D) * -360.0D, 1.0F, 0.0F, 0.0F);
+			GL11.glRotatef((float)(seed % 360), 0.0F, 1.0F, 0.0F);
+			GL11.glRotatef(inclination, 0.0F, 0.0F, 1.0F);
+			GL11.glRotated((ticks / 600.0D) * -360.0D + (seed % 360), 1.0F, 0.0F, 0.0F);
 
-			GL11.glColor4f(color[0], color[1], color[2], color[3]);
+			GL11.glColor4f(r, g, b, 1.0F);
 
 			mc.renderEngine.bindTexture(satelliteTexture);
 
 			float size = 0.5F;
 
 			tessellator.startDrawingQuads();
-			tessellator.addVertexWithUV(-size, 100.0, -size, 0.0D, 0.0D);
-			tessellator.addVertexWithUV(size, 100.0, -size, 0.0D, 1.0D);
-			tessellator.addVertexWithUV(size, 100.0, size, 1.0D, 1.0D);
-			tessellator.addVertexWithUV(-size, 100.0, size, 1.0D, 0.0D);
+			tessellator.addVertexWithUV(-size, renderAltitude, -size, 0.0D, 0.0D);
+			tessellator.addVertexWithUV(size, renderAltitude, -size, 0.0D, 1.0D);
+			tessellator.addVertexWithUV(size, renderAltitude, size, 1.0D, 1.0D);
+			tessellator.addVertexWithUV(-size, renderAltitude, size, 1.0D, 0.0D);
 			tessellator.draw();
 
 		}
@@ -270,6 +321,22 @@ public abstract class Satellite {
 	// killing myself
 	public float getInterp() {
 		return 0;
+	}
+
+	private static float[] getRegisteredColor(Item item) {
+		Class<? extends Satellite> satelliteClass = itemToClass.get(item);
+		if(satelliteClass == null) {
+			throw new IllegalStateException("No satellite class registered for item: " + item);
+		}
+		return getRegisteredColor(satelliteClass);
+	}
+
+	private static float[] getRegisteredColor(Class<? extends Satellite> satelliteClass) {
+		float[] color = satelliteColors.get(satelliteClass);
+		if(color == null) {
+			throw new IllegalStateException("No color registered for satellite class: " + satelliteClass);
+		}
+		return color;
 	}
 
 }

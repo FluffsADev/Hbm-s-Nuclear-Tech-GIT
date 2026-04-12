@@ -92,6 +92,9 @@ public class EntityRideableRocket extends EntityMissileBaseNT implements ILookOv
 	private float satInclination = Satellite.DEFAULT_INCLINATION;
 	private float satAltitude = Satellite.DEFAULT_ALTITUDE_KM;
 	private String satOwner = Satellite.DEFAULT_OWNER;
+	private float satColorR = 0.0F;
+	private float satColorG = 0.0F;
+	private float satColorB = 0.0F;
 
 	private TileEntityOrbitalStation targetPort;
 
@@ -124,6 +127,9 @@ public class EntityRideableRocket extends EntityMissileBaseNT implements ILookOv
 		satInclination = Satellite.getInclination(stack);
 		satAltitude = Satellite.getAltitude(stack);
 		satOwner = Satellite.getOwner(stack);
+		satColorR = Satellite.getColorR(stack);
+		satColorG = Satellite.getColorG(stack);
+		satColorB = Satellite.getColorB(stack);
 
 		setRocket(rocket);
 		setSize(2, (float)rocket.getHeight() + 1);
@@ -869,6 +875,9 @@ public class EntityRideableRocket extends EntityMissileBaseNT implements ILookOv
 		satInclination = nbt.hasKey(Satellite.NBT_INCLINATION) ? nbt.getFloat(Satellite.NBT_INCLINATION) : Satellite.DEFAULT_INCLINATION;
 		satAltitude = nbt.hasKey(Satellite.NBT_ALTITUDE) ? nbt.getFloat(Satellite.NBT_ALTITUDE) : Satellite.DEFAULT_ALTITUDE_KM;
 		satOwner = nbt.hasKey(Satellite.NBT_OWNER) ? nbt.getString(Satellite.NBT_OWNER) : Satellite.DEFAULT_OWNER;
+		satColorR = nbt.getFloat(Satellite.NBT_COLOR_R);
+		satColorG = nbt.getFloat(Satellite.NBT_COLOR_G);
+		satColorB = nbt.getFloat(Satellite.NBT_COLOR_B);
 		if(satOwner == null || satOwner.isEmpty()) satOwner = Satellite.DEFAULT_OWNER;
 
 		if(nbt.getBoolean("hasOverride")) {
@@ -901,6 +910,9 @@ public class EntityRideableRocket extends EntityMissileBaseNT implements ILookOv
 		nbt.setFloat(Satellite.NBT_INCLINATION, satInclination);
 		nbt.setFloat(Satellite.NBT_ALTITUDE, satAltitude);
 		nbt.setString(Satellite.NBT_OWNER, satOwner);
+		nbt.setFloat(Satellite.NBT_COLOR_R, satColorR);
+		nbt.setFloat(Satellite.NBT_COLOR_G, satColorG);
+		nbt.setFloat(Satellite.NBT_COLOR_B, satColorB);
 
 		if(destinationOverride != null) {
 			nbt.setBoolean("hasOverride", true);
@@ -914,6 +926,7 @@ public class EntityRideableRocket extends EntityMissileBaseNT implements ILookOv
 		Satellite.setInclination(stack, satInclination);
 		Satellite.setAltitude(stack, satAltitude);
 		Satellite.setOwner(stack, satOwner);
+		Satellite.setColor(stack, satColorR, satColorG, satColorB);
 	}
 
 	@Override

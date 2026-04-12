@@ -59,9 +59,4 @@ public class SatelliteMiner extends Satellite {
 		registerCargo(SatelliteMiner.class, ItemPoolsSatellite.POOL_SAT_MINER);
 	}
 
-	@Override
-	protected float[] getColor() {
-		return new float[] { 0.0F, 0.0F, 0.0F, 0.0F };
-	}
-
 }

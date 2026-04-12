@@ -51,11 +51,6 @@ public class SatelliteWar extends Satellite {
 		Minecraft.getMinecraft().thePlayer.playSound("hbm:misc.fireflash", 10F, 1F);
 	}
 
-	@Override
-	protected float[] getColor() {
-		return new float[] { 0.0F, 0.0F, 0.0F, 0.0F };
-	}
-
 	public float getInterp() {
 		return interp;
 	}

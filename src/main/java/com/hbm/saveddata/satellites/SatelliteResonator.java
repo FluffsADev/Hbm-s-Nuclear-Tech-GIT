@@ -22,9 +22,4 @@ public class SatelliteResonator extends Satellite {
 		world.playSoundEffect(player.posX, player.posY, player.posZ, "mob.endermen.portal", 1.0F, 1.0F);
 	}
 
-	@Override
-	protected float[] getColor() {
-		return new float[] { 1.0F, 0.646F, 0.181F, 1.0F };
-	}
-
 }
