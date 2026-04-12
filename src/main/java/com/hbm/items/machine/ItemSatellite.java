@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.hbm.dim.CelestialBody;
 import com.hbm.inventory.gui.GUIScreenSatSettings;
+import com.hbm.items.IItemControlReceiver;
 import com.hbm.items.ISatChip;
 import com.hbm.items.ModItems;
 import com.hbm.items.weapon.ItemCustomMissilePart;
@@ -19,14 +20,16 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.Container;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
+import net.minecraft.util.MathHelper;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.DimensionManager;
 import org.lwjgl.input.Keyboard;
 
-public class ItemSatellite extends ItemCustomMissilePart implements ISatChip, IGUIProvider {
+public class ItemSatellite extends ItemCustomMissilePart implements ISatChip, IGUIProvider, IItemControlReceiver {
 
 	private boolean canLaunchByHand;
 
@@ -157,6 +160,31 @@ public class ItemSatellite extends ItemCustomMissilePart implements ISatChip, IG
 	@SideOnly(Side.CLIENT)
 	public Object provideGUI(int ID, EntityPlayer player, World world, int x, int y, int z) {
 		return new GUIScreenSatSettings(player);
+	}
+
+	@Override
+	public void receiveControl(ItemStack stack, NBTTagCompound data) {
+		int r = Math.round(Satellite.getColorR(stack) * 255F);
+		int g = Math.round(Satellite.getColorG(stack) * 255F);
+		int b = Math.round(Satellite.getColorB(stack) * 255F);
+		boolean update = false;
+
+		if(data.hasKey("satColorR")) {
+			r = MathHelper.clamp_int(data.getInteger("satColorR"), 0, 255);
+			update = true;
+		}
+		if(data.hasKey("satColorG")) {
+			g = MathHelper.clamp_int(data.getInteger("satColorG"), 0, 255);
+			update = true;
+		}
+		if(data.hasKey("satColorB")) {
+			b = MathHelper.clamp_int(data.getInteger("satColorB"), 0, 255);
+			update = true;
+		}
+
+		if(update) {
+			Satellite.setColor(stack, r / 255F, g / 255F, b / 255F);
+		}
 	}
 
 	private static String formatValue(float value) {
