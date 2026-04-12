@@ -3,16 +3,20 @@ package com.hbm.items.machine;
 import java.util.List;
 
 import com.hbm.dim.CelestialBody;
+import com.hbm.inventory.gui.GUIScreenSatSettings;
 import com.hbm.items.ISatChip;
 import com.hbm.items.ModItems;
 import com.hbm.items.weapon.ItemCustomMissilePart;
+import com.hbm.main.MainRegistry;
 import com.hbm.saveddata.satellites.Satellite;
+import com.hbm.tileentity.IGUIProvider;
 
 import com.hbm.util.i18n.I18nUtil;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.inventory.Container;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ChatComponentText;
@@ -22,7 +26,7 @@ import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.DimensionManager;
 import org.lwjgl.input.Keyboard;
 
-public class ItemSatellite extends ItemCustomMissilePart implements ISatChip {
+public class ItemSatellite extends ItemCustomMissilePart implements ISatChip, IGUIProvider {
 
 	private boolean canLaunchByHand;
 
@@ -116,6 +120,11 @@ public class ItemSatellite extends ItemCustomMissilePart implements ISatChip {
 
 	@Override
 	public ItemStack onItemRightClick(ItemStack stack, World world, EntityPlayer player) {
+		if(player.isSneaking()) {
+			if(world.isRemote) player.openGui(MainRegistry.instance, 0, world, 0, 0, 0);
+			return stack;
+		}
+
 		if(!canLaunchByHand) return stack;
 		if(!CelestialBody.inOrbit(world)) return stack;
 
@@ -137,6 +146,17 @@ public class ItemSatellite extends ItemCustomMissilePart implements ISatChip {
 		stack.stackSize--;
 
 		return stack;
+	}
+
+	@Override
+	public Container provideContainer(int ID, EntityPlayer player, World world, int x, int y, int z) {
+		return null;
+	}
+
+	@Override
+	@SideOnly(Side.CLIENT)
+	public Object provideGUI(int ID, EntityPlayer player, World world, int x, int y, int z) {
+		return new GUIScreenSatSettings(player);
 	}
 
 	private static String formatValue(float value) {
