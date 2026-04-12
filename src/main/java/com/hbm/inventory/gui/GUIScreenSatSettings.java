@@ -75,7 +75,7 @@ public class GUIScreenSatSettings extends GuiScreen {
 		drawLeftAligned(10, 130, 140, "Owner: " + Satellite.getOwner(held), 0x00FF00);
 		drawLeftAligned(10, 145, 155, "Altitude: " + formatValue(Satellite.getAltitude(held)) + "km", 0x00FF00);
 		drawLeftAligned(10, 160, 170, "Inclination: " + formatValue(Satellite.getInclination(held)) + "\u00B0", 0x00FF00);
-		drawRect(guiLeft + 81, guiTop + 176, guiLeft + 111, guiTop + 200, 0xFF000000 | (r << 16) | (g << 8) | b);
+		drawRect(guiLeft + 81, guiTop + 176, guiLeft + 110, guiTop + 199, 0xFF000000 | (r << 16) | (g << 8) | b);
 		drawRightAligned(110, 205, 214, formatValue(Satellite.getBlinkPeriod(held)) + "s", 0xFFFFFF, textScale);
 		GL11.glColor4f(1F, 1F, 1F, 1F);
 		drawSlider(r, sliderYRed, sliderVRed);
@@ -148,7 +148,7 @@ public class GUIScreenSatSettings extends GuiScreen {
 	}
 
 	private void drawSlider(int value, int y, int v) {
-		drawTexturedModalRect(guiLeft + sliderX + Math.round(value * (sliderW - sliderKnobW) / 255F), guiTop + y - (sliderKnobH - sliderLineH) / 2, sliderU, v, sliderKnobW, sliderKnobH);
+		func_146110_a(guiLeft + sliderX + Math.round(value * (sliderW - sliderKnobW) / 255F), guiTop + y - (sliderKnobH - sliderLineH) / 2, sliderU, v, sliderKnobW, sliderKnobH, texW, texH);
 	}
 
 	private int getSliderAt(int mouseX, int mouseY) {
