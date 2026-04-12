@@ -1,6 +1,7 @@
 package com.hbm.items.machine;
 
 import java.util.List;
+import java.util.Locale;
 
 import com.hbm.dim.CelestialBody;
 import com.hbm.inventory.gui.GUIScreenSatSettings;
@@ -72,6 +73,7 @@ public class ItemSatellite extends ItemCustomMissilePart implements ISatChip, IG
 			list.add(EnumChatFormatting.YELLOW + I18nUtil.resolveKey("item.sat.desc.owner") + ": " + Satellite.getOwner(itemstack));
 			list.add(EnumChatFormatting.YELLOW + I18nUtil.resolveKey("item.sat.desc.inclination") + ": " + formatValue(Satellite.getInclination(itemstack)) + "°");
 			list.add(EnumChatFormatting.YELLOW + I18nUtil.resolveKey("item.sat.desc.altitude") + ": " + formatValue(Satellite.getAltitude(itemstack)) + "km");
+			list.add(EnumChatFormatting.YELLOW + I18nUtil.resolveKey("item.sat.desc.color") + ": " + getHexColor(itemstack));
 		} else {
 			list.add(EnumChatFormatting.DARK_GRAY + "" + EnumChatFormatting.ITALIC + "Hold <" + EnumChatFormatting.YELLOW + "" + EnumChatFormatting.ITALIC + "LSHIFT" + EnumChatFormatting.DARK_GRAY
 					+ "" + EnumChatFormatting.ITALIC + "> to display more info");
@@ -190,6 +192,13 @@ public class ItemSatellite extends ItemCustomMissilePart implements ISatChip, IG
 	private static String formatValue(float value) {
 		if(value == (int)value) return Integer.toString((int)value);
 		return Float.toString(value);
+	}
+
+	private static String getHexColor(ItemStack stack) {
+		int r = MathHelper.clamp_int(Math.round(Satellite.getColorR(stack) * 255F), 0, 255);
+		int g = MathHelper.clamp_int(Math.round(Satellite.getColorG(stack) * 255F), 0, 255);
+		int b = MathHelper.clamp_int(Math.round(Satellite.getColorB(stack) * 255F), 0, 255);
+		return String.format(Locale.ROOT, "#%02X%02X%02X", r, g, b);
 	}
 
 }

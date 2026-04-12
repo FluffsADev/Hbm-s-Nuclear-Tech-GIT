@@ -4933,6 +4933,7 @@ item.sat.desc.frequency=Satellite frequency
 item.sat.desc.owner=Satellite owner
 item.sat.desc.inclination=Satellite inclination
 item.sat.desc.altitude=Satellite altitude
+item.sat.desc.color=Satellite color
 item.sat.desc.foeq=Gives you an achievement. That's it.
 item.sat.desc.gerald.single_use=Single use.
 item.sat.desc.gerald.orbital_module=Requires orbital module.
