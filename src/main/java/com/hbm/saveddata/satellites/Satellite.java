@@ -24,7 +24,6 @@ import net.minecraftforge.common.DimensionManager;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Random;
 
 import org.lwjgl.opengl.GL11;
 
@@ -36,8 +35,8 @@ public abstract class Satellite {
 	public static final float DEFAULT_INCLINATION = 0F;
 	public static final float MAX_INCLINATION = 360.0F;
 	public static final float DEFAULT_ALTITUDE_KM = AstronomyUtil.DEFAULT_ALTITUDE_KM;
-	public static final float MIN_ALTITUDE_KM = 100.0F;
-	public static final float MAX_ALTITUDE_KM = 250.0F;
+	public static final float MIN_ALTITUDE_KM = 80.0F;
+	public static final float MAX_ALTITUDE_KM = 125.0F;
 	public static final float DEFAULT_BLINK_PERIOD = 0.0F;
 	public static final float MIN_BLINK_PERIOD = 0.3F;
 	public static final String DEFAULT_OWNER = "None";
@@ -312,7 +311,7 @@ public abstract class Satellite {
 	public static void renderDefault(float partialTicks, WorldClient world, Minecraft mc, float solarAngle, long seed, float r, float g, float b, float inclination, float altitude, float blinkPeriod) {
 		Tessellator tessellator = Tessellator.instance;
 
-		double ticks = (double)(System.currentTimeMillis() % (600 * 50)) / 50;
+		double ticks = (double)System.currentTimeMillis() / 50.0D;
 		float orbitAngle = applyFrequencyToOrbitAngle(seed, (float)((ticks / 600.0D) * -360.0D), 360.0F);
 		float renderAltitude = Math.max(1.0F, altitude);
 
@@ -341,8 +340,19 @@ public abstract class Satellite {
 	}
 
 	public static float applyFrequencyToOrbitAngle(long frequency, float baseAngle, float fullRotation) {
-		Random random = new Random(frequency);
-		return baseAngle * (ORBIT_SPEED_MIN + random.nextFloat() * ORBIT_SPEED_RANGE) + random.nextFloat() * fullRotation;
+		float speed = ORBIT_SPEED_MIN + getFrequencyFloat(frequency, 0x9E3779B97F4A7C15L) * ORBIT_SPEED_RANGE;
+		float phase = getFrequencyFloat(frequency, 0xC2B2AE3D27D4EB4FL) * fullRotation;
+		return baseAngle * speed + phase;
+	}
+
+	private static float getFrequencyFloat(long frequency, long salt) {
+		long x = frequency + salt;
+		x ^= (x >>> 30);
+		x *= 0xBF58476D1CE4E5B9L;
+		x ^= (x >>> 27);
+		x *= 0x94D049BB133111EBL;
+		x ^= (x >>> 31);
+		return (float)((x & 0xFFFFFFL) / (double)0x1000000L);
 	}
 
 	// killing myself

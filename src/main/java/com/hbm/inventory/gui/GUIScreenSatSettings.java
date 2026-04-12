@@ -731,7 +731,7 @@ public class GUIScreenSatSettings extends GuiScreen {
 
 	private float getArtificialSatelliteAngle() {
 		long cycle = 30000L;
-		double progress = (double) (System.currentTimeMillis() % cycle) / (double) cycle;
+		double progress = (double) System.currentTimeMillis() / (double) cycle;
 		return (float) (-progress * 2D * Math.PI);
 	}
 

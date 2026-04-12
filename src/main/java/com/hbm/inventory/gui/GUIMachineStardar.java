@@ -830,7 +830,7 @@ public class GUIMachineStardar extends GuiInfoContainer {
 	private SatelliteOrbitPoint getArtificialSatelliteOrbitPoint(Satellite satellite, float angle, float baseRadiusMapPx) {
 		float altitude = satellite != null ? Satellite.sanitizeAltitude(satellite.altitude) : Satellite.DEFAULT_ALTITUDE_KM;
 		double inclination = Math.toRadians(satellite != null ? Satellite.sanitizeInclination(satellite.inclination) : Satellite.DEFAULT_INCLINATION);
-		double radiusMapPx = baseRadiusMapPx * (altitude / Satellite.DEFAULT_ALTITUDE_KM);
+		double radiusMapPx = baseRadiusMapPx * (altitude / Satellite.DEFAULT_ALTITUDE_KM) * 0.5D;
 
 		double x = radiusMapPx * MathHelper.cos(angle);
 		double y = radiusMapPx * MathHelper.sin(angle);
@@ -845,7 +845,7 @@ public class GUIMachineStardar extends GuiInfoContainer {
 
 	private float getArtificialSatelliteAngle() {
 		long cycle = SATELLITE_CYCLE_MS;
-		double progress = (double) (System.currentTimeMillis() % cycle) / (double) cycle;
+		double progress = (double) System.currentTimeMillis() / (double) cycle;
 		return (float) (-progress * 2D * Math.PI);
 	}
 
