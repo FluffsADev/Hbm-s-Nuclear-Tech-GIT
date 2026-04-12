@@ -713,7 +713,7 @@ public class GUIMachineStardar extends GuiInfoContainer {
 		float mapTop = guiTop + MAP_Y;
 		float mapRight = mapLeft + MAP_W;
 		float mapBottom = mapTop + MAP_H;
-		float angle = getArtificialSatelliteAngle();
+		double angle = getArtificialSatelliteAngle();
 
 		GL11.glColor4f(1F, 1F, 1F, 1F);
 		for (Map.Entry<Integer, Satellite> entry : satellites.entrySet()) {
@@ -830,7 +830,7 @@ public class GUIMachineStardar extends GuiInfoContainer {
 	private SatelliteOrbitPoint getArtificialSatelliteOrbitPoint(Satellite satellite, float angle, float baseRadiusMapPx) {
 		float altitude = satellite != null ? Satellite.sanitizeAltitude(satellite.altitude) : Satellite.DEFAULT_ALTITUDE_KM;
 		double inclination = Math.toRadians(satellite != null ? Satellite.sanitizeInclination(satellite.inclination) : Satellite.DEFAULT_INCLINATION);
-		double radiusMapPx = baseRadiusMapPx * (altitude / Satellite.DEFAULT_ALTITUDE_KM) * 0.5D;
+		double radiusMapPx = baseRadiusMapPx * (altitude / Satellite.DEFAULT_ALTITUDE_KM);
 
 		double x = radiusMapPx * MathHelper.cos(angle);
 		double y = radiusMapPx * MathHelper.sin(angle);
@@ -843,10 +843,10 @@ public class GUIMachineStardar extends GuiInfoContainer {
 		return new SatelliteOrbitPoint((float) x, (float) y, (float) z);
 	}
 
-	private float getArtificialSatelliteAngle() {
+	private double getArtificialSatelliteAngle() {
 		long cycle = SATELLITE_CYCLE_MS;
 		double progress = (double) System.currentTimeMillis() / (double) cycle;
-		return (float) (-progress * 2D * Math.PI);
+		return -progress * 2D * Math.PI;
 	}
 
 	private ResourceLocation getArtificialSatelliteTexture(Satellite satellite) {

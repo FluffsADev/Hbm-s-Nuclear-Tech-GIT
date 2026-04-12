@@ -258,7 +258,7 @@ public class GUIScreenSatSettings extends GuiScreen {
 		float centerY = guiTop + 8 + 116 * 0.5F;
 		float bodySize = MathHelper.clamp_float(bodySizeAt1x * renderZoom, 8F, 96F);
 		float iconSize = MathHelper.clamp_float(bodySize * 0.75F * 0.25F, 0.4F, 9.0F);
-		float angle = getArtificialSatelliteAngle();
+		double angle = getArtificialSatelliteAngle();
 		int heldFrequency = ISatChip.getFreqS(held);
 
 		float heldAltitude = Satellite.getAltitude(held);
@@ -315,7 +315,7 @@ public class GUIScreenSatSettings extends GuiScreen {
 		);
 	}
 
-	private void drawOwnedSatellites(Map<Integer, Satellite> satellites, String owner, float centerX, float centerY, float baseOrbitRadiusMapPx, float zoom, float angle, float iconSize, boolean frontHalf) {
+	private void drawOwnedSatellites(Map<Integer, Satellite> satellites, String owner, float centerX, float centerY, float baseOrbitRadiusMapPx, float zoom, double angle, float iconSize, boolean frontHalf) {
 		for(Satellite satellite : satellites.values()) {
 			if(!owner.equals(satellite.owner)) continue;
 
@@ -411,7 +411,7 @@ public class GUIScreenSatSettings extends GuiScreen {
 		GL11.glColor4f(1F, 1F, 1F, 1F);
 	}
 
-	private void drawSatelliteIcon(ResourceLocation texture, float centerX, float centerY, float baseRadiusMapPx, float zoom, int frequency, float altitude, float inclination, float angle, boolean frontHalf, float size) {
+	private void drawSatelliteIcon(ResourceLocation texture, float centerX, float centerY, float baseRadiusMapPx, float zoom, int frequency, float altitude, float inclination, double angle, boolean frontHalf, float size) {
 		float satelliteAngle = Satellite.applyFrequencyToOrbitAngle(frequency, angle, (float)(2D * Math.PI));
 		SatelliteOrbitPoint orbitPoint = getArtificialSatelliteOrbitPoint(altitude, inclination, satelliteAngle, baseRadiusMapPx);
 		float screenX = mapToScreenX(centerX, orbitPoint.offsetU, orbitPoint.offsetV, zoom);
@@ -729,10 +729,10 @@ public class GUIScreenSatSettings extends GuiScreen {
 		return new SatelliteOrbitPoint((float) x, (float) y, (float) z);
 	}
 
-	private float getArtificialSatelliteAngle() {
+	private double getArtificialSatelliteAngle() {
 		long cycle = 30000L;
 		double progress = (double) System.currentTimeMillis() / (double) cycle;
-		return (float) (-progress * 2D * Math.PI);
+		return -progress * 2D * Math.PI;
 	}
 
 	private CelestialBody getCurrentBody() {
