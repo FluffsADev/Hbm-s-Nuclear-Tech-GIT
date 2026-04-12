@@ -338,12 +338,12 @@ public class GUIScreenSatSettings extends GuiScreen {
 		float lineR = MathHelper.clamp_float(r, 0F, 1F);
 		float lineG = MathHelper.clamp_float(g, 0F, 1F);
 		float lineB = MathHelper.clamp_float(b, 0F, 1F);
+		float crossY = centerY;
 
 		boolean hasPrev = false;
 		float prevX = 0F;
 		float prevY = 0F;
-		float prevDepth = 0F;
-		boolean prevFront = false;
+		boolean prevInFrontHalf = false;
 		boolean drawing = false;
 
 		for(int i = 0; i <= 64; i++) {
@@ -351,20 +351,18 @@ public class GUIScreenSatSettings extends GuiScreen {
 			SatelliteOrbitPoint orbitPoint = getArtificialSatelliteOrbitPoint(altitude, inclination, orbitAngle, baseRadiusMapPx);
 			float currX = mapToScreenX(centerX, orbitPoint.offsetU, orbitPoint.offsetV, zoom);
 			float currY = mapToScreenY(centerY, orbitPoint.offsetU, orbitPoint.offsetV, zoom);
-			float currDepth = orbitPoint.depth;
-			boolean currFront = currDepth <= 0F;
+			boolean currInFrontHalf = currY >= crossY;
 
 			if(!hasPrev) {
 				prevX = currX;
 				prevY = currY;
-				prevDepth = currDepth;
-				prevFront = currFront;
+				prevInFrontHalf = currInFrontHalf;
 				hasPrev = true;
 				continue;
 			}
 
-			boolean prevSelected = prevFront == frontHalf;
-			boolean currSelected = currFront == frontHalf;
+			boolean prevSelected = prevInFrontHalf == frontHalf;
+			boolean currSelected = currInFrontHalf == frontHalf;
 
 			if(prevSelected && currSelected) {
 				if(!drawing) {
@@ -375,11 +373,11 @@ public class GUIScreenSatSettings extends GuiScreen {
 				}
 				tess.addVertex(currX, currY, this.zLevel);
 			} else if(prevSelected != currSelected) {
-				float depthDelta = currDepth - prevDepth;
-				float t = depthDelta == 0F ? 0.5F : (-prevDepth) / depthDelta;
+				float dy = currY - prevY;
+				float t = dy == 0F ? 0.5F : (crossY - prevY) / dy;
 				t = MathHelper.clamp_float(t, 0F, 1F);
 				float crossX = prevX + (currX - prevX) * t;
-				float crossY = prevY + (currY - prevY) * t;
+				float crossPointY = prevY + (currY - prevY) * t;
 
 				if(prevSelected) {
 					if(!drawing) {
@@ -388,13 +386,13 @@ public class GUIScreenSatSettings extends GuiScreen {
 						tess.addVertex(prevX, prevY, this.zLevel);
 						drawing = true;
 					}
-					tess.addVertex(crossX, crossY, this.zLevel);
+					tess.addVertex(crossX, crossPointY, this.zLevel);
 					tess.draw();
 					drawing = false;
 				} else {
 					tess.startDrawing(GL11.GL_LINE_STRIP);
 					tess.setColorRGBA_F(lineR, lineG, lineB, alpha);
-					tess.addVertex(crossX, crossY, this.zLevel);
+					tess.addVertex(crossX, crossPointY, this.zLevel);
 					tess.addVertex(currX, currY, this.zLevel);
 					drawing = true;
 				}
@@ -402,8 +400,7 @@ public class GUIScreenSatSettings extends GuiScreen {
 
 			prevX = currX;
 			prevY = currY;
-			prevDepth = currDepth;
-			prevFront = currFront;
+			prevInFrontHalf = currInFrontHalf;
 		}
 
 		if(drawing) tess.draw();
@@ -416,7 +413,7 @@ public class GUIScreenSatSettings extends GuiScreen {
 		SatelliteOrbitPoint orbitPoint = getArtificialSatelliteOrbitPoint(altitude, inclination, satelliteAngle, baseRadiusMapPx);
 		float screenX = mapToScreenX(centerX, orbitPoint.offsetU, orbitPoint.offsetV, zoom);
 		float screenY = mapToScreenY(centerY, orbitPoint.offsetU, orbitPoint.offsetV, zoom);
-		if((orbitPoint.depth <= 0F) != frontHalf) return;
+		if((screenY >= centerY) != frontHalf) return;
 
 		float half = size * 0.5F;
 		float minX = guiLeft + 9;
