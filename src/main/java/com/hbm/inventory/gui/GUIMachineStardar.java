@@ -691,8 +691,8 @@ public class GUIMachineStardar extends GuiInfoContainer {
 			return;
 		}
 
-		float orbitRadiusMapPx = getBodySizePxAt1x(body) * SATELLITE_ORBIT_RADIUS_SCALE;
-		if (orbitRadiusMapPx <= 0F) {
+		float baseOrbitRadiusMapPx = getBodySizePxAt1x(body) * SATELLITE_ORBIT_RADIUS_SCALE;
+		if (baseOrbitRadiusMapPx <= 0F) {
 			return;
 		}
 
@@ -701,10 +701,11 @@ public class GUIMachineStardar extends GuiInfoContainer {
 		if (drawOrbitLines) {
 			for (Map.Entry<Integer, Satellite> entry : satellites.entrySet()) {
 				Integer frequency = entry.getKey();
-				if (frequency == null) {
+				Satellite satellite = entry.getValue();
+				if (frequency == null || satellite == null) {
 					continue;
 				}
-				drawArtificialSatelliteOrbitHalf(body, bodyMapU, bodyMapV, orbitRadiusMapPx, frequency, frontHalf);
+				drawArtificialSatelliteOrbitHalf(bodyMapU, bodyMapV, baseOrbitRadiusMapPx, frequency, satellite, frontHalf);
 			}
 		}
 
@@ -724,7 +725,7 @@ public class GUIMachineStardar extends GuiInfoContainer {
 				continue;
 			}
 
-			SatelliteOrbitPoint orbitPoint = getArtificialSatelliteOrbitPoint(frequency, angle, orbitRadiusMapPx);
+			SatelliteOrbitPoint orbitPoint = getArtificialSatelliteOrbitPoint(satellite, frequency, angle, baseOrbitRadiusMapPx);
 			float screenX = mapToScreenX(bodyMapU + orbitPoint.offsetU, bodyMapV + orbitPoint.offsetV);
 			float screenY = mapToScreenY(bodyMapU + orbitPoint.offsetU, bodyMapV + orbitPoint.offsetV);
 			if ((orbitPoint.depth <= 0F) != frontHalf) {
@@ -743,11 +744,10 @@ public class GUIMachineStardar extends GuiInfoContainer {
 		return body != null && currentBody != null && body == currentBody;
 	}
 
-	private void drawArtificialSatelliteOrbitHalf(CelestialBody body, float bodyMapU, float bodyMapV, float radiusMapPx, int frequency, boolean frontHalf) {
-		float[] color = body.color != null && body.color.length >= 3 ? body.color : null;
-		float r = color != null ? color[0] : 0.8F;
-		float g = color != null ? color[1] : 0.8F;
-		float b = color != null ? color[2] : 0.8F;
+	private void drawArtificialSatelliteOrbitHalf(float bodyMapU, float bodyMapV, float baseRadiusMapPx, int frequency, Satellite satellite, boolean frontHalf) {
+		float r = MathHelper.clamp_float(satellite.colorR, 0F, 1F);
+		float g = MathHelper.clamp_float(satellite.colorG, 0F, 1F);
+		float b = MathHelper.clamp_float(satellite.colorB, 0F, 1F);
 
 		GL11.glDisable(GL11.GL_TEXTURE_2D);
 		GL11.glLineWidth(1F);
@@ -762,7 +762,7 @@ public class GUIMachineStardar extends GuiInfoContainer {
 
 		for (int i = 0; i <= 64; i++) {
 			float angle = (float) (2D * Math.PI * ((double) i / 64D));
-			SatelliteOrbitPoint orbitPoint = getArtificialSatelliteOrbitPoint(frequency, angle, radiusMapPx);
+			SatelliteOrbitPoint orbitPoint = getArtificialSatelliteOrbitPoint(satellite, frequency, angle, baseRadiusMapPx);
 			float currX = mapToScreenX(bodyMapU + orbitPoint.offsetU, bodyMapV + orbitPoint.offsetV);
 			float currY = mapToScreenY(bodyMapU + orbitPoint.offsetU, bodyMapV + orbitPoint.offsetV);
 			float currDepth = orbitPoint.depth;
@@ -828,34 +828,25 @@ public class GUIMachineStardar extends GuiInfoContainer {
 		GL11.glColor4f(1F, 1F, 1F, 1F);
 	}
 
-	private SatelliteOrbitPoint getArtificialSatelliteOrbitPoint(int frequency, float angle, float radiusMapPx) {
-		float rotX = (float) Math.toRadians(-45F + positiveMod(frequency, 800) * 0.1F);
-		float rotY = (float) Math.toRadians(positiveMod(frequency, 50) * 0.1F - 20F);
-		float rotZ = (float) Math.toRadians(positiveMod(frequency, 80) * 0.1F - 2.5F);
+	private SatelliteOrbitPoint getArtificialSatelliteOrbitPoint(Satellite satellite, int frequency, float angle, float baseRadiusMapPx) {
+		float altitude = satellite != null ? Math.max(1.0F, satellite.altitude) : Satellite.DEFAULT_ALTITUDE_KM;
+		double inclination = Math.toRadians(satellite != null ? satellite.inclination : Satellite.DEFAULT_INCLINATION);
+		double ascendingNode = Math.toRadians(positiveMod(frequency, 360));
+		double radiusMapPx = baseRadiusMapPx * (altitude / Satellite.DEFAULT_ALTITUDE_KM);
 
-		float x = 0F;
-		float y = radiusMapPx * MathHelper.cos(angle);
-		float z = radiusMapPx * MathHelper.sin(angle);
+		double x = radiusMapPx * MathHelper.cos(angle);
+		double y = radiusMapPx * MathHelper.sin(angle);
+		double z = Math.sin(inclination) * y;
+		y = Math.cos(inclination) * y;
 
-		float cosZ = MathHelper.cos(rotZ);
-		float sinZ = MathHelper.sin(rotZ);
-		float xz = x * cosZ - y * sinZ;
-		float yz = x * sinZ + y * cosZ;
+		double px = x;
+		x = Math.cos(ascendingNode) * px - Math.sin(ascendingNode) * y;
+		y = Math.sin(ascendingNode) * px + Math.cos(ascendingNode) * y;
 
-		float cosY = MathHelper.cos(rotY);
-		float sinY = MathHelper.sin(rotY);
-		float xy = xz * cosY + z * sinY;
-		float zy = -xz * sinY + z * cosY;
+		y -= z * 0.35D;
+		y *= 0.8D;
 
-		float cosX = MathHelper.cos(rotX);
-		float sinX = MathHelper.sin(rotX);
-		float yx = yz * cosX - zy * sinX;
-		float zx = yz * sinX + zy * cosX;
-
-		yx -= zx * 0.35F;
-		yx *= 0.8F;
-
-		return new SatelliteOrbitPoint(xy, yx, zx);
+		return new SatelliteOrbitPoint((float) x, (float) y, (float) z);
 	}
 
 	private float getArtificialSatelliteAngle() {
