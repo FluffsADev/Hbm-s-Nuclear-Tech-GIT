@@ -244,7 +244,7 @@ public class SkyProviderCelestial extends IRenderHandler {
 				// JEFF BOZOS WOULD LIKE TO KNOW YOUR LOCATION
 				// ... to send you a pakedge :)))
 				if(world.provider.dimensionId == 0) {
-					Satellite.renderDefault(partialTicks, world, mc, solarAngle, 1916169, 1.0F, 0.534F, 0.385F, Satellite.DEFAULT_INCLINATION, Satellite.DEFAULT_ALTITUDE_KM);
+					Satellite.renderDefault(partialTicks, world, mc, solarAngle, 1916169, 1.0F, 0.534F, 0.385F, Satellite.DEFAULT_INCLINATION, Satellite.DEFAULT_ALTITUDE_KM, Satellite.DEFAULT_BLINK_PERIOD);
 				}
 
 				// Light up the sky

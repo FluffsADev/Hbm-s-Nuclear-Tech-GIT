@@ -31,14 +31,10 @@ public abstract class Satellite {
 	public static final List<Class<? extends Satellite>> satellites = new ArrayList<>();
 	public static final HashMap<Item, Class<? extends Satellite>> itemToClass = new HashMap<>();
 	private static final HashMap<Class<? extends Satellite>, float[]> satelliteColors = new HashMap<>();
-	public static final String NBT_INCLINATION = "satInclination";
-	public static final String NBT_ALTITUDE = "satAltitude";
-	public static final String NBT_OWNER = "satOwner";
-	public static final String NBT_COLOR_R = "satColorR";
-	public static final String NBT_COLOR_G = "satColorG";
-	public static final String NBT_COLOR_B = "satColorB";
 	public static final float DEFAULT_INCLINATION = 0F;
 	public static final float DEFAULT_ALTITUDE_KM = AstronomyUtil.DEFAULT_ALTITUDE_KM;
+	public static final float DEFAULT_BLINK_PERIOD = 0.0F;
+	public static final float MIN_BLINK_PERIOD = 0.3F;
 	public static final String DEFAULT_OWNER = "None";
 
 	private static final ResourceLocation satelliteTexture = new ResourceLocation(RefStrings.MODID, "textures/misc/space/satellite.png");
@@ -66,6 +62,7 @@ public abstract class Satellite {
 	public Interfaces satIface = Interfaces.NONE;
 	public float inclination = DEFAULT_INCLINATION;
 	public float altitude = DEFAULT_ALTITUDE_KM;
+	public float blinkPeriod = DEFAULT_BLINK_PERIOD;
 	public String owner = DEFAULT_OWNER;
 	public float colorR;
 	public float colorG;
@@ -111,12 +108,13 @@ public abstract class Satellite {
 		if(nbt == null) {
 			nbt = new NBTTagCompound();
 			float[] color = getRegisteredColor(stack.getItem());
-			nbt.setFloat(NBT_INCLINATION, DEFAULT_INCLINATION);
-			nbt.setFloat(NBT_ALTITUDE, DEFAULT_ALTITUDE_KM);
-			nbt.setString(NBT_OWNER, DEFAULT_OWNER);
-			nbt.setFloat(NBT_COLOR_R, color[0]);
-			nbt.setFloat(NBT_COLOR_G, color[1]);
-			nbt.setFloat(NBT_COLOR_B, color[2]);
+			nbt.setFloat("satInclination", DEFAULT_INCLINATION);
+			nbt.setFloat("satAltitude", DEFAULT_ALTITUDE_KM);
+			nbt.setFloat("satBlink", DEFAULT_BLINK_PERIOD);
+			nbt.setString("satOwner", DEFAULT_OWNER);
+			nbt.setFloat("satColorR", color[0]);
+			nbt.setFloat("satColorG", color[1]);
+			nbt.setFloat("satColorB", color[2]);
 			stack.stackTagCompound = nbt;
 		}
 
@@ -124,46 +122,54 @@ public abstract class Satellite {
 	}
 
 	public static float getInclination(ItemStack stack) {
-		return getItemData(stack).getFloat(NBT_INCLINATION);
+		return getItemData(stack).getFloat("satInclination");
 	}
 
 	public static float getAltitude(ItemStack stack) {
-		return getItemData(stack).getFloat(NBT_ALTITUDE);
+		return getItemData(stack).getFloat("satAltitude");
 	}
 
 	public static String getOwner(ItemStack stack) {
-		return getItemData(stack).getString(NBT_OWNER);
+		return getItemData(stack).getString("satOwner");
 	}
 
 	public static float getColorR(ItemStack stack) {
-		return getItemData(stack).getFloat(NBT_COLOR_R);
+		return getItemData(stack).getFloat("satColorR");
 	}
 
 	public static float getColorG(ItemStack stack) {
-		return getItemData(stack).getFloat(NBT_COLOR_G);
+		return getItemData(stack).getFloat("satColorG");
 	}
 
 	public static float getColorB(ItemStack stack) {
-		return getItemData(stack).getFloat(NBT_COLOR_B);
+		return getItemData(stack).getFloat("satColorB");
+	}
+
+	public static float getBlinkPeriod(ItemStack stack) {
+		return sanitizeBlinkPeriod(getItemData(stack).getFloat("satBlink"));
 	}
 
 	public static void setInclination(ItemStack stack, float inclination) {
-		getItemData(stack).setFloat(NBT_INCLINATION, inclination);
+		getItemData(stack).setFloat("satInclination", inclination);
 	}
 
 	public static void setAltitude(ItemStack stack, float altitude) {
-		getItemData(stack).setFloat(NBT_ALTITUDE, altitude);
+		getItemData(stack).setFloat("satAltitude", altitude);
 	}
 
 	public static void setOwner(ItemStack stack, String owner) {
-		getItemData(stack).setString(NBT_OWNER, owner);
+		getItemData(stack).setString("satOwner", owner);
 	}
 
 	public static void setColor(ItemStack stack, float r, float g, float b) {
 		NBTTagCompound nbt = getItemData(stack);
-		nbt.setFloat(NBT_COLOR_R, r);
-		nbt.setFloat(NBT_COLOR_G, g);
-		nbt.setFloat(NBT_COLOR_B, b);
+		nbt.setFloat("satColorR", r);
+		nbt.setFloat("satColorG", g);
+		nbt.setFloat("satColorB", b);
+	}
+
+	public static void setBlinkPeriod(ItemStack stack, float blinkPeriod) {
+		getItemData(stack).setFloat("satBlink", sanitizeBlinkPeriod(blinkPeriod));
 	}
 
 	public static void copyItemData(ItemStack from, ItemStack to) {
@@ -172,6 +178,7 @@ public abstract class Satellite {
 		setAltitude(to, getAltitude(from));
 		setOwner(to, getOwner(from));
 		setColor(to, getColorR(from), getColorG(from), getColorB(from));
+		setBlinkPeriod(to, getBlinkPeriod(from));
 	}
 
 	public static void orbit(World world, int id, int freq, double x, double y, double z, ItemStack stack) {
@@ -188,6 +195,7 @@ public abstract class Satellite {
 			
 			sat.inclination = getInclination(stack);
 			sat.altitude = getAltitude(stack);
+			sat.blinkPeriod = getBlinkPeriod(stack);
 			sat.owner = getOwner(stack);
 			sat.colorR = getColorR(stack);
 			sat.colorG = getColorG(stack);
@@ -228,21 +236,23 @@ public abstract class Satellite {
 	}
 
 	public void writeToNBT(NBTTagCompound nbt) {
-		nbt.setFloat(NBT_INCLINATION, inclination);
-		nbt.setFloat(NBT_ALTITUDE, altitude);
-		nbt.setString(NBT_OWNER, owner);
-		nbt.setFloat(NBT_COLOR_R, colorR);
-		nbt.setFloat(NBT_COLOR_G, colorG);
-		nbt.setFloat(NBT_COLOR_B, colorB);
+		nbt.setFloat("satInclination", inclination);
+		nbt.setFloat("satAltitude", altitude);
+		nbt.setFloat("satBlink", blinkPeriod);
+		nbt.setString("satOwner", owner);
+		nbt.setFloat("satColorR", colorR);
+		nbt.setFloat("satColorG", colorG);
+		nbt.setFloat("satColorB", colorB);
 	}
 	public void readFromNBT(NBTTagCompound nbt) {
-		inclination = nbt.getFloat(NBT_INCLINATION);
-		altitude = nbt.hasKey(NBT_ALTITUDE) ? nbt.getFloat(NBT_ALTITUDE) : DEFAULT_ALTITUDE_KM;
-		owner = nbt.hasKey(NBT_OWNER) ? nbt.getString(NBT_OWNER) : DEFAULT_OWNER;
+		inclination = nbt.getFloat("satInclination");
+		altitude = nbt.hasKey("satAltitude") ? nbt.getFloat("satAltitude") : DEFAULT_ALTITUDE_KM;
+		blinkPeriod = nbt.hasKey("satBlink") ? sanitizeBlinkPeriod(nbt.getFloat("satBlink")) : DEFAULT_BLINK_PERIOD;
+		owner = nbt.hasKey("satOwner") ? nbt.getString("satOwner") : DEFAULT_OWNER;
 		float[] registeredColor = getRegisteredColor(getClass());
-		colorR = nbt.hasKey(NBT_COLOR_R) ? nbt.getFloat(NBT_COLOR_R) : registeredColor[0];
-		colorG = nbt.hasKey(NBT_COLOR_G) ? nbt.getFloat(NBT_COLOR_G) : registeredColor[1];
-		colorB = nbt.hasKey(NBT_COLOR_B) ? nbt.getFloat(NBT_COLOR_B) : registeredColor[2];
+		colorR = nbt.hasKey("satColorR") ? nbt.getFloat("satColorR") : registeredColor[0];
+		colorG = nbt.hasKey("satColorG") ? nbt.getFloat("satColorG") : registeredColor[1];
+		colorB = nbt.hasKey("satColorB") ? nbt.getFloat("satColorB") : registeredColor[2];
 	}
 
 	public void serialize(ByteBuf buf) {
@@ -252,6 +262,7 @@ public abstract class Satellite {
 		buf.writeFloat(colorR);
 		buf.writeFloat(colorG);
 		buf.writeFloat(colorB);
+		buf.writeFloat(blinkPeriod);
 	}
 	public void deserialize(ByteBuf buf) {
 		inclination = buf.readFloat();
@@ -260,6 +271,7 @@ public abstract class Satellite {
 		colorR = buf.readFloat();
 		colorG = buf.readFloat();
 		colorB = buf.readFloat();
+		blinkPeriod = sanitizeBlinkPeriod(buf.readFloat());
 	}
 
 	/**
@@ -287,10 +299,10 @@ public abstract class Satellite {
 
 
 	public void render(float partialTicks, WorldClient world, Minecraft mc, float solarAngle, long id) {
-		renderDefault(partialTicks, world, mc, solarAngle, id, colorR, colorG, colorB, inclination, altitude);
+		renderDefault(partialTicks, world, mc, solarAngle, id, colorR, colorG, colorB, inclination, altitude, blinkPeriod);
 	}
 
-	public static void renderDefault(float partialTicks, WorldClient world, Minecraft mc, float solarAngle, long seed, float r, float g, float b, float inclination, float altitude) {
+	public static void renderDefault(float partialTicks, WorldClient world, Minecraft mc, float solarAngle, long seed, float r, float g, float b, float inclination, float altitude, float blinkPeriod) {
 		Tessellator tessellator = Tessellator.instance;
 
 		double ticks = (double)(System.currentTimeMillis() % (600 * 50)) / 50;
@@ -304,7 +316,7 @@ public abstract class Satellite {
 			GL11.glRotatef(inclination, 0.0F, 0.0F, 1.0F);
 			GL11.glRotated((ticks / 600.0D) * -360.0D + (seed % 360), 1.0F, 0.0F, 0.0F);
 
-			GL11.glColor4f(r, g, b, 1.0F);
+			GL11.glColor4f(r, g, b, getBlinkAlpha(blinkPeriod));
 
 			mc.renderEngine.bindTexture(satelliteTexture);
 
@@ -324,6 +336,22 @@ public abstract class Satellite {
 	// killing myself
 	public float getInterp() {
 		return 0;
+	}
+
+	public static float sanitizeBlinkPeriod(float blinkPeriod) {
+		if(Float.isNaN(blinkPeriod) || Float.isInfinite(blinkPeriod) || blinkPeriod <= 0.0F) {
+			return DEFAULT_BLINK_PERIOD;
+		}
+		return Math.max(MIN_BLINK_PERIOD, blinkPeriod);
+	}
+
+	private static float getBlinkAlpha(float blinkPeriod) {
+		float sanitizedBlink = sanitizeBlinkPeriod(blinkPeriod);
+		if(sanitizedBlink <= 0.0F) {
+			return 1.0F;
+		}
+		long cycleMillis = (long)(sanitizedBlink * 1000.0F);
+		return 1.0F - (float)(System.currentTimeMillis() % cycleMillis) / cycleMillis;
 	}
 
 	private static float[] getRegisteredColor(Item item) {
