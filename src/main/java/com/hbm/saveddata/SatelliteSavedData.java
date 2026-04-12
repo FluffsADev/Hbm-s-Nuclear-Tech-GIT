@@ -108,6 +108,9 @@ public class SatelliteSavedData extends WorldSavedData {
 		if(data.getSatFromFreq(freq) != null) {
 			return data;
 		}
+		if(worldObj.provider.dimensionId == -1 || worldObj.provider.dimensionId == 1) {
+			return data;
+		}
 
 		for(CelestialBody body : CelestialBody.getLandableBodies()) {
 			World bodyWorld = DimensionManager.getWorld(body.dimensionId);
