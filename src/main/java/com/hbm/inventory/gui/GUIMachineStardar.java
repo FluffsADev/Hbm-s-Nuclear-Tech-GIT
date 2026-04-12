@@ -118,12 +118,17 @@ public class GUIMachineStardar extends GuiInfoContainer {
 
 	private final List<BodyRenderInfo> renderedBodies = new ArrayList<BodyRenderInfo>();
 	private final List<BodyLabelRenderInfo> renderedBodyLabels = new ArrayList<BodyLabelRenderInfo>();
+	private final List<SatelliteRenderInfo> renderedSatellites = new ArrayList<SatelliteRenderInfo>();
 	private final BodyPosition trackedBodyPosition = new BodyPosition();
+	private final BodyPosition trackedSatellitePosition = new BodyPosition();
 
 	private final CelestialBody currentBody;
 	private CelestialBody focusedBody;
 	private CelestialBody focusAnimationBody;
 	private BodyRenderInfo hoveredBody;
+	private SatelliteRenderInfo hoveredSatellite;
+	private SatelliteRenderInfo focusedSatellite;
+	private Integer focusedSatelliteFrequency;
 	private CelestialBody landingBody;
 
 	private boolean landingMode;
@@ -201,6 +206,7 @@ public class GUIMachineStardar extends GuiInfoContainer {
 		this.drawCustomInfoStat(mouseX, mouseY, guiLeft + 129, guiTop + 124, 18, 18, mouseX, mouseY, "Focus current body");
 		this.drawCustomInfoStat(mouseX, mouseY, guiLeft + 129, guiTop + 143, 18, 18, mouseX, mouseY, "Program new orbital station into drive");
 		this.drawCustomInfoStat(mouseX, mouseY, guiLeft + 149, guiTop + 143, 18, 18, mouseX, mouseY, "Program current body into drive");
+		drawSatelliteTooltip(mouseX, mouseY);
 
 	}
 
@@ -229,6 +235,12 @@ public class GUIMachineStardar extends GuiInfoContainer {
 	}
 
 	private void drawMapForeground() {
+		if (focusedSatelliteFrequency != null) {
+			fontRendererObj.drawString("Focus: Satellite", 10, 128, 0x00FF00);
+			fontRendererObj.drawString("Right click to unfocus", 10, 148, 0x00FF00);
+			return;
+		}
+
 		CelestialBody activeFocus = getRenderFocusBody();
 		CelestialBody displayBody = hoveredBody != null ? hoveredBody.body : activeFocus;
 
@@ -315,6 +327,9 @@ public class GUIMachineStardar extends GuiInfoContainer {
 
 		renderedBodies.clear();
 		renderedBodyLabels.clear();
+		renderedSatellites.clear();
+		hoveredSatellite = null;
+		focusedSatellite = null;
 
 		CelestialBody root = SolarSystem.kerbol;
 		if (root == null) return;
@@ -344,6 +359,7 @@ public class GUIMachineStardar extends GuiInfoContainer {
 		GL11.glPopAttrib();
 
 		hoveredBody = findBodyUnderCursor(lastMouseX, lastMouseY);
+		hoveredSatellite = findSatelliteUnderCursor(lastMouseX, lastMouseY);
 	}
 
 	private void drawSurfaceMap() {
@@ -738,6 +754,12 @@ public class GUIMachineStardar extends GuiInfoContainer {
 
 			mc.getTextureManager().bindTexture(getArtificialSatelliteTexture(satellite));
 			drawPartialTex(screenX - iconHalf, screenY - iconHalf, iconSize, iconSize, 0F, 0F, 1F, 1F);
+
+			SatelliteRenderInfo renderInfo = new SatelliteRenderInfo(frequency.intValue(), satellite, bodyMapU + orbitPoint.offsetU, bodyMapV + orbitPoint.offsetV, iconSize);
+			renderedSatellites.add(renderInfo);
+			if (focusedSatelliteFrequency != null && focusedSatelliteFrequency.intValue() == renderInfo.frequency) {
+				focusedSatellite = renderInfo;
+			}
 		}
 	}
 
@@ -1204,6 +1226,28 @@ public class GUIMachineStardar extends GuiInfoContainer {
 		return nearest;
 	}
 
+	private SatelliteRenderInfo findSatelliteUnderCursor(int mouseX, int mouseY) {
+		SatelliteRenderInfo nearest = null;
+		float nearestDistSq = Float.MAX_VALUE;
+
+		for (int i = renderedSatellites.size() - 1; i >= 0; i--) {
+			SatelliteRenderInfo satelliteInfo = renderedSatellites.get(i);
+			float satelliteX = mapToScreenX(satelliteInfo.mapU, satelliteInfo.mapV);
+			float satelliteY = mapToScreenY(satelliteInfo.mapU, satelliteInfo.mapV);
+			float clickableRadius = Math.max(4F, satelliteInfo.drawSize * 0.75F);
+			float dx = mouseX - satelliteX;
+			float dy = mouseY - satelliteY;
+			float distanceSq = dx * dx + dy * dy;
+
+			if (distanceSq <= clickableRadius * clickableRadius && distanceSq < nearestDistSq) {
+				nearestDistSq = distanceSq;
+				nearest = satelliteInfo;
+			}
+		}
+
+		return nearest;
+	}
+
 	@Override
 	public void handleMouseInput() {
 		super.handleMouseInput();
@@ -1309,6 +1353,7 @@ public class GUIMachineStardar extends GuiInfoContainer {
 			mc.getSoundHandler().playSound(PositionedSoundRecord.func_147674_a(new ResourceLocation("gui.button.press"), 1.0F));
 			CelestialBody body = CelestialBody.getBody(star.getWorldObj());
 			if (body != null && body.getStar() != null) {
+				clearSatelliteFocus();
 				if (landingMode) {
 					exitLandingMode();
 				}
@@ -1347,12 +1392,24 @@ public class GUIMachineStardar extends GuiInfoContainer {
 		}
 
 		if (button == 1) {
+			if (focusedSatelliteFrequency != null) {
+				clearSatelliteFocus();
+				draggingMap = false;
+				return;
+			}
 			beginUnfocusAnimation();
 			draggingMap = false;
 			return;
 		}
 
 		if (button != 0) {
+			return;
+		}
+
+		SatelliteRenderInfo clickedSatellite = findSatelliteUnderCursor(mouseX, mouseY);
+		if (clickedSatellite != null) {
+			focusSatellite(clickedSatellite);
+			draggingMap = false;
 			return;
 		}
 
@@ -1466,12 +1523,13 @@ public class GUIMachineStardar extends GuiInfoContainer {
 			return;
 		}
 
+		clearSatelliteFocus();
 		mc.getSoundHandler().playSound(PositionedSoundRecord.func_147674_a(new ResourceLocation("gui.button.press"), 1.0F));
 		configureFocusAnimation(bodyInfo.body, bodyInfo.body, true, 500, bodyInfo.mapU, bodyInfo.mapV, getFocusZoomForBody(bodyInfo.body));
 	}
 
 	private void beginUnfocusAnimation() {
-		if (!isFocusContextActive()) {
+		if (!hasBodyFocusContext()) {
 			return;
 		}
 
@@ -1505,7 +1563,11 @@ public class GUIMachineStardar extends GuiInfoContainer {
 	}
 
 	private void updateFocusView(CelestialBody starBody, float starCenterU, float starCenterV, float systemOrbitScalePxPerKm, double worldTicks) {
-		if (!isFocusContextActive()) {
+		if (updateFocusedSatelliteView(starBody, starCenterU, starCenterV, systemOrbitScalePxPerKm, worldTicks)) {
+			return;
+		}
+
+		if (!hasBodyFocusContext()) {
 			return;
 		}
 
@@ -1558,6 +1620,20 @@ public class GUIMachineStardar extends GuiInfoContainer {
 		}
 	}
 
+	private boolean updateFocusedSatelliteView(CelestialBody starBody, float starCenterU, float starCenterV, float systemOrbitScalePxPerKm, double worldTicks) {
+		if (focusedSatelliteFrequency == null) {
+			return false;
+		}
+
+		if (!findSatelliteMapPosition(starBody, starCenterU, starCenterV, systemOrbitScalePxPerKm, worldTicks, focusedSatelliteFrequency.intValue(), trackedSatellitePosition)) {
+			clearSatelliteFocus();
+			return false;
+		}
+
+		setViewFromCenter(trackedSatellitePosition.mapU, trackedSatellitePosition.mapV, mapZoom);
+		return true;
+	}
+
 	private boolean findBodyMapPosition(CelestialBody body, float bodyMapU, float bodyMapV, float systemOrbitScalePxPerKm,
 										double worldTicks, CelestialBody targetBody, BodyPosition outPosition) {
 		if (body == targetBody) {
@@ -1581,6 +1657,37 @@ public class GUIMachineStardar extends GuiInfoContainer {
 		}
 
 		return false;
+	}
+
+	private boolean findSatelliteMapPosition(CelestialBody starBody, float starCenterU, float starCenterV, float systemOrbitScalePxPerKm, double worldTicks, int frequency, BodyPosition outPosition) {
+		if (currentBody == null || outPosition == null) {
+			return false;
+		}
+
+		Map<Integer, Satellite> satellites = SatelliteSavedData.getClientSats();
+		if (satellites == null || satellites.isEmpty()) {
+			return false;
+		}
+
+		Satellite satellite = satellites.get(frequency);
+		if (satellite == null) {
+			return false;
+		}
+
+		if (!findBodyMapPosition(starBody, starCenterU, starCenterV, systemOrbitScalePxPerKm, worldTicks, currentBody, trackedBodyPosition)) {
+			return false;
+		}
+
+		float baseOrbitRadiusMapPx = getBodySizePxAt1x(currentBody) * SATELLITE_ORBIT_RADIUS_SCALE;
+		if (baseOrbitRadiusMapPx <= 0F) {
+			return false;
+		}
+
+		float satelliteAngle = Satellite.applyFrequencyToOrbitAngle(frequency, getArtificialSatelliteAngle(), (float)(2D * Math.PI));
+		SatelliteOrbitPoint orbitPoint = getArtificialSatelliteOrbitPoint(satellite, satelliteAngle, baseOrbitRadiusMapPx);
+		outPosition.mapU = trackedBodyPosition.mapU + orbitPoint.offsetU;
+		outPosition.mapV = trackedBodyPosition.mapV + orbitPoint.offsetV;
+		return true;
 	}
 
 	private void zoomAtMouse(int mouseX, int mouseY, float oldZoom, float newZoom) {
@@ -1669,8 +1776,55 @@ public class GUIMachineStardar extends GuiInfoContainer {
 		focusAnimTrackingInitialized = false;
 	}
 
-	private boolean isFocusContextActive() {
+	private void clearSatelliteFocus() {
+		focusedSatelliteFrequency = null;
+		focusedSatellite = null;
+	}
+
+	private void focusSatellite(SatelliteRenderInfo satelliteInfo) {
+		if (satelliteInfo == null || satelliteInfo.satellite == null) {
+			return;
+		}
+		if (focusedSatelliteFrequency != null && focusedSatelliteFrequency.intValue() == satelliteInfo.frequency) {
+			return;
+		}
+
+		cancelFocusState();
+		focusedSatelliteFrequency = satelliteInfo.frequency;
+		focusedSatellite = satelliteInfo;
+		setViewFromCenter(satelliteInfo.mapU, satelliteInfo.mapV, mapZoom);
+		mc.getSoundHandler().playSound(PositionedSoundRecord.func_147674_a(new ResourceLocation("gui.button.press"), 1.0F));
+	}
+
+	private void drawSatelliteTooltip(int mouseX, int mouseY) {
+		if (landingMode || !isMouseInsideMap(mouseX, mouseY)) {
+			return;
+		}
+
+		SatelliteRenderInfo satelliteInfo = hoveredSatellite != null ? hoveredSatellite : focusedSatellite;
+		if (satelliteInfo == null || satelliteInfo.satellite == null) {
+			return;
+		}
+
+		Satellite satellite = satelliteInfo.satellite;
+		String owner = satellite.owner != null && !satellite.owner.isEmpty() ? satellite.owner : Satellite.DEFAULT_OWNER;
+		List<String> tooltip = new ArrayList<String>(3);
+		tooltip.add(I18nUtil.resolveKey("item.sat.desc.owner") + ": " + owner);
+		tooltip.add(I18nUtil.resolveKey("item.sat.desc.altitude") + ": " + formatValue(Satellite.sanitizeAltitude(satellite.altitude)) + "km");
+		tooltip.add(I18nUtil.resolveKey("item.sat.desc.inclination") + ": " + formatValue(Satellite.sanitizeInclination(satellite.inclination)) + "\u00B0");
+		func_146283_a(tooltip, mouseX, mouseY);
+	}
+
+	private boolean isMouseInsideMap(int mouseX, int mouseY) {
+		return mouseX >= guiLeft + MAP_X && mouseX < guiLeft + MAP_X + MAP_W && mouseY >= guiTop + MAP_Y && mouseY < guiTop + MAP_Y + MAP_H;
+	}
+
+	private boolean hasBodyFocusContext() {
 		return focusedBody != null || focusAnimationActive;
+	}
+
+	private boolean isFocusContextActive() {
+		return hasBodyFocusContext() || focusedSatelliteFrequency != null;
 	}
 
 	private void setViewFromCenter(float centerU, float centerV, float zoom) {
@@ -2107,6 +2261,10 @@ public class GUIMachineStardar extends GuiInfoContainer {
 		return body.name.substring(0, 1).toUpperCase() + body.name.substring(1);
 	}
 
+	private static String formatValue(float value) {
+		return value == (int) value ? Integer.toString((int) value) : Float.toString(value);
+	}
+
 	private int colorArrayToRgb(float[] color) {
 		if (color == null || color.length < 3) {
 			return 0xFFFFFFFF;
@@ -2174,6 +2332,22 @@ public class GUIMachineStardar extends GuiInfoContainer {
 
 		BodyRenderInfo(CelestialBody body, float mapU, float mapV, float drawSize) {
 			this.body = body;
+			this.mapU = mapU;
+			this.mapV = mapV;
+			this.drawSize = drawSize;
+		}
+	}
+
+	private static class SatelliteRenderInfo {
+		final int frequency;
+		final Satellite satellite;
+		final float mapU;
+		final float mapV;
+		final float drawSize;
+
+		SatelliteRenderInfo(int frequency, Satellite satellite, float mapU, float mapV, float drawSize) {
+			this.frequency = frequency;
+			this.satellite = satellite;
 			this.mapU = mapU;
 			this.mapV = mapV;
 			this.drawSize = drawSize;

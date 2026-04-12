@@ -4661,6 +4661,9 @@ item.sat_resonator.name=Спутник с Зен-Резонатором
 item.sat_scanner.name=Спутник с модулем глубинно-ресурсного сканирования
 
 item.sat.desc.frequency=Частота спутника
+item.sat.desc.owner=Владелец спутника
+item.sat.desc.inclination=Наклонение спутника
+item.sat.desc.altitude=Высота орбиты спутника
 item.sat.desc.foeq=Даёт тебе достижение. Это всё.
 item.sat.desc.gerald.single_use=Одноразовое.
 item.sat.desc.gerald.orbital_module=Требует орбитальный модуль.

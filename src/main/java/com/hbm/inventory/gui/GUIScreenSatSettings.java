@@ -30,6 +30,7 @@ import com.hbm.saveddata.satellites.SatelliteRadar;
 import com.hbm.saveddata.satellites.SatelliteResonator;
 import com.hbm.saveddata.satellites.SatelliteScanner;
 import com.hbm.util.AstronomyUtil;
+import com.hbm.util.i18n.I18nUtil;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
@@ -116,9 +117,9 @@ public class GUIScreenSatSettings extends GuiScreen {
 		int g = toColorChannel(Satellite.getColorG(held));
 		int b = toColorChannel(Satellite.getColorB(held));
 
-		drawLeftAligned(10, 130, 140, "Owner: " + Satellite.getOwner(held), 0x00FF00);
-		drawLeftAligned(10, 145, 155, "Altitude: " + formatValue(Satellite.getAltitude(held)) + "km", 0x00FF00);
-		drawLeftAligned(10, 160, 170, "Inclination: " + formatValue(Satellite.getInclination(held)) + "\u00B0", 0x00FF00);
+		drawLeftAligned(10, 130, 140, I18nUtil.resolveKey("item.sat.desc.owner") + ": " + Satellite.getOwner(held), 0x00FF00);
+		drawLeftAligned(10, 145, 155, I18nUtil.resolveKey("item.sat.desc.altitude") + ": " + formatValue(Satellite.getAltitude(held)) + "km", 0x00FF00);
+		drawLeftAligned(10, 160, 170, I18nUtil.resolveKey("item.sat.desc.inclination") + ": " + formatValue(Satellite.getInclination(held)) + "\u00B0", 0x00FF00);
 		drawRect(guiLeft + 81, guiTop + 176, guiLeft + 110, guiTop + 199, 0xFF000000 | (r << 16) | (g << 8) | b);
 		drawRightAligned(110, 205, 214, formatValue(Satellite.getBlinkPeriod(held)) + "s", 0xFFFFFF, 2F / 3F);
 		Minecraft.getMinecraft().getTextureManager().bindTexture(texture);
