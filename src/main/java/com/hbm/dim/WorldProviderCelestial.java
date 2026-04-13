@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.Random;
 import java.util.List;
+import java.util.ListIterator;
 
 import com.hbm.config.GeneralConfig;
 import com.hbm.dim.SolarSystem.AstroMetric;
@@ -11,7 +12,6 @@ import com.hbm.dim.trait.CBT_Atmosphere;
 import com.hbm.dim.trait.CBT_Atmosphere.FluidEntry;
 import com.hbm.dim.trait.CBT_War;
 import com.hbm.dim.trait.CBT_Destroyed;
-import com.hbm.dim.trait.CBT_Invasion;
 import com.hbm.handler.ImpactWorldHandler;
 import com.hbm.handler.atmosphere.ChunkAtmosphereManager;
 import com.hbm.inventory.FluidStack;
@@ -90,22 +90,12 @@ public abstract class WorldProviderCelestial extends WorldProviderSurface {
 		isHellWorld = !worldObj.isRemote && pressure <= 0.2F && !Loader.isModLoaded(Compat.MOD_COFH);
 
 		if(worldObj.isRemote) {
-			EntityPlayer player = MainRegistry.proxy.me();
-			CBT_Invasion invasion = CelestialBody.getTrait(worldObj, CBT_Invasion.class);
-
-			if(invasion != null) {
-				for(int i = 0; i < meteors.size(); i++) {
-					meteors.get(i).update();
-				}
-				
-				if(worldObj.rand.nextInt(Math.max(1, 5 - invasion.wave)) == 0 && invasion.isInvading) {
-					Meteor meteor = new Meteor((player.posX + worldObj.rand.nextInt(16000)) - 8000, 2017,(player.posZ + worldObj.rand.nextInt(16000)) - 8000);
-					meteors.add(meteor);
-				}
-
-				meteors.removeIf(x -> x.isDead);
-			} else {
-				meteors.removeAll(meteors);
+			ListIterator<Meteor> iterator = meteors.listIterator();
+			while(iterator.hasNext()) {
+				Meteor meteor = iterator.next();
+				Meteor fragment = meteor.update(worldObj.rand);
+				if(meteor.isDead) iterator.remove();
+				if(fragment != null) iterator.add(fragment);
 			}
 		}
 
@@ -846,7 +836,7 @@ public abstract class WorldProviderCelestial extends WorldProviderSurface {
 	}
 	/// FISH ///
 
-	public class Meteor {
+	public static class Meteor {
 
 		public double posX;
 		public double posY;
@@ -875,14 +865,14 @@ public abstract class WorldProviderCelestial extends WorldProviderSurface {
 			this.motionZ = motionZ;
 		}
 
-		private void update() {
-			Random rand = new Random();
+		public static void addMeteor() {
+			EntityPlayer player = MainRegistry.proxy.me();
+			if(player == null) return;
 
-			if(this.type != MeteorType.SMOKE && this.type != MeteorType.FRAGMENT) {
-				Meteor meteor = new Meteor((this.posX + rand.nextInt(16)) - 8, (this.posY + rand.nextInt(16)), (this.posZ + rand.nextInt(16)) - 8, MeteorType.SMOKE, 0, 0, 0);
-				meteors.add(meteor);
-			}
+			meteors.add(new Meteor(player.posX + player.worldObj.rand.nextInt(16000) - 8000, 2017, player.posZ + player.worldObj.rand.nextInt(16000) - 8000));
+		}
 
+		private Meteor update(Random rand) {
 			if(this.posY <= 500 && this.type != MeteorType.SMOKE) {
 				this.isDead = true;
 			}
@@ -899,6 +889,12 @@ public abstract class WorldProviderCelestial extends WorldProviderSurface {
 			this.posX += this.motionX;
 			this.posY += this.motionY;
 			this.posZ += this.motionZ;
+
+			if(this.type != MeteorType.SMOKE && this.type != MeteorType.FRAGMENT) {
+				return new Meteor((this.posX + rand.nextInt(16)) - 8, (this.posY + rand.nextInt(16)), (this.posZ + rand.nextInt(16)) - 8, MeteorType.SMOKE, 0, 0, 0);
+			}
+
+			return null;
 		}
 	}
 
