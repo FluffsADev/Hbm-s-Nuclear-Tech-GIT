@@ -7420,5 +7420,6 @@ desc.util.warhead=Боеголовка
 desc.util.chip_inaccuracy=Неточность чипа
 desc.util.fin_inaccuracy=Неточность стабилизатора
 
-
+// Vitya Note: Здесь небольшой беспорядок в файле.
+// В следующем обновлении это исправлю...
 // last updated March 27th, 2026 by Vitya2127, approved by KimiKimi //
