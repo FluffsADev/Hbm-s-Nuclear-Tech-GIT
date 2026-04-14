@@ -340,7 +340,7 @@ public abstract class Satellite {
 		Tessellator tessellator = Tessellator.instance;
 
 		double ticks = (double)System.currentTimeMillis() / 50.0D;
-		float orbitAngle = applyFrequencyToOrbitAngle(seed, (ticks / 600.0D) * -360.0D, 360.0F);
+		float orbitAngle = applyFrequencyToOrbitAngle(seed, altitude, (ticks / 600.0D) * -360.0D, 360.0F);
 		float renderAltitude = Math.max(1.0F, altitude);
 
 		GL11.glPushMatrix();
@@ -367,13 +367,17 @@ public abstract class Satellite {
 		GL11.glPopMatrix();
 	}
 
-	public static float applyFrequencyToOrbitAngle(long frequency, double baseAngle, float fullRotation) {
-		double speed = ORBIT_SPEED_MIN + getFrequencyFloat(frequency, 0x9E3779B97F4A7C15L) * ORBIT_SPEED_RANGE;
+	public static float applyFrequencyToOrbitAngle(long frequency, float altitude, double baseAngle, float fullRotation) {
+		double speed = getAltitudeOrbitSpeed(altitude) * (ORBIT_SPEED_MIN + getFrequencyFloat(frequency, 0x9E3779B97F4A7C15L) * ORBIT_SPEED_RANGE);
 		double phase = getFrequencyFloat(frequency, 0xC2B2AE3D27D4EB4FL) * fullRotation;
 		double angle = baseAngle * speed + phase;
 		double wrapped = angle % fullRotation;
 		if(wrapped < 0.0D) wrapped += fullRotation;
 		return (float)wrapped;
+	}
+
+	private static double getAltitudeOrbitSpeed(float altitude) {
+		return Math.pow((double)DEFAULT_ALTITUDE_KM / Math.max(1.0D, altitude), 1.5D);
 	}
 
 	private static float getFrequencyFloat(long frequency, long salt) {
