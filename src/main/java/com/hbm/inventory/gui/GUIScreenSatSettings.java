@@ -83,9 +83,12 @@ public class GUIScreenSatSettings extends GuiScreen {
 
 	private final EntityPlayer player;
 	private final Map<ResourceLocation, Boolean> textureAlphaCache = new HashMap<ResourceLocation, Boolean>();
+	private static final long CONTROL_SYNC_INTERVAL_MS = 50L;
 	private int guiLeft;
 	private int guiTop;
 	private int draggedSlider = -1;
+	private NBTTagCompound pendingControlData;
+	private long nextControlSyncTimeMs;
 
 	public GUIScreenSatSettings(EntityPlayer player) {
 		this.player = player;
@@ -100,7 +103,13 @@ public class GUIScreenSatSettings extends GuiScreen {
 
 	@Override
 	public void updateScreen() {
-		if(getHeldSatellite() == null) player.closeScreen();
+		if(getHeldSatellite() == null) {
+			flushPendingControlData(true);
+			player.closeScreen();
+			return;
+		}
+
+		flushPendingControlData(false);
 	}
 
 	@Override
@@ -149,6 +158,7 @@ public class GUIScreenSatSettings extends GuiScreen {
 	@Override
 	protected void keyTyped(char c, int key) {
 		if(key == 1 || key == mc.gameSettings.keyBindInventory.getKeyCode()) {
+			flushPendingControlData(true);
 			mc.thePlayer.closeScreen();
 			return;
 		}
@@ -170,9 +180,8 @@ public class GUIScreenSatSettings extends GuiScreen {
 			boolean isBlinking = Satellite.isBlinking(held);
 			Satellite.setBlinking(held, !isBlinking);
 
-			NBTTagCompound data = new NBTTagCompound();
-			data.setBoolean("satIsBlinking", !isBlinking);
-			PacketDispatcher.wrapper.sendToServer(new NBTItemControlPacket(data));
+			queuePendingControlBoolean("satIsBlinking", !isBlinking);
+			flushPendingControlData(true);
 			return;
 		}
 
@@ -184,9 +193,8 @@ public class GUIScreenSatSettings extends GuiScreen {
 			String owner = player.getCommandSenderName();
 			Satellite.setOwner(held, owner);
 
-			NBTTagCompound data = new NBTTagCompound();
-			data.setString("satOwner", owner);
-			PacketDispatcher.wrapper.sendToServer(new NBTItemControlPacket(data));
+			queuePendingControlString("satOwner", owner);
+			flushPendingControlData(true);
 			return;
 		}
 
@@ -209,7 +217,8 @@ public class GUIScreenSatSettings extends GuiScreen {
 	protected void mouseMovedOrUp(int mouseX, int mouseY, int button) {
 		super.mouseMovedOrUp(mouseX, mouseY, button);
 
-		if(button == 0) {
+		if(button == 0 && draggedSlider >= 0) {
+			flushPendingControlData(true);
 			draggedSlider = -1;
 		}
 	}
@@ -229,6 +238,7 @@ public class GUIScreenSatSettings extends GuiScreen {
 		if(scrollField < 0) return;
 
 		adjustScrollField(scrollField, scroll > 0 ? 1 : -1);
+		flushPendingControlData(false);
 	}
 
 	private void drawLeftAligned(int x, int y1, int y2, String text, int color) {
@@ -284,12 +294,10 @@ public class GUIScreenSatSettings extends GuiScreen {
 		if(r == oldR && g == oldG && b == oldB) return;
 
 		Satellite.setColor(held, r / 255F, g / 255F, b / 255F);
-
-		NBTTagCompound data = new NBTTagCompound();
-		data.setInteger("satColorR", r);
-		data.setInteger("satColorG", g);
-		data.setInteger("satColorB", b);
-		PacketDispatcher.wrapper.sendToServer(new NBTItemControlPacket(data));
+		queuePendingControlInt("satColorR", r);
+		queuePendingControlInt("satColorG", g);
+		queuePendingControlInt("satColorB", b);
+		flushPendingControlData(false);
 	}
 
 	private void adjustScrollField(int field, int delta) {
@@ -315,9 +323,8 @@ public class GUIScreenSatSettings extends GuiScreen {
 			Satellite.setInclination(held, newValue);
 		}
 
-		NBTTagCompound data = new NBTTagCompound();
-		data.setFloat(altitude ? "satAltitude" : "satInclination", newValue);
-		PacketDispatcher.wrapper.sendToServer(new NBTItemControlPacket(data));
+		queuePendingControlFloat(altitude ? "satAltitude" : "satInclination", newValue);
+		flushPendingControlData(false);
 	}
 
 	private void adjustBlinkPeriod(int delta) {
@@ -331,10 +338,8 @@ public class GUIScreenSatSettings extends GuiScreen {
 		if(newValue == oldValue) return;
 
 		Satellite.setBlinkPeriod(held, newValue);
-
-		NBTTagCompound data = new NBTTagCompound();
-		data.setFloat("satBlink", newValue);
-		PacketDispatcher.wrapper.sendToServer(new NBTItemControlPacket(data));
+		queuePendingControlFloat("satBlink", newValue);
+		flushPendingControlData(false);
 	}
 
 	private int getScrollFieldAt(int mouseX, int mouseY) {
@@ -364,6 +369,44 @@ public class GUIScreenSatSettings extends GuiScreen {
 	private ItemStack getHeldSatellite() {
 		ItemStack held = player.getHeldItem();
 		return held != null && Satellite.isSatelliteItem(held.getItem()) ? held : null;
+	}
+
+	private void queuePendingControlInt(String key, int value) {
+		getPendingControlData().setInteger(key, value);
+	}
+
+	private void queuePendingControlFloat(String key, float value) {
+		getPendingControlData().setFloat(key, value);
+	}
+
+	private void queuePendingControlBoolean(String key, boolean value) {
+		getPendingControlData().setBoolean(key, value);
+	}
+
+	private void queuePendingControlString(String key, String value) {
+		getPendingControlData().setString(key, value);
+	}
+
+	private NBTTagCompound getPendingControlData() {
+		if(pendingControlData == null) pendingControlData = new NBTTagCompound();
+		return pendingControlData;
+	}
+
+	private void flushPendingControlData(boolean force) {
+		if(pendingControlData == null || pendingControlData.hasNoTags()) return;
+
+		long now = Minecraft.getSystemTime();
+		if(!force && now < nextControlSyncTimeMs) return;
+
+		PacketDispatcher.wrapper.sendToServer(new NBTItemControlPacket(pendingControlData));
+		pendingControlData = null;
+		nextControlSyncTimeMs = now + CONTROL_SYNC_INTERVAL_MS;
+	}
+
+	@Override
+	public void onGuiClosed() {
+		flushPendingControlData(true);
+		super.onGuiClosed();
 	}
 
 	private void drawOrbitPreview(ItemStack held, float partialTicks) {
