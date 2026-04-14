@@ -713,9 +713,7 @@ public class GUIMachineStardar extends GuiInfoContainer {
 			return;
 		}
 
-		CelestialBody activeFocus = getOrbitRuleFocusBody();
-		boolean drawOrbitLines = activeFocus != null && (activeFocus == body || activeFocus.parent == body);
-		if (drawOrbitLines) {
+		if (shouldDrawArtificialSatelliteOrbitLines(body)) {
 			for (Satellite satellite : satellites.values()) {
 				if (satellite == null) {
 					continue;
@@ -1803,8 +1801,13 @@ public class GUIMachineStardar extends GuiInfoContainer {
 		}
 
 		boolean focusedTooltip = focusedSatelliteFrequency != null && focusedSatellite != null;
-		if (!focusedTooltip && !isMouseInsideMap(mouseX, mouseY)) {
-			return;
+		if (!focusedTooltip) {
+			if (!isMouseInsideMap(mouseX, mouseY)) {
+				return;
+			}
+			if (!shouldDrawArtificialSatelliteOrbitLines(currentBody)) {
+				return;
+			}
 		}
 
 		SatelliteRenderInfo satelliteInfo = focusedTooltip ? focusedSatellite : hoveredSatellite;
@@ -1834,6 +1837,11 @@ public class GUIMachineStardar extends GuiInfoContainer {
 
 	private boolean isMouseInsideMap(int mouseX, int mouseY) {
 		return mouseX >= guiLeft + MAP_X && mouseX < guiLeft + MAP_X + MAP_W && mouseY >= guiTop + MAP_Y && mouseY < guiTop + MAP_Y + MAP_H;
+	}
+
+	private boolean shouldDrawArtificialSatelliteOrbitLines(CelestialBody body) {
+		CelestialBody activeFocus = getOrbitRuleFocusBody();
+		return body != null && activeFocus != null && (activeFocus == body || activeFocus.parent == body);
 	}
 
 	private CelestialBody getOrbitRuleFocusBody() {
