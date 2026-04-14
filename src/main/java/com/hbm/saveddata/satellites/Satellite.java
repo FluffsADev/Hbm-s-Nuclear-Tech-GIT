@@ -32,7 +32,8 @@ public abstract class Satellite {
 	public static final HashMap<Item, Class<? extends Satellite>> itemToClass = new HashMap<>();
 	private static final HashMap<Class<? extends Satellite>, float[]> satelliteColors = new HashMap<>();
 	public static final float DEFAULT_INCLINATION = 0F;
-	public static final float MAX_INCLINATION = 360.0F;
+	public static final float MIN_INCLINATION = -180.0F;
+	public static final float MAX_INCLINATION = 180.0F;
 	public static final float DEFAULT_ALTITUDE_KM = AstronomyUtil.DEFAULT_ALTITUDE_KM;
 	public static final float MIN_ALTITUDE_KM = 80.0F;
 	public static final float MAX_ALTITUDE_KM = 125.0F;
@@ -126,8 +127,9 @@ public abstract class Satellite {
 			nbt.setFloat("satColorB", color[2]);
 			stack.stackTagCompound = nbt;
 		} else {
+			nbt.setFloat("satInclination", nbt.hasKey("satInclination") ? nbt.getFloat("satInclination") : DEFAULT_INCLINATION);
 			if(!nbt.hasKey("satIsBlinking")) {
-				nbt.setBoolean("satIsBlinking", nbt.hasKey("satBlink") && nbt.getFloat("satBlink") > 0.0F);
+				nbt.setBoolean("satIsBlinking", DEFAULT_IS_BLINKING);
 			}
 			nbt.setFloat("satBlink", nbt.hasKey("satBlink") ? clampBlinkPeriod(nbt.getFloat("satBlink")) : DEFAULT_BLINK_PERIOD);
 		}
@@ -276,7 +278,7 @@ public abstract class Satellite {
 	public void readFromNBT(NBTTagCompound nbt) {
 		inclination = nbt.getFloat("satInclination");
 		altitude = nbt.hasKey("satAltitude") ? nbt.getFloat("satAltitude") : DEFAULT_ALTITUDE_KM;
-		isBlinking = nbt.hasKey("satIsBlinking") ? nbt.getBoolean("satIsBlinking") : nbt.hasKey("satBlink") && nbt.getFloat("satBlink") > 0.0F;
+		isBlinking = nbt.hasKey("satIsBlinking") ? nbt.getBoolean("satIsBlinking") : DEFAULT_IS_BLINKING;
 		blinkPeriod = nbt.hasKey("satBlink") ? clampBlinkPeriod(nbt.getFloat("satBlink")) : DEFAULT_BLINK_PERIOD;
 		owner = nbt.hasKey("satOwner") ? nbt.getString("satOwner") : DEFAULT_OWNER;
 		float[] registeredColor = getRegisteredColor(getClass());

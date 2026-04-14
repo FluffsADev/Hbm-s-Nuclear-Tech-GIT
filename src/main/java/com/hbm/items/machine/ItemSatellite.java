@@ -193,7 +193,7 @@ public class ItemSatellite extends ItemCustomMissilePart implements ISatChip, IG
 		}
 
 		if(data.hasKey("satInclination")) {
-			Satellite.setInclination(stack, MathHelper.clamp_float(data.getFloat("satInclination"), Satellite.DEFAULT_INCLINATION, Satellite.MAX_INCLINATION));
+			Satellite.setInclination(stack, MathHelper.clamp_float(data.getFloat("satInclination"), Satellite.MIN_INCLINATION, Satellite.MAX_INCLINATION));
 		}
 
 		if(data.hasKey("satOwner")) {

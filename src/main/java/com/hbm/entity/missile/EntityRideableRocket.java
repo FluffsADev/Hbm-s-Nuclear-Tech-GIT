@@ -878,7 +878,7 @@ public class EntityRideableRocket extends EntityMissileBaseNT implements ILookOv
 		satFreq = nbt.getInteger("freq");
 		satInclination = nbt.hasKey("satInclination") ? nbt.getFloat("satInclination") : Satellite.DEFAULT_INCLINATION;
 		satAltitude = nbt.hasKey("satAltitude") ? nbt.getFloat("satAltitude") : Satellite.DEFAULT_ALTITUDE_KM;
-		satIsBlinking = nbt.hasKey("satIsBlinking") ? nbt.getBoolean("satIsBlinking") : nbt.hasKey("satBlink") && nbt.getFloat("satBlink") > 0.0F;
+		satIsBlinking = nbt.hasKey("satIsBlinking") ? nbt.getBoolean("satIsBlinking") : Satellite.DEFAULT_IS_BLINKING;
 		satBlinkPeriod = nbt.hasKey("satBlink") ? Satellite.clampBlinkPeriod(nbt.getFloat("satBlink")) : Satellite.DEFAULT_BLINK_PERIOD;
 		satOwner = nbt.hasKey("satOwner") ? nbt.getString("satOwner") : Satellite.DEFAULT_OWNER;
 		satColorR = nbt.getFloat("satColorR");

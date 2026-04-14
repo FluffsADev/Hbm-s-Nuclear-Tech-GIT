@@ -83,12 +83,18 @@ public class GUIScreenSatSettings extends GuiScreen {
 
 	private final EntityPlayer player;
 	private final Map<ResourceLocation, Boolean> textureAlphaCache = new HashMap<ResourceLocation, Boolean>();
-	private static final long CONTROL_SYNC_INTERVAL_MS = 50L;
 	private int guiLeft;
 	private int guiTop;
 	private int draggedSlider = -1;
 	private NBTTagCompound pendingControlData;
-	private long nextControlSyncTimeMs;
+	private String editOwner;
+	private float editAltitude;
+	private float editInclination;
+	private boolean editBlinking;
+	private float editBlinkPeriod;
+	private int editColorR;
+	private int editColorG;
+	private int editColorB;
 
 	public GUIScreenSatSettings(EntityPlayer player) {
 		this.player = player;
@@ -99,17 +105,15 @@ public class GUIScreenSatSettings extends GuiScreen {
 		super.initGui();
 		guiLeft = (width - 134) / 2;
 		guiTop = (height - 221) / 2;
+		loadEditableValues();
 	}
 
 	@Override
 	public void updateScreen() {
 		if(getHeldSatellite() == null) {
-			flushPendingControlData(true);
 			player.closeScreen();
 			return;
 		}
-
-		flushPendingControlData(false);
 	}
 
 	@Override
@@ -124,21 +128,17 @@ public class GUIScreenSatSettings extends GuiScreen {
 
 		drawOrbitPreview(held, partialTicks);
 
-		int r = toColorChannel(Satellite.getColorR(held));
-		int g = toColorChannel(Satellite.getColorG(held));
-		int b = toColorChannel(Satellite.getColorB(held));
-
-		drawLeftAligned(10, 130, 140, I18nUtil.resolveKey("item.sat.desc.owner") + ": " + Satellite.getOwner(held), 0x00FF00);
-		drawLeftAligned(10, 145, 155, I18nUtil.resolveKey("item.sat.desc.altitude") + ": " + formatValue(Satellite.getAltitude(held)) + "km", 0x00FF00);
-		drawLeftAligned(10, 160, 170, I18nUtil.resolveKey("item.sat.desc.inclination") + ": " + formatValue(Satellite.getInclination(held)) + "\u00B0", 0x00FF00);
-		drawRect(guiLeft + 81, guiTop + 176, guiLeft + 110, guiTop + 199, 0xFF000000 | (r << 16) | (g << 8) | b);
-		drawRightAligned(110, 205, 214, formatValue(Satellite.getBlinkPeriod(held)) + "s", 0xFFFFFF, 2F / 3F);
+		drawLeftAligned(10, 130, 140, I18nUtil.resolveKey("item.sat.desc.owner") + ": " + editOwner, 0x00FF00);
+		drawLeftAligned(10, 145, 155, I18nUtil.resolveKey("item.sat.desc.altitude") + ": " + formatValue(editAltitude) + "km", 0x00FF00);
+		drawLeftAligned(10, 160, 170, I18nUtil.resolveKey("item.sat.desc.inclination") + ": " + formatValue(editInclination) + "\u00B0", 0x00FF00);
+		drawRect(guiLeft + 81, guiTop + 176, guiLeft + 110, guiTop + 199, 0xFF000000 | (editColorR << 16) | (editColorG << 8) | editColorB);
+		drawRightAligned(108, 205, 214, formatValue(editBlinkPeriod) + "s", 0xFFFFFF, 2F / 3F);
 		Minecraft.getMinecraft().getTextureManager().bindTexture(texture);
 		GL11.glColor4f(1F, 1F, 1F, 1F);
-		drawSlider(r, 180, 17);
-		drawSlider(g, 187, 24);
-		drawSlider(b, 194, 31);
-		if(Satellite.isBlinking(held)) {
+		drawSlider(editColorR, 180, 17);
+		drawSlider(editColorG, 187, 24);
+		drawSlider(editColorB, 194, 31);
+		if(editBlinking) {
 			func_146110_a(guiLeft + 113, guiTop + 203, 136, 3, 12, 12, 152, 221);
 		}
 
@@ -158,7 +158,6 @@ public class GUIScreenSatSettings extends GuiScreen {
 	@Override
 	protected void keyTyped(char c, int key) {
 		if(key == 1 || key == mc.gameSettings.keyBindInventory.getKeyCode()) {
-			flushPendingControlData(true);
 			mc.thePlayer.closeScreen();
 			return;
 		}
@@ -177,11 +176,8 @@ public class GUIScreenSatSettings extends GuiScreen {
 			if(held == null) return;
 
 			mc.getSoundHandler().playSound(PositionedSoundRecord.func_147674_a(new ResourceLocation("gui.button.press"), 1.0F));
-			boolean isBlinking = Satellite.isBlinking(held);
-			Satellite.setBlinking(held, !isBlinking);
-
-			queuePendingControlBoolean("satIsBlinking", !isBlinking);
-			flushPendingControlData(true);
+			editBlinking = !editBlinking;
+			queuePendingControlBoolean("satIsBlinking", editBlinking);
 			return;
 		}
 
@@ -191,10 +187,9 @@ public class GUIScreenSatSettings extends GuiScreen {
 
 			mc.getSoundHandler().playSound(PositionedSoundRecord.func_147674_a(new ResourceLocation("gui.button.press"), 1.0F));
 			String owner = player.getCommandSenderName();
-			Satellite.setOwner(held, owner);
-
+			if(owner.equals(editOwner)) return;
+			editOwner = owner;
 			queuePendingControlString("satOwner", owner);
-			flushPendingControlData(true);
 			return;
 		}
 
@@ -218,7 +213,6 @@ public class GUIScreenSatSettings extends GuiScreen {
 		super.mouseMovedOrUp(mouseX, mouseY, button);
 
 		if(button == 0 && draggedSlider >= 0) {
-			flushPendingControlData(true);
 			draggedSlider = -1;
 		}
 	}
@@ -238,7 +232,6 @@ public class GUIScreenSatSettings extends GuiScreen {
 		if(scrollField < 0) return;
 
 		adjustScrollField(scrollField, scroll > 0 ? 1 : -1);
-		flushPendingControlData(false);
 	}
 
 	private void drawLeftAligned(int x, int y1, int y2, String text, int color) {
@@ -280,24 +273,24 @@ public class GUIScreenSatSettings extends GuiScreen {
 		if(held == null) return;
 
 		int value = Math.round(MathHelper.clamp_int(mouseX - guiLeft - 12, 0, 62) * 255F / 62);
-		int r = toColorChannel(Satellite.getColorR(held));
-		int g = toColorChannel(Satellite.getColorG(held));
-		int b = toColorChannel(Satellite.getColorB(held));
-		int oldR = r;
-		int oldG = g;
-		int oldB = b;
 
-		if(slider == 0) r = value;
-		if(slider == 1) g = value;
-		if(slider == 2) b = value;
-
-		if(r == oldR && g == oldG && b == oldB) return;
-
-		Satellite.setColor(held, r / 255F, g / 255F, b / 255F);
-		queuePendingControlInt("satColorR", r);
-		queuePendingControlInt("satColorG", g);
-		queuePendingControlInt("satColorB", b);
-		flushPendingControlData(false);
+		if(slider == 0) {
+			if(editColorR == value) return;
+			editColorR = value;
+			queuePendingControlInt("satColorR", value);
+			return;
+		}
+		if(slider == 1) {
+			if(editColorG == value) return;
+			editColorG = value;
+			queuePendingControlInt("satColorG", value);
+			return;
+		}
+		if(slider == 2) {
+			if(editColorB == value) return;
+			editColorB = value;
+			queuePendingControlInt("satColorB", value);
+		}
 	}
 
 	private void adjustScrollField(int field, int delta) {
@@ -310,36 +303,34 @@ public class GUIScreenSatSettings extends GuiScreen {
 		ItemStack held = getHeldSatellite();
 		if(held == null) return;
 
-		float oldValue = altitude ? Satellite.getAltitude(held) : Satellite.getInclination(held);
+		float oldValue = altitude ? editAltitude : editInclination;
 		float newValue = MathHelper.clamp_float(oldValue + delta,
-			altitude ? Satellite.MIN_ALTITUDE_KM : Satellite.DEFAULT_INCLINATION,
+			altitude ? Satellite.MIN_ALTITUDE_KM : Satellite.MIN_INCLINATION,
 			altitude ? Satellite.MAX_ALTITUDE_KM : Satellite.MAX_INCLINATION
 		);
 		if(newValue == oldValue) return;
 
 		if(altitude) {
-			Satellite.setAltitude(held, newValue);
+			editAltitude = newValue;
 		} else {
-			Satellite.setInclination(held, newValue);
+			editInclination = newValue;
 		}
 
 		queuePendingControlFloat(altitude ? "satAltitude" : "satInclination", newValue);
-		flushPendingControlData(false);
 	}
 
 	private void adjustBlinkPeriod(int delta) {
 		ItemStack held = getHeldSatellite();
 		if(held == null) return;
 
-		float oldValue = Satellite.getBlinkPeriod(held);
+		float oldValue = editBlinkPeriod;
 		float newValue = Math.round((oldValue + (delta > 0 ? 0.1F : -0.1F)) * 10F) / 10F;
 
 		newValue = Satellite.clampBlinkPeriod(newValue);
 		if(newValue == oldValue) return;
 
-		Satellite.setBlinkPeriod(held, newValue);
+		editBlinkPeriod = newValue;
 		queuePendingControlFloat("satBlink", newValue);
-		flushPendingControlData(false);
 	}
 
 	private int getScrollFieldAt(int mouseX, int mouseY) {
@@ -371,6 +362,20 @@ public class GUIScreenSatSettings extends GuiScreen {
 		return held != null && Satellite.isSatelliteItem(held.getItem()) ? held : null;
 	}
 
+	private void loadEditableValues() {
+		ItemStack held = getHeldSatellite();
+		if(held == null) return;
+
+		editOwner = Satellite.getOwner(held);
+		editAltitude = Satellite.getAltitude(held);
+		editInclination = Satellite.getInclination(held);
+		editBlinking = Satellite.isBlinking(held);
+		editBlinkPeriod = Satellite.getBlinkPeriod(held);
+		editColorR = toColorChannel(Satellite.getColorR(held));
+		editColorG = toColorChannel(Satellite.getColorG(held));
+		editColorB = toColorChannel(Satellite.getColorB(held));
+	}
+
 	private void queuePendingControlInt(String key, int value) {
 		getPendingControlData().setInteger(key, value);
 	}
@@ -392,20 +397,24 @@ public class GUIScreenSatSettings extends GuiScreen {
 		return pendingControlData;
 	}
 
-	private void flushPendingControlData(boolean force) {
-		if(pendingControlData == null || pendingControlData.hasNoTags()) return;
-
-		long now = Minecraft.getSystemTime();
-		if(!force && now < nextControlSyncTimeMs) return;
-
-		PacketDispatcher.wrapper.sendToServer(new NBTItemControlPacket(pendingControlData));
-		pendingControlData = null;
-		nextControlSyncTimeMs = now + CONTROL_SYNC_INTERVAL_MS;
+	private void applyEditableValues(ItemStack held) {
+		Satellite.setOwner(held, editOwner);
+		Satellite.setAltitude(held, editAltitude);
+		Satellite.setInclination(held, editInclination);
+		Satellite.setBlinking(held, editBlinking);
+		Satellite.setBlinkPeriod(held, editBlinkPeriod);
+		Satellite.setColor(held, editColorR / 255F, editColorG / 255F, editColorB / 255F);
 	}
 
 	@Override
 	public void onGuiClosed() {
-		flushPendingControlData(true);
+		if(pendingControlData != null && !pendingControlData.hasNoTags()) {
+			ItemStack held = getHeldSatellite();
+			if(held != null) {
+				applyEditableValues(held);
+				PacketDispatcher.wrapper.sendToServer(new NBTItemControlPacket(pendingControlData));
+			}
+		}
 		super.onGuiClosed();
 	}
 
@@ -414,8 +423,8 @@ public class GUIScreenSatSettings extends GuiScreen {
 		float bodySizeAt1x = getBodySizePxAt1x(body);
 		float baseOrbitRadiusMapPx = bodySizeAt1x * 1.5F;
 		Map<Integer, Satellite> satellites = SatelliteSavedData.getClientSats();
-		String owner = Satellite.getOwner(held);
-		float maxAltitude = Satellite.getAltitude(held);
+		String owner = editOwner;
+		float maxAltitude = editAltitude;
 
 		for(Satellite satellite : satellites.values()) {
 			if(owner.equals(satellite.owner)) {
@@ -431,11 +440,11 @@ public class GUIScreenSatSettings extends GuiScreen {
 		double angle = getArtificialSatelliteAngle();
 		int heldFrequency = ISatChip.getFreqS(held);
 
-		float heldAltitude = Satellite.getAltitude(held);
-		float heldInclination = Satellite.getInclination(held);
-		float heldR = Satellite.getColorR(held);
-		float heldG = Satellite.getColorG(held);
-		float heldB = Satellite.getColorB(held);
+		float heldAltitude = editAltitude;
+		float heldInclination = editInclination;
+		float heldR = editColorR / 255F;
+		float heldG = editColorG / 255F;
+		float heldB = editColorB / 255F;
 		ResourceLocation heldTexture = getSatelliteTextureByType(Satellite.itemToClass.get(held.getItem()));
 
 		double dayTicks = mc.theWorld.getTotalWorldTime() + partialTicks;
