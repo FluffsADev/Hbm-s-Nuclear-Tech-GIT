@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL13;
 
@@ -33,6 +34,7 @@ import com.hbm.util.AstronomyUtil;
 import com.hbm.util.i18n.I18nUtil;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.audio.PositionedSoundRecord;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.Tessellator;
@@ -127,6 +129,16 @@ public class GUIScreenSatSettings extends GuiScreen {
 		drawSlider(r, 180, 17);
 		drawSlider(g, 187, 24);
 		drawSlider(b, 194, 31);
+		if(Satellite.isBlinking(held)) {
+			func_146110_a(guiLeft + 113, guiTop + 203, 136, 3, 12, 12, 152, 221);
+		}
+
+		int scrollField = getScrollFieldAt(mouseX, mouseY);
+		if(scrollField == 0 || scrollField == 1) {
+			drawCreativeTabHoveringText("Scroll with your mouse wheel to change altitude/inclination", mouseX, mouseY);
+		} else if(scrollField == 2) {
+			drawCreativeTabHoveringText("Scroll with your mouse wheel to change blink time", mouseX, mouseY);
+		}
 	}
 
 	@Override
@@ -150,6 +162,21 @@ public class GUIScreenSatSettings extends GuiScreen {
 
 		if(button != 0) return;
 
+		if(isBlinkButtonAt(mouseX, mouseY)) {
+			ItemStack held = getHeldSatellite();
+			if(held == null) return;
+
+			mc.getSoundHandler().playSound(PositionedSoundRecord.func_147674_a(new ResourceLocation("gui.button.press"), 1.0F));
+			if(!Satellite.isBlinking(held)) {
+				Satellite.setBlinking(held, true);
+
+				NBTTagCompound data = new NBTTagCompound();
+				data.setBoolean("satIsBlinking", true);
+				PacketDispatcher.wrapper.sendToServer(new NBTItemControlPacket(data));
+			}
+			return;
+		}
+
 		draggedSlider = getSliderAt(mouseX, mouseY);
 		if(draggedSlider >= 0) {
 			updateSlider(draggedSlider, mouseX);
@@ -172,6 +199,23 @@ public class GUIScreenSatSettings extends GuiScreen {
 		if(button == 0) {
 			draggedSlider = -1;
 		}
+	}
+
+	@Override
+	public void handleMouseInput() {
+		super.handleMouseInput();
+
+		if(mc == null || Mouse.getEventButton() != -1) return;
+
+		int scroll = Mouse.getEventDWheel();
+		if(scroll == 0) return;
+
+		int mouseX = Mouse.getEventX() * width / mc.displayWidth;
+		int mouseY = height - Mouse.getEventY() * height / mc.displayHeight - 1;
+		int scrollField = getScrollFieldAt(mouseX, mouseY);
+		if(scrollField < 0) return;
+
+		adjustScrollField(scrollField, scroll > 0 ? 1 : -1);
 	}
 
 	private void drawLeftAligned(int x, int y1, int y2, String text, int color) {
@@ -233,6 +277,69 @@ public class GUIScreenSatSettings extends GuiScreen {
 		data.setInteger("satColorG", g);
 		data.setInteger("satColorB", b);
 		PacketDispatcher.wrapper.sendToServer(new NBTItemControlPacket(data));
+	}
+
+	private void adjustScrollField(int field, int delta) {
+		if(field == 2) {
+			adjustBlinkPeriod(delta);
+			return;
+		}
+
+		boolean altitude = field == 0;
+		ItemStack held = getHeldSatellite();
+		if(held == null) return;
+
+		float oldValue = altitude ? Satellite.getAltitude(held) : Satellite.getInclination(held);
+		float newValue = MathHelper.clamp_float(oldValue + delta,
+			altitude ? Satellite.MIN_ALTITUDE_KM : Satellite.DEFAULT_INCLINATION,
+			altitude ? Satellite.MAX_ALTITUDE_KM : Satellite.MAX_INCLINATION
+		);
+		if(newValue == oldValue) return;
+
+		if(altitude) {
+			Satellite.setAltitude(held, newValue);
+		} else {
+			Satellite.setInclination(held, newValue);
+		}
+
+		NBTTagCompound data = new NBTTagCompound();
+		data.setFloat(altitude ? "satAltitude" : "satInclination", newValue);
+		PacketDispatcher.wrapper.sendToServer(new NBTItemControlPacket(data));
+	}
+
+	private void adjustBlinkPeriod(int delta) {
+		ItemStack held = getHeldSatellite();
+		if(held == null) return;
+
+		float oldValue = Satellite.getBlinkPeriod(held);
+		float newValue = Math.round((oldValue + (delta > 0 ? 0.1F : -0.1F)) * 10F) / 10F;
+
+		newValue = Satellite.clampBlinkPeriod(newValue);
+		if(newValue == oldValue) return;
+
+		Satellite.setBlinkPeriod(held, newValue);
+
+		NBTTagCompound data = new NBTTagCompound();
+		data.setFloat("satBlink", newValue);
+		PacketDispatcher.wrapper.sendToServer(new NBTItemControlPacket(data));
+	}
+
+	private int getScrollFieldAt(int mouseX, int mouseY) {
+		int x = mouseX - guiLeft;
+		int y = mouseY - guiTop;
+
+		if(x >= 9 && x < 111) {
+			if(y >= 145 && y <= 155) return 0;
+			if(y >= 160 && y <= 170) return 1;
+		}
+		if(x >= 81 && x < 111 && y >= 205 && y <= 214) return 2;
+		return -1;
+	}
+
+	private boolean isBlinkButtonAt(int mouseX, int mouseY) {
+		int x = mouseX - guiLeft;
+		int y = mouseY - guiTop;
+		return x >= 113 && x < 126 && y >= 203 && y < 216;
 	}
 
 	private ItemStack getHeldSatellite() {
@@ -695,7 +802,7 @@ public class GUIScreenSatSettings extends GuiScreen {
 	}
 
 	private float getPreviewZoom(float bodySizeAt1x, float baseOrbitRadiusMapPx, float maxAltitude) {
-		float altitude = Math.max(Satellite.DEFAULT_ALTITUDE_KM, Satellite.sanitizeAltitude(maxAltitude));
+		float altitude = Math.max(Satellite.DEFAULT_ALTITUDE_KM, maxAltitude);
 		float altitudeFactor = altitude / Satellite.DEFAULT_ALTITUDE_KM;
 		float maxOrbitRadius = 116F * 0.46F;
 		float zoomForOrbit = maxOrbitRadius / Math.max(0.0001F, baseOrbitRadiusMapPx * altitudeFactor * 0.70F);
@@ -712,8 +819,8 @@ public class GUIScreenSatSettings extends GuiScreen {
 	}
 
 	private SatelliteOrbitPoint getArtificialSatelliteOrbitPoint(float altitude, float inclination, float angle, float baseRadiusMapPx) {
-		float satAltitude = Satellite.sanitizeAltitude(altitude);
-		double satInclination = Math.toRadians(Satellite.sanitizeInclination(inclination));
+		float satAltitude = altitude;
+		double satInclination = Math.toRadians(inclination);
 		double radiusMapPx = baseRadiusMapPx * (satAltitude / Satellite.DEFAULT_ALTITUDE_KM);
 
 		double x = radiusMapPx * MathHelper.cos(angle);

@@ -850,8 +850,8 @@ public class GUIMachineStardar extends GuiInfoContainer {
 	}
 
 	private SatelliteOrbitPoint getArtificialSatelliteOrbitPoint(Satellite satellite, float angle, float baseRadiusMapPx) {
-		float altitude = satellite != null ? Satellite.sanitizeAltitude(satellite.altitude) : Satellite.DEFAULT_ALTITUDE_KM;
-		double inclination = Math.toRadians(satellite != null ? Satellite.sanitizeInclination(satellite.inclination) : Satellite.DEFAULT_INCLINATION);
+		float altitude = satellite != null ? satellite.altitude : Satellite.DEFAULT_ALTITUDE_KM;
+		double inclination = Math.toRadians(satellite != null ? satellite.inclination : Satellite.DEFAULT_INCLINATION);
 		double radiusMapPx = baseRadiusMapPx * (altitude / Satellite.DEFAULT_ALTITUDE_KM);
 
 		double x = radiusMapPx * MathHelper.cos(angle);
@@ -1816,8 +1816,8 @@ public class GUIMachineStardar extends GuiInfoContainer {
 		String owner = satellite.owner != null && !satellite.owner.isEmpty() ? satellite.owner : Satellite.DEFAULT_OWNER;
 		List<String> tooltip = new ArrayList<String>(3);
 		tooltip.add(EnumChatFormatting.YELLOW + I18nUtil.resolveKey("item.sat.desc.owner") + ": " + EnumChatFormatting.GOLD + owner);
-		tooltip.add(EnumChatFormatting.YELLOW + I18nUtil.resolveKey("item.sat.desc.altitude") + ": " + EnumChatFormatting.GOLD + formatValue(Satellite.sanitizeAltitude(satellite.altitude)) + "km");
-		tooltip.add(EnumChatFormatting.YELLOW + I18nUtil.resolveKey("item.sat.desc.inclination") + ": " + EnumChatFormatting.GOLD + formatValue(Satellite.sanitizeInclination(satellite.inclination)) + "\u00B0");
+		tooltip.add(EnumChatFormatting.YELLOW + I18nUtil.resolveKey("item.sat.desc.altitude") + ": " + EnumChatFormatting.GOLD + formatValue(satellite.altitude) + "km");
+		tooltip.add(EnumChatFormatting.YELLOW + I18nUtil.resolveKey("item.sat.desc.inclination") + ": " + EnumChatFormatting.GOLD + formatValue(satellite.inclination) + "\u00B0");
 
 		int tooltipX = mouseX;
 		int tooltipY = mouseY;

@@ -169,23 +169,39 @@ public class ItemSatellite extends ItemCustomMissilePart implements ISatChip, IG
 		int r = Math.round(Satellite.getColorR(stack) * 255F);
 		int g = Math.round(Satellite.getColorG(stack) * 255F);
 		int b = Math.round(Satellite.getColorB(stack) * 255F);
-		boolean update = false;
+		boolean updateColor = false;
 
 		if(data.hasKey("satColorR")) {
 			r = MathHelper.clamp_int(data.getInteger("satColorR"), 0, 255);
-			update = true;
+			updateColor = true;
 		}
 		if(data.hasKey("satColorG")) {
 			g = MathHelper.clamp_int(data.getInteger("satColorG"), 0, 255);
-			update = true;
+			updateColor = true;
 		}
 		if(data.hasKey("satColorB")) {
 			b = MathHelper.clamp_int(data.getInteger("satColorB"), 0, 255);
-			update = true;
+			updateColor = true;
 		}
 
-		if(update) {
+		if(updateColor) {
 			Satellite.setColor(stack, r / 255F, g / 255F, b / 255F);
+		}
+
+		if(data.hasKey("satAltitude")) {
+			Satellite.setAltitude(stack, MathHelper.clamp_float(data.getFloat("satAltitude"), Satellite.MIN_ALTITUDE_KM, Satellite.MAX_ALTITUDE_KM));
+		}
+
+		if(data.hasKey("satInclination")) {
+			Satellite.setInclination(stack, MathHelper.clamp_float(data.getFloat("satInclination"), Satellite.DEFAULT_INCLINATION, Satellite.MAX_INCLINATION));
+		}
+
+		if(data.hasKey("satIsBlinking")) {
+			Satellite.setBlinking(stack, data.getBoolean("satIsBlinking"));
+		}
+
+		if(data.hasKey("satBlink")) {
+			Satellite.setBlinkPeriod(stack, data.getFloat("satBlink"));
 		}
 	}
 

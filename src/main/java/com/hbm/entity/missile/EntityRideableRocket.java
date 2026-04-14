@@ -91,6 +91,7 @@ public class EntityRideableRocket extends EntityMissileBaseNT implements ILookOv
 	private int satFreq = 0;
 	private float satInclination = Satellite.DEFAULT_INCLINATION;
 	private float satAltitude = Satellite.DEFAULT_ALTITUDE_KM;
+	private boolean satIsBlinking = Satellite.DEFAULT_IS_BLINKING;
 	private float satBlinkPeriod = Satellite.DEFAULT_BLINK_PERIOD;
 	private String satOwner = Satellite.DEFAULT_OWNER;
 	private float satColorR = 0.0F;
@@ -127,6 +128,7 @@ public class EntityRideableRocket extends EntityMissileBaseNT implements ILookOv
 		satFreq = ISatChip.getFreqS(stack);
 		satInclination = Satellite.getInclination(stack);
 		satAltitude = Satellite.getAltitude(stack);
+		satIsBlinking = Satellite.isBlinking(stack);
 		satBlinkPeriod = Satellite.getBlinkPeriod(stack);
 		satOwner = Satellite.getOwner(stack);
 		satColorR = Satellite.getColorR(stack);
@@ -874,9 +876,10 @@ public class EntityRideableRocket extends EntityMissileBaseNT implements ILookOv
 		}
 
 		satFreq = nbt.getInteger("freq");
-		satInclination = nbt.hasKey("satInclination") ? Satellite.sanitizeInclination(nbt.getFloat("satInclination")) : Satellite.DEFAULT_INCLINATION;
-		satAltitude = nbt.hasKey("satAltitude") ? Satellite.sanitizeAltitude(nbt.getFloat("satAltitude")) : Satellite.sanitizeAltitude(Satellite.DEFAULT_ALTITUDE_KM);
-		satBlinkPeriod = nbt.hasKey("satBlink") ? Satellite.sanitizeBlinkPeriod(nbt.getFloat("satBlink")) : Satellite.DEFAULT_BLINK_PERIOD;
+		satInclination = nbt.hasKey("satInclination") ? nbt.getFloat("satInclination") : Satellite.DEFAULT_INCLINATION;
+		satAltitude = nbt.hasKey("satAltitude") ? nbt.getFloat("satAltitude") : Satellite.DEFAULT_ALTITUDE_KM;
+		satIsBlinking = nbt.hasKey("satIsBlinking") ? nbt.getBoolean("satIsBlinking") : nbt.hasKey("satBlink") && nbt.getFloat("satBlink") > 0.0F;
+		satBlinkPeriod = nbt.hasKey("satBlink") ? Satellite.clampBlinkPeriod(nbt.getFloat("satBlink")) : Satellite.DEFAULT_BLINK_PERIOD;
 		satOwner = nbt.hasKey("satOwner") ? nbt.getString("satOwner") : Satellite.DEFAULT_OWNER;
 		satColorR = nbt.getFloat("satColorR");
 		satColorG = nbt.getFloat("satColorG");
@@ -910,8 +913,9 @@ public class EntityRideableRocket extends EntityMissileBaseNT implements ILookOv
 		}
 
 		nbt.setInteger("freq", satFreq);
-		nbt.setFloat("satInclination", Satellite.sanitizeInclination(satInclination));
-		nbt.setFloat("satAltitude", Satellite.sanitizeAltitude(satAltitude));
+		nbt.setFloat("satInclination", satInclination);
+		nbt.setFloat("satAltitude", satAltitude);
+		nbt.setBoolean("satIsBlinking", satIsBlinking);
 		nbt.setFloat("satBlink", satBlinkPeriod);
 		nbt.setString("satOwner", satOwner);
 		nbt.setFloat("satColorR", satColorR);
@@ -929,6 +933,7 @@ public class EntityRideableRocket extends EntityMissileBaseNT implements ILookOv
 	private void applySatData(ItemStack stack) {
 		Satellite.setInclination(stack, satInclination);
 		Satellite.setAltitude(stack, satAltitude);
+		Satellite.setBlinking(stack, satIsBlinking);
 		Satellite.setBlinkPeriod(stack, satBlinkPeriod);
 		Satellite.setOwner(stack, satOwner);
 		Satellite.setColor(stack, satColorR, satColorG, satColorB);
