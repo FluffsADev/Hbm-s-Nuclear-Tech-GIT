@@ -167,13 +167,26 @@ public class GUIScreenSatSettings extends GuiScreen {
 			if(held == null) return;
 
 			mc.getSoundHandler().playSound(PositionedSoundRecord.func_147674_a(new ResourceLocation("gui.button.press"), 1.0F));
-			if(!Satellite.isBlinking(held)) {
-				Satellite.setBlinking(held, true);
+			boolean isBlinking = Satellite.isBlinking(held);
+			Satellite.setBlinking(held, !isBlinking);
 
-				NBTTagCompound data = new NBTTagCompound();
-				data.setBoolean("satIsBlinking", true);
-				PacketDispatcher.wrapper.sendToServer(new NBTItemControlPacket(data));
-			}
+			NBTTagCompound data = new NBTTagCompound();
+			data.setBoolean("satIsBlinking", !isBlinking);
+			PacketDispatcher.wrapper.sendToServer(new NBTItemControlPacket(data));
+			return;
+		}
+
+		if(isOwnerButtonAt(mouseX, mouseY)) {
+			ItemStack held = getHeldSatellite();
+			if(held == null) return;
+
+			mc.getSoundHandler().playSound(PositionedSoundRecord.func_147674_a(new ResourceLocation("gui.button.press"), 1.0F));
+			String owner = player.getCommandSenderName();
+			Satellite.setOwner(held, owner);
+
+			NBTTagCompound data = new NBTTagCompound();
+			data.setString("satOwner", owner);
+			PacketDispatcher.wrapper.sendToServer(new NBTItemControlPacket(data));
 			return;
 		}
 
@@ -342,6 +355,12 @@ public class GUIScreenSatSettings extends GuiScreen {
 		return x >= 113 && x < 126 && y >= 203 && y < 216;
 	}
 
+	private boolean isOwnerButtonAt(int mouseX, int mouseY) {
+		int x = mouseX - guiLeft;
+		int y = mouseY - guiTop;
+		return x >= 113 && x < 126 && y >= 128 && y < 141;
+	}
+
 	private ItemStack getHeldSatellite() {
 		ItemStack held = player.getHeldItem();
 		return held != null && Satellite.isSatelliteItem(held.getItem()) ? held : null;
@@ -385,6 +404,11 @@ public class GUIScreenSatSettings extends GuiScreen {
 		pushScissor(9, 8, 116, 116);
 		drawStarmapBackground();
 
+		GL11.glPushAttrib(GL11.GL_ENABLE_BIT | GL11.GL_COLOR_BUFFER_BIT | GL11.GL_LINE_BIT);
+		GL11.glEnable(GL11.GL_BLEND);
+		GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+		GL11.glDisable(GL11.GL_ALPHA_TEST);
+
 		drawOwnedSatellites(satellites, owner, centerX, centerY, baseOrbitRadiusMapPx, renderZoom, angle, iconSize, false);
 		drawSatelliteOrbitHalf(centerX, centerY, baseOrbitRadiusMapPx, renderZoom, heldAltitude, heldInclination, heldR, heldG, heldB, false, 0.45F);
 		drawSatelliteIcon(heldTexture, centerX, centerY, baseOrbitRadiusMapPx, renderZoom, heldFrequency, heldAltitude, heldInclination, angle, false, iconSize * 1.2F);
@@ -393,6 +417,7 @@ public class GUIScreenSatSettings extends GuiScreen {
 		drawOwnedSatellites(satellites, owner, centerX, centerY, baseOrbitRadiusMapPx, renderZoom, angle, iconSize, true);
 		drawSatelliteOrbitHalf(centerX, centerY, baseOrbitRadiusMapPx, renderZoom, heldAltitude, heldInclination, heldR, heldG, heldB, true, 0.45F);
 		drawSatelliteIcon(heldTexture, centerX, centerY, baseOrbitRadiusMapPx, renderZoom, heldFrequency, heldAltitude, heldInclination, angle, true, iconSize * 1.2F);
+		GL11.glPopAttrib();
 
 		GL11.glDisable(GL11.GL_SCISSOR_TEST);
 		GL11.glColor4f(1F, 1F, 1F, 1F);
