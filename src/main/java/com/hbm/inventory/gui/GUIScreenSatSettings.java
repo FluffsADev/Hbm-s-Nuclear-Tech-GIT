@@ -95,6 +95,7 @@ public class GUIScreenSatSettings extends GuiScreen {
 	private int editColorR;
 	private int editColorG;
 	private int editColorB;
+	private boolean showSatelliteDetails = true;
 
 	public GUIScreenSatSettings(EntityPlayer player) {
 		this.player = player;
@@ -126,27 +127,32 @@ public class GUIScreenSatSettings extends GuiScreen {
 		ItemStack held = getHeldSatellite();
 		if(held == null) return;
 
-		drawOrbitPreview(held, partialTicks);
+		if(showSatelliteDetails) {
+			drawBatterySlice();
+			drawOrbitPreview(held, partialTicks);
+			drawLeftAligned(10, 130, 140, I18nUtil.resolveKey("item.sat.desc.owner") + ": " + editOwner, 0x00FF00);
+			drawLeftAligned(10, 145, 155, I18nUtil.resolveKey("item.sat.desc.altitude") + ": " + formatValue(editAltitude) + "km", 0x00FF00);
+			drawLeftAligned(10, 160, 170, I18nUtil.resolveKey("item.sat.desc.inclination") + ": " + formatValue(editInclination) + "\u00B0", 0x00FF00);
+			drawRect(guiLeft + 81, guiTop + 176, guiLeft + 110, guiTop + 199, 0xFF000000 | (editColorR << 16) | (editColorG << 8) | editColorB);
+			drawRightAligned(108, 205, 214, formatValue(editBlinkPeriod) + "s", 0xFFFFFF, 2F / 3F);
+		}
 
-		drawLeftAligned(10, 130, 140, I18nUtil.resolveKey("item.sat.desc.owner") + ": " + editOwner, 0x00FF00);
-		drawLeftAligned(10, 145, 155, I18nUtil.resolveKey("item.sat.desc.altitude") + ": " + formatValue(editAltitude) + "km", 0x00FF00);
-		drawLeftAligned(10, 160, 170, I18nUtil.resolveKey("item.sat.desc.inclination") + ": " + formatValue(editInclination) + "\u00B0", 0x00FF00);
-		drawRect(guiLeft + 81, guiTop + 176, guiLeft + 110, guiTop + 199, 0xFF000000 | (editColorR << 16) | (editColorG << 8) | editColorB);
-		drawRightAligned(108, 205, 214, formatValue(editBlinkPeriod) + "s", 0xFFFFFF, 2F / 3F);
 		Minecraft.getMinecraft().getTextureManager().bindTexture(texture);
 		GL11.glColor4f(1F, 1F, 1F, 1F);
 		drawSlider(editColorR, 180, 17);
 		drawSlider(editColorG, 187, 24);
 		drawSlider(editColorB, 194, 31);
-		if(editBlinking) {
+		if(showSatelliteDetails && editBlinking) {
 			func_146110_a(guiLeft + 113, guiTop + 203, 136, 3, 12, 12, 152, 221);
 		}
 
-		int scrollField = getScrollFieldAt(mouseX, mouseY);
-		if(scrollField == 0 || scrollField == 1) {
-			drawCreativeTabHoveringText("Scroll with your mouse wheel to change altitude/inclination", mouseX, mouseY);
-		} else if(scrollField == 2) {
-			drawCreativeTabHoveringText("Scroll with your mouse wheel to change blink time", mouseX, mouseY);
+		if(showSatelliteDetails) {
+			int scrollField = getScrollFieldAt(mouseX, mouseY);
+			if(scrollField == 0 || scrollField == 1) {
+				drawCreativeTabHoveringText("Scroll with your mouse wheel to change altitude/inclination", mouseX, mouseY);
+			} else if(scrollField == 2) {
+				drawCreativeTabHoveringText("Scroll with your mouse wheel to change blink time", mouseX, mouseY);
+			}
 		}
 	}
 
@@ -170,11 +176,15 @@ public class GUIScreenSatSettings extends GuiScreen {
 		super.mouseClicked(mouseX, mouseY, button);
 
 		if(button != 0) return;
+		if(getHeldSatellite() == null) return;
+
+		if(isBatteryToggleAt(mouseX, mouseY)) {
+			mc.getSoundHandler().playSound(PositionedSoundRecord.func_147674_a(new ResourceLocation(RefStrings.MODID, "item_unpack"), 1.0F));
+			showSatelliteDetails = !showSatelliteDetails;
+			return;
+		}
 
 		if(isBlinkButtonAt(mouseX, mouseY)) {
-			ItemStack held = getHeldSatellite();
-			if(held == null) return;
-
 			mc.getSoundHandler().playSound(PositionedSoundRecord.func_147674_a(new ResourceLocation("gui.button.press"), 1.0F));
 			editBlinking = !editBlinking;
 			queuePendingControlBoolean("satIsBlinking", editBlinking);
@@ -182,9 +192,6 @@ public class GUIScreenSatSettings extends GuiScreen {
 		}
 
 		if(isOwnerButtonAt(mouseX, mouseY)) {
-			ItemStack held = getHeldSatellite();
-			if(held == null) return;
-
 			mc.getSoundHandler().playSound(PositionedSoundRecord.func_147674_a(new ResourceLocation("gui.button.press"), 1.0F));
 			String owner = player.getCommandSenderName();
 			if(owner.equals(editOwner)) return;
@@ -268,6 +275,26 @@ public class GUIScreenSatSettings extends GuiScreen {
 		return -1;
 	}
 
+	private void drawBatterySlice() {
+		float u1 = 136F / 152F;
+		float v1 = 38F / 221F;
+		float u2 = 149F / 152F;
+		float v2 = 67F / 221F;
+		float x = guiLeft + 15;
+		float y = guiTop + 200;
+		drawPartialTexRotated90(x, y, 29F, 13F, u1, v1, u2, v2);
+	}
+
+	private void drawPartialTexRotated90(float x, float y, float w, float h, float u1, float v1, float u2, float v2) {
+		Tessellator tess = Tessellator.instance;
+		tess.startDrawingQuads();
+		tess.addVertexWithUV(x, y + h, this.zLevel, u2, v2);
+		tess.addVertexWithUV(x + w, y + h, this.zLevel, u2, v1);
+		tess.addVertexWithUV(x + w, y, this.zLevel, u1, v1);
+		tess.addVertexWithUV(x, y, this.zLevel, u1, v2);
+		tess.draw();
+	}
+
 	private void updateSlider(int slider, int mouseX) {
 		ItemStack held = getHeldSatellite();
 		if(held == null) return;
@@ -349,6 +376,12 @@ public class GUIScreenSatSettings extends GuiScreen {
 		int x = mouseX - guiLeft;
 		int y = mouseY - guiTop;
 		return x >= 113 && x < 126 && y >= 203 && y < 216;
+	}
+
+	private boolean isBatteryToggleAt(int mouseX, int mouseY) {
+		int x = mouseX - guiLeft;
+		int y = mouseY - guiTop;
+		return x >= 15 && x < 44 && y >= 200 && y < 213;
 	}
 
 	private boolean isOwnerButtonAt(int mouseX, int mouseY) {
