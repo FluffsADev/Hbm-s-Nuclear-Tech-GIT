@@ -728,7 +728,6 @@ public class GUIMachineStardar extends GuiInfoContainer {
 		float mapTop = guiTop + MAP_Y;
 		float mapRight = mapLeft + MAP_W;
 		float mapBottom = mapTop + MAP_H;
-		float crossY = mapToScreenY(bodyMapU, bodyMapV);
 		double angle = getArtificialSatelliteAngle();
 
 		GL11.glColor4f(1F, 1F, 1F, 1F);
@@ -743,7 +742,7 @@ public class GUIMachineStardar extends GuiInfoContainer {
 			SatelliteOrbitPoint orbitPoint = getArtificialSatelliteOrbitPoint(satellite, satelliteAngle, baseOrbitRadiusMapPx);
 			float screenX = mapToScreenX(bodyMapU + orbitPoint.offsetU, bodyMapV + orbitPoint.offsetV);
 			float screenY = mapToScreenY(bodyMapU + orbitPoint.offsetU, bodyMapV + orbitPoint.offsetV);
-			boolean inFrontHalf = screenY >= crossY;
+			boolean inFrontHalf = orbitPoint.depth >= 0F;
 			if (inFrontHalf != frontHalf) {
 				continue;
 			}
@@ -770,7 +769,6 @@ public class GUIMachineStardar extends GuiInfoContainer {
 		float r = MathHelper.clamp_float(satellite.colorR, 0F, 1F);
 		float g = MathHelper.clamp_float(satellite.colorG, 0F, 1F);
 		float b = MathHelper.clamp_float(satellite.colorB, 0F, 1F);
-		float crossY = mapToScreenY(bodyMapU, bodyMapV);
 
 		GL11.glDisable(GL11.GL_TEXTURE_2D);
 		GL11.glLineWidth(1F);
@@ -779,6 +777,7 @@ public class GUIMachineStardar extends GuiInfoContainer {
 		boolean hasPrev = false;
 		float prevX = 0F;
 		float prevY = 0F;
+		float prevDepth = 0F;
 		boolean prevInFrontHalf = false;
 		boolean drawing = false;
 
@@ -787,11 +786,13 @@ public class GUIMachineStardar extends GuiInfoContainer {
 			SatelliteOrbitPoint orbitPoint = getArtificialSatelliteOrbitPoint(satellite, angle, baseRadiusMapPx);
 			float currX = mapToScreenX(bodyMapU + orbitPoint.offsetU, bodyMapV + orbitPoint.offsetV);
 			float currY = mapToScreenY(bodyMapU + orbitPoint.offsetU, bodyMapV + orbitPoint.offsetV);
-			boolean currInFrontHalf = currY >= crossY;
+			float currDepth = orbitPoint.depth;
+			boolean currInFrontHalf = currDepth >= 0F;
 
 			if (!hasPrev) {
 				prevX = currX;
 				prevY = currY;
+				prevDepth = currDepth;
 				prevInFrontHalf = currInFrontHalf;
 				hasPrev = true;
 				continue;
@@ -809,8 +810,8 @@ public class GUIMachineStardar extends GuiInfoContainer {
 				}
 				tessellator.addVertex(currX, currY, this.zLevel);
 			} else if (prevSelected != currSelected) {
-				float dy = currY - prevY;
-				float t = dy == 0F ? 0.5F : (crossY - prevY) / dy;
+				float depthDelta = currDepth - prevDepth;
+				float t = depthDelta == 0F ? 0.5F : -prevDepth / depthDelta;
 				t = MathHelper.clamp_float(t, 0F, 1F);
 				float crossX = prevX + (currX - prevX) * t;
 				float crossPointY = prevY + (currY - prevY) * t;
@@ -836,6 +837,7 @@ public class GUIMachineStardar extends GuiInfoContainer {
 
 			prevX = currX;
 			prevY = currY;
+			prevDepth = currDepth;
 			prevInFrontHalf = currInFrontHalf;
 		}
 
