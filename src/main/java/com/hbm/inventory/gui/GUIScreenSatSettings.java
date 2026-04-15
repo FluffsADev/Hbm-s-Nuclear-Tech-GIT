@@ -134,7 +134,7 @@ public class GUIScreenSatSettings extends GuiScreen {
 			drawLeftAligned(10, 130, 140, I18nUtil.resolveKey("item.sat.desc.owner") + ": " + editOwner, 0x00FF00);
 			drawLeftAligned(10, 145, 155, I18nUtil.resolveKey("item.sat.desc.altitude") + ": " + formatValue(editAltitude) + "km", 0x00FF00);
 			drawLeftAligned(10, 160, 170, I18nUtil.resolveKey("item.sat.desc.inclination") + ": " + formatValue(editInclination) + "\u00B0", 0x00FF00);
-			drawRect(guiLeft + 81, guiTop + 176, guiLeft + 110, guiTop + 199, 0xFF000000 | (editColorR << 16) | (editColorG << 8) | editColorB);
+			drawRect(guiLeft + 81, guiTop + 177, guiLeft + 110, guiTop + 199, 0xFF000000 | (editColorR << 16) | (editColorG << 8) | editColorB);
 			drawRightAligned(108, 204, 213, formatValue(editBlinkPeriod) + "s", 0xFFFFFF, 2F / 3F);
 		}
 
