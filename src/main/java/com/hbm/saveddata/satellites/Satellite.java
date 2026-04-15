@@ -367,6 +367,35 @@ public abstract class Satellite {
 		GL11.glPopMatrix();
 	}
 
+	public static void renderOrbitLine(float solarAngle, float r, float g, float b, float inclination, float altitude, boolean isBlinking, float blinkPeriod) {
+		Tessellator tessellator = Tessellator.instance;
+		float renderAltitude = Math.max(1.0F, altitude);
+		float alpha = 0.35F * getBlinkAlpha(isBlinking, blinkPeriod);
+
+		GL11.glPushAttrib(GL11.GL_ENABLE_BIT | GL11.GL_COLOR_BUFFER_BIT | GL11.GL_LINE_BIT);
+		GL11.glDisable(GL11.GL_TEXTURE_2D);
+		GL11.glEnable(GL11.GL_BLEND);
+		GL11.glLineWidth(1.0F);
+		GL11.glColor4f(r, g, b, alpha);
+
+		GL11.glPushMatrix();
+		{
+			GL11.glRotatef(solarAngle * -360.0F, 1.0F, 0.0F, 0.0F);
+			GL11.glRotatef(inclination, 0.0F, 0.0F, 1.0F);
+
+			tessellator.startDrawing(GL11.GL_LINE_LOOP);
+			for(int i = 0; i < 72; i++) {
+				double angle = Math.PI * 2.0D * i / 72.0D;
+				tessellator.addVertex(0.0D, renderAltitude * Math.cos(angle), renderAltitude * Math.sin(angle));
+			}
+			tessellator.draw();
+		}
+		GL11.glPopMatrix();
+
+		GL11.glPopAttrib();
+		GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+	}
+
 	public static float applyFrequencyToOrbitAngle(long frequency, float altitude, double baseAngle, float fullRotation) {
 		double speed = getAltitudeOrbitSpeed(altitude) * (ORBIT_SPEED_MIN + getFrequencyFloat(frequency, 0x9E3779B97F4A7C15L) * ORBIT_SPEED_RANGE);
 		double phase = getFrequencyFloat(frequency, 0xC2B2AE3D27D4EB4FL) * fullRotation;

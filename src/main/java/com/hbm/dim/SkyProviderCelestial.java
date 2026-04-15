@@ -40,11 +40,13 @@ import org.lwjgl.opengl.GLContext;
 
 import com.hbm.dim.trait.CBT_Impact;
 import com.hbm.dim.trait.CBT_Lights;
+import com.hbm.items.ISatChip;
 import com.hbm.main.ModEventHandlerClient;
 import com.hbm.main.ModEventHandlerRenderer;
 
 import cpw.mods.fml.client.FMLClientHandler;
 import cpw.mods.fml.relauncher.ReflectionHelper;
+import net.minecraft.item.ItemStack;
 
 public class SkyProviderCelestial extends IRenderHandler {
 
@@ -251,6 +253,8 @@ public class SkyProviderCelestial extends IRenderHandler {
 				for(Map.Entry<Integer, Satellite> satelliteEntry : SatelliteSavedData.getClientSats().entrySet()) {
 					satelliteEntry.getValue().render(partialTicks, world, mc, solarAngle, satelliteEntry.getKey());
 				}
+
+				renderHeldSatellitePreview(partialTicks, world, mc, solarAngle);
 
 				// Stations, too
 				for(OrbitalStation station : OrbitalStation.orbitingStations) {
@@ -1426,6 +1430,22 @@ public class SkyProviderCelestial extends IRenderHandler {
 
 	protected void render3DModel(float partialTicks, WorldClient world, Minecraft mc) {
 
+	}
+
+	protected void renderHeldSatellitePreview(float partialTicks, WorldClient world, Minecraft mc, float solarAngle) {
+		ItemStack held = mc.thePlayer.getHeldItem();
+		if(held == null || !Satellite.isSatelliteItem(held.getItem())) return;
+
+		float r = Satellite.getColorR(held);
+		float g = Satellite.getColorG(held);
+		float b = Satellite.getColorB(held);
+		float inclination = Satellite.getInclination(held);
+		float altitude = Satellite.getAltitude(held);
+		boolean isBlinking = Satellite.isBlinking(held);
+		float blinkPeriod = Satellite.getBlinkPeriod(held);
+
+		Satellite.renderOrbitLine(solarAngle, r, g, b, inclination, altitude, isBlinking, blinkPeriod);
+		Satellite.renderDefault(partialTicks, world, mc, solarAngle, ISatChip.getFreqS(held), r, g, b, inclination, altitude, isBlinking, blinkPeriod);
 	}
 
 	protected void renderStation(float partialTicks, WorldClient world, Minecraft mc, OrbitalStation station, float solarAngle) {
