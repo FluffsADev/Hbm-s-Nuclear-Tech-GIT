@@ -135,7 +135,7 @@ public class GUIScreenSatSettings extends GuiScreen {
 			drawLeftAligned(10, 145, 155, I18nUtil.resolveKey("item.sat.desc.altitude") + ": " + formatValue(editAltitude) + "km", 0x00FF00);
 			drawLeftAligned(10, 160, 170, I18nUtil.resolveKey("item.sat.desc.inclination") + ": " + formatValue(editInclination) + "\u00B0", 0x00FF00);
 			drawRect(guiLeft + 81, guiTop + 176, guiLeft + 110, guiTop + 199, 0xFF000000 | (editColorR << 16) | (editColorG << 8) | editColorB);
-			drawRightAligned(108, 205, 214, formatValue(editBlinkPeriod) + "s", 0xFFFFFF, 2F / 3F);
+			drawRightAligned(108, 204, 213, formatValue(editBlinkPeriod) + "s", 0xFFFFFF, 2F / 3F);
 		}
 
 		Minecraft.getMinecraft().getTextureManager().bindTexture(texture);
@@ -144,7 +144,7 @@ public class GUIScreenSatSettings extends GuiScreen {
 		drawSlider(editColorG, 187, 24);
 		drawSlider(editColorB, 194, 31);
 		if(showSatelliteDetails && editBlinking) {
-			func_146110_a(guiLeft + 113, guiTop + 203, 136, 3, 12, 12, 152, 221);
+			func_146110_a(guiLeft + 114, guiTop + 202, 136, 3, 12, 12, 152, 221);
 		}
 
 		if(showSatelliteDetails) {
@@ -180,7 +180,8 @@ public class GUIScreenSatSettings extends GuiScreen {
 		if(getHeldSatellite() == null) return;
 
 		if(isBatteryToggleAt(mouseX, mouseY)) {
-			mc.getSoundHandler().playSound(PositionedSoundRecord.func_147674_a(new ResourceLocation(RefStrings.MODID, "item.unpack"), 1.0F));
+			boolean removeBattery = showSatelliteDetails;
+			mc.getSoundHandler().playSound(PositionedSoundRecord.func_147674_a(new ResourceLocation(RefStrings.MODID, removeBattery ? "item.unpackRemove" : "item.unpackInsert"), 1.0F));
 			showSatelliteDetails = !showSatelliteDetails;
 			return;
 		}
@@ -369,14 +370,14 @@ public class GUIScreenSatSettings extends GuiScreen {
 			if(y >= 145 && y <= 155) return 0;
 			if(y >= 160 && y <= 170) return 1;
 		}
-		if(x >= 81 && x < 111 && y >= 205 && y <= 214) return 2;
+		if(x >= 81 && x < 111 && y >= 204 && y <= 213) return 2;
 		return -1;
 	}
 
 	private boolean isBlinkButtonAt(int mouseX, int mouseY) {
 		int x = mouseX - guiLeft;
 		int y = mouseY - guiTop;
-		return x >= 113 && x < 126 && y >= 203 && y < 216;
+		return x >= 114 && x < 127 && y >= 202 && y < 215;
 	}
 
 	private boolean isBatteryToggleAt(int mouseX, int mouseY) {

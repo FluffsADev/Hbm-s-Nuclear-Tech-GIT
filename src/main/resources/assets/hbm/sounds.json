@@ -132,6 +132,8 @@
 	"item.gasmaskScrew": {"category": "player", "sounds": [{"name": "tool/gasmaskScrew", "stream": false}]},
 	"item.jetpackTank": {"category": "player", "sounds": [{"name": "tool/jetpackTank", "stream": false}]},
 	"item.unpack": {"category": "player", "sounds": ["tool/extract1", "tool/extract2"]},
+	"item.unpackRemove": {"category": "player", "sounds": [{"name": "tool/extract1", "stream": false}]},
+	"item.unpackInsert": {"category": "player", "sounds": [{"name": "tool/extract2", "stream": false}]},
 	"item.syringe": {"category": "player", "sounds": [{"name": "tool/stim", "stream": false}]},
 	"item.radaway": {"category": "player", "sounds": [{"name": "tool/radaway", "stream": false}]},
 	"item.spray": {"category": "player", "sounds": [{"name": "tool/spray", "stream": false}]},
