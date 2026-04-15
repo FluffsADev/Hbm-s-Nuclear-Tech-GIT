@@ -15,8 +15,8 @@ import com.hbm.dim.SolarSystem;
 import com.hbm.dim.trait.CBT_Impact;
 import com.hbm.dim.trait.CBT_Lights;
 import com.hbm.items.ISatChip;
-import com.hbm.lib.Library;
 import com.hbm.lib.RefStrings;
+import com.hbm.main.NTMSounds;
 import com.hbm.packet.PacketDispatcher;
 import com.hbm.packet.toserver.NBTItemControlPacket;
 import com.hbm.render.shader.Shader;
@@ -104,6 +104,7 @@ public class GUIScreenSatSettings extends GuiScreen {
 	@Override
 	public void initGui() {
 		super.initGui();
+		mc.getSoundHandler().playSound(PositionedSoundRecord.func_147674_a(new ResourceLocation(NTMSounds.BLOCK_FALLOUT_3_POPUP), 1.0F));
 		guiLeft = (width - 134) / 2;
 		guiTop = (height - 221) / 2;
 		loadEditableValues();
@@ -179,7 +180,7 @@ public class GUIScreenSatSettings extends GuiScreen {
 		if(getHeldSatellite() == null) return;
 
 		if(isBatteryToggleAt(mouseX, mouseY)) {
-			mc.getSoundHandler().playSound(PositionedSoundRecord.func_147674_a(new ResourceLocation(RefStrings.MODID, "item_unpack"), 1.0F));
+			mc.getSoundHandler().playSound(PositionedSoundRecord.func_147674_a(new ResourceLocation(RefStrings.MODID, "item.unpack"), 1.0F));
 			showSatelliteDetails = !showSatelliteDetails;
 			return;
 		}
@@ -481,10 +482,6 @@ public class GUIScreenSatSettings extends GuiScreen {
 		ResourceLocation heldTexture = getSatelliteTextureByType(Satellite.itemToClass.get(held.getItem()));
 
 		double dayTicks = mc.theWorld.getTotalWorldTime() + partialTicks;
-		double worldTicks = dayTicks * AstronomyUtil.TIME_MULTIPLIER;
-		BodyPosition bodyPosition = new BodyPosition();
-		BodyPosition parentPosition = new BodyPosition();
-		resolveBodyPositions(body, worldTicks, bodyPosition, parentPosition);
 
 		pushScissor(9, 8, 116, 116);
 		drawStarmapBackground();
@@ -498,7 +495,7 @@ public class GUIScreenSatSettings extends GuiScreen {
 		float heldBlinkAlpha = getBlinkAlpha(editBlinking, editBlinkPeriod);
 		drawSatelliteOrbitHalf(centerX, centerY, baseOrbitRadiusMapPx, renderZoom, heldAltitude, heldInclination, heldR, heldG, heldB, false, 0.45F * heldBlinkAlpha);
 		drawSatelliteIcon(heldTexture, centerX, centerY, baseOrbitRadiusMapPx, renderZoom, heldFrequency, heldAltitude, heldInclination, angle, false, iconSize * 1.2F);
-		drawBodyPreview(body, centerX, centerY, bodySize, dayTicks, bodyPosition, parentPosition);
+		drawBodyPreview(body, centerX, centerY, bodySize, dayTicks);
 
 		drawOwnedSatellites(satellites, owner, centerX, centerY, baseOrbitRadiusMapPx, renderZoom, angle, iconSize, true);
 		drawSatelliteOrbitHalf(centerX, centerY, baseOrbitRadiusMapPx, renderZoom, heldAltitude, heldInclination, heldR, heldG, heldB, true, 0.45F * heldBlinkAlpha);
@@ -659,7 +656,7 @@ public class GUIScreenSatSettings extends GuiScreen {
 		return 1.0F - (float)(System.currentTimeMillis() % cycleMillis) / cycleMillis;
 	}
 
-	private void drawBodyPreview(CelestialBody body, float centerX, float centerY, float size, double dayTicks, BodyPosition bodyPosition, BodyPosition parentPosition) {
+	private void drawBodyPreview(CelestialBody body, float centerX, float centerY, float size, double dayTicks) {
 		float half = size * 0.5F;
 		float ringHalfWidth = 0F;
 		float ringHalfHeight = 0F;
@@ -705,7 +702,7 @@ public class GUIScreenSatSettings extends GuiScreen {
 					textureUOffset = phase;
 				}
 
-				drawBodyCrescentOverlay(body, centerX, centerY, size, bodyPosition, parentPosition, rotateBody, bodyRotationAngle, dayTicks, textureUOffset);
+				drawBodyCrescentOverlay(body, centerX, centerY, size, rotateBody, bodyRotationAngle, dayTicks, textureUOffset);
 			}
 		} else {
 			int color = 0xFF666666;
@@ -743,8 +740,8 @@ public class GUIScreenSatSettings extends GuiScreen {
 		GL11.glColor4f(1F, 1F, 1F, 1F);
 	}
 
-	private void drawBodyCrescentOverlay(CelestialBody body, float bodyScreenX, float bodyScreenY, float drawSize, BodyPosition bodyPosition, BodyPosition parentPosition, boolean rotateBody, float bodyRotationAngle, double dayTicks, float textureUOffset) {
-		float phase = calculateHorizontalCrescentPhase(body, bodyPosition.mapU, bodyPosition.mapV, parentPosition.mapU, parentPosition.mapV);
+	private void drawBodyCrescentOverlay(CelestialBody body, float bodyScreenX, float bodyScreenY, float drawSize, boolean rotateBody, float bodyRotationAngle, double dayTicks, float textureUOffset) {
+		float phase = calculateBodyCrescentPhase(body, dayTicks);
 		CBT_Impact impact = body.getTrait(CBT_Impact.class);
 		CBT_Lights light = body.getTrait(CBT_Lights.class);
 		double impactTime = impact != null ? dayTicks - impact.time : 0.0D;
@@ -834,63 +831,20 @@ public class GUIScreenSatSettings extends GuiScreen {
 		return hasAlpha;
 	}
 
-	private float calculateHorizontalCrescentPhase(CelestialBody body, float bodyMapU, float bodyMapV, float parentMapU, float parentMapV) {
-		float sunMapU = 1024F * 0.5F;
-		float sunMapV = 1024F * 0.5F;
-		float bodyProjX = bodyMapU;
-		float bodyProjY = bodyMapV;
-		float sunProjX = sunMapU;
-		float sunProjY = sunMapV;
+	private float calculateBodyCrescentPhase(CelestialBody body, double dayTicks) {
+		if(body == null || body.parent == null) return 0F;
 
-		float dx = bodyProjX - sunProjX;
-		float dy = bodyProjY - sunProjY;
-		float lengthSq = dx * dx + dy * dy;
-		if(lengthSq <= 0.0001F) return 0F;
+		double orbitalPeriodTicks = body.getOrbitalPeriod() * (double) AstronomyUtil.TICKS_IN_DAY;
+		if(orbitalPeriodTicks <= 0D) return 0F;
 
-		float length = MathHelper.sqrt_float(lengthSq);
-		float verticalFactor = dy / length;
-		float phaseMagnitude = MathHelper.clamp_float((verticalFactor + 1F) * 0.5F, 0F, 1F);
-		phaseMagnitude = applyMoonEclipseDarkening(body, bodyMapU, bodyMapV, parentMapU, parentMapV, sunMapU, sunMapV, phaseMagnitude);
+		double worldTicks = dayTicks * AstronomyUtil.TIME_MULTIPLIER;
+		float orbitalAngle = (float) (2D * Math.PI * (worldTicks / orbitalPeriodTicks));
+		float dx = MathHelper.cos(orbitalAngle);
+		float dy = MathHelper.sin(orbitalAngle);
 
+		float phaseMagnitude = MathHelper.clamp_float((dy + 1F) * 0.5F, 0F, 1F);
 		float phaseSign = dx <= 0F ? 1F : -1F;
 		return MathHelper.clamp_float(phaseMagnitude * phaseSign, -1F, 1F);
-	}
-
-	private float applyMoonEclipseDarkening(CelestialBody body, float moonMapU, float moonMapV, float parentMapU, float parentMapV, float sunMapU, float sunMapV, float phaseMagnitude) {
-		if(!isMoon(body) || body.parent == null) return phaseMagnitude;
-
-		float moonProjX = moonMapU;
-		float moonProjY = moonMapV;
-		float parentProjX = parentMapU;
-		float parentProjY = parentMapV;
-		float sunProjX = sunMapU;
-		float sunProjY = sunMapV;
-
-		float sunToParentX = parentProjX - sunProjX;
-		float sunToParentY = parentProjY - sunProjY;
-		float parentToMoonX = moonProjX - parentProjX;
-		float parentToMoonY = moonProjY - parentProjY;
-
-		float sunParentLenSq = sunToParentX * sunToParentX + sunToParentY * sunToParentY;
-		if(sunParentLenSq <= 0.0001F) return phaseMagnitude;
-
-		float sunParentLen = MathHelper.sqrt_float(sunParentLenSq);
-		float alongShadowAxis = (sunToParentX * parentToMoonX + sunToParentY * parentToMoonY) / sunParentLen;
-		float lineDistance = Math.abs(sunToParentX * parentToMoonY - sunToParentY * parentToMoonX) / sunParentLen;
-		float eclipseRadius = Math.max(1.5F, getBodySizePxAt1x(body.parent) * 0.45F);
-		float penumbraRadius = eclipseRadius * 2F;
-		float behindFade = Math.max(0.15F, eclipseRadius * 0.12F);
-
-		if(lineDistance >= penumbraRadius || alongShadowAxis <= -behindFade) return phaseMagnitude;
-
-		float behindFactor = alongShadowAxis >= 0F ? 1F : Library.smoothstep(alongShadowAxis, -behindFade, 0F);
-		if(lineDistance <= eclipseRadius) {
-			return MathHelper.clamp_float(phaseMagnitude + (1F - phaseMagnitude) * behindFactor, 0F, 1F);
-		}
-
-		float penumbraFactor = 1F - Library.smoothstep(lineDistance, eclipseRadius, penumbraRadius);
-		float eclipseFactor = behindFactor * penumbraFactor;
-		return MathHelper.clamp_float(phaseMagnitude + (1F - phaseMagnitude) * eclipseFactor, 0F, 1F);
 	}
 
 	private void drawPartialTex(float x, float y, float w, float h, float u1, float v1, float u2, float v2) {
@@ -975,147 +929,6 @@ public class GUIScreenSatSettings extends GuiScreen {
 		return getCurrentBody();
 	}
 
-	private void resolveBodyPositions(CelestialBody body, double worldTicks, BodyPosition bodyPosition, BodyPosition parentPosition) {
-		float centerU = 1024F * 0.5F;
-		float centerV = 1024F * 0.5F;
-		bodyPosition.mapU = centerU;
-		bodyPosition.mapV = centerV;
-		parentPosition.mapU = Float.NaN;
-		parentPosition.mapV = Float.NaN;
-
-		CelestialBody root = body.getStar();
-		float systemOrbitScale = getOrbitScalePxPerKm(root);
-
-		findBodyMapPosition(root, centerU, centerV, systemOrbitScale, worldTicks, body, bodyPosition);
-		if(body.parent != null) {
-			findBodyMapPosition(root, centerU, centerV, systemOrbitScale, worldTicks, body.parent, parentPosition);
-		}
-	}
-
-	private boolean findBodyMapPosition(CelestialBody body, float bodyMapU, float bodyMapV, float systemOrbitScalePxPerKm, double worldTicks, CelestialBody targetBody, BodyPosition outPosition) {
-		if(body == targetBody) {
-			outPosition.mapU = bodyMapU;
-			outPosition.mapV = bodyMapV;
-			return true;
-		}
-
-		float childOrbitScale = getChildOrbitScalePxPerKm(body, systemOrbitScalePxPerKm);
-		for(CelestialBody childBody : body.satellites) {
-			double meanAnomaly = calculateMeanAnomaly(childBody, worldTicks);
-			float[] orbitOffset = calculateOrbitOffsetPx(body, childBody, meanAnomaly, childOrbitScale);
-			if(findBodyMapPosition(childBody, bodyMapU + orbitOffset[0], bodyMapV + orbitOffset[1], systemOrbitScalePxPerKm, worldTicks, targetBody, outPosition)) {
-				return true;
-			}
-		}
-
-		return false;
-	}
-
-	private float getOrbitScalePxPerKm(CelestialBody starBody) {
-		float maxDistanceKm = getSystemMaxDistanceKm(starBody);
-		float starRadiusPxAt1x = getBodySizePxAt1x(starBody) * 0.5F;
-		float availableRadiusPx = Math.max(0F, (256F * 0.50F) - starRadiusPxAt1x);
-		return availableRadiusPx / maxDistanceKm;
-	}
-
-	private float getSystemMaxDistanceKm(CelestialBody starBody) {
-		float maxDistance = 0F;
-		for(CelestialBody child : starBody.satellites) {
-			float apoapsisKm = child.semiMajorAxisKm * (1F + child.eccentricity);
-			maxDistance = Math.max(maxDistance, apoapsisKm);
-		}
-
-		return maxDistance;
-	}
-
-	private float getChildOrbitScalePxPerKm(CelestialBody parent, float systemOrbitScalePxPerKm) {
-		if(parent.parent != null) {
-			float moonOrbitScale = getMoonOrbitScalePxPerKm(parent, systemOrbitScalePxPerKm);
-			if(moonOrbitScale > 0F) return moonOrbitScale;
-		}
-		return systemOrbitScalePxPerKm;
-	}
-
-	private float getMoonOrbitScalePxPerKm(CelestialBody parent, float systemOrbitScalePxPerKm) {
-		float maxMoonDistanceKm = 0F;
-		for(CelestialBody moon : parent.satellites) {
-			maxMoonDistanceKm = Math.max(maxMoonDistanceKm, moon.semiMajorAxisKm * (1F + moon.eccentricity));
-		}
-
-		float parentRadiusPxAt1x = getBodySizePxAt1x(parent) * 0.5F;
-		float moonOrbitRadiusPxAt1x = Math.max(10.0F, parentRadiusPxAt1x * 14F);
-		float nearestSiblingGapKm = getNearestSiblingOrbitGapKm(parent);
-
-		if(systemOrbitScalePxPerKm > 0F && nearestSiblingGapKm > 0F) {
-			float siblingGapPxAt1x = nearestSiblingGapKm * systemOrbitScalePxPerKm;
-			float maxAllowedMoonOrbitRadiusPxAt1x = siblingGapPxAt1x * 0.45F;
-			if(maxAllowedMoonOrbitRadiusPxAt1x > 0F) {
-				moonOrbitRadiusPxAt1x = Math.min(moonOrbitRadiusPxAt1x, maxAllowedMoonOrbitRadiusPxAt1x);
-			}
-		}
-
-		return moonOrbitRadiusPxAt1x / maxMoonDistanceKm;
-	}
-
-	private float getNearestSiblingOrbitGapKm(CelestialBody body) {
-		float nearestGapKm = Float.MAX_VALUE;
-		for(CelestialBody sibling : body.parent.satellites) {
-			if(sibling == body) continue;
-			nearestGapKm = Math.min(nearestGapKm, Math.abs(sibling.semiMajorAxisKm - body.semiMajorAxisKm));
-		}
-
-		return nearestGapKm == Float.MAX_VALUE ? 0F : nearestGapKm;
-	}
-
-	private float[] calculateOrbitOffsetPx(CelestialBody parent, CelestialBody body, double meanAnomaly, float orbitScalePxPerKm) {
-		double eccentricAnomaly = calculateEccentricAnomaly(meanAnomaly, body.eccentricity);
-		double semiMinorAxisFactor = body.semiMinorAxisFactor > 0 ? body.semiMinorAxisFactor : Math.sqrt(1D - (body.eccentricity * body.eccentricity));
-		double x = body.semiMajorAxisKm * (Math.cos(eccentricAnomaly) - body.eccentricity);
-		double y = body.semiMajorAxisKm * semiMinorAxisFactor * Math.sin(eccentricAnomaly);
-
-		double px = x;
-		x = Math.cos(body.argumentPeriapsis) * px - Math.sin(body.argumentPeriapsis) * y;
-		y = Math.sin(body.argumentPeriapsis) * px + Math.cos(body.argumentPeriapsis) * y;
-
-		y = Math.cos(body.inclination) * y;
-
-		px = x;
-		x = Math.cos(body.ascendingNode) * px - Math.sin(body.ascendingNode) * y;
-		y = Math.sin(body.ascendingNode) * px + Math.cos(body.ascendingNode) * y;
-
-		float mapX = (float) (x * orbitScalePxPerKm);
-		float mapY = (float) (y * orbitScalePxPerKm);
-
-		float parentVisualRadiusPx = getBodySizePxAt1x(parent) * 0.5F;
-		float distanceFromParentPx = MathHelper.sqrt_float(mapX * mapX + mapY * mapY);
-		if(distanceFromParentPx > 0F) {
-			float radialScale = (distanceFromParentPx + parentVisualRadiusPx) / distanceFromParentPx;
-			mapX *= radialScale;
-			mapY *= radialScale;
-		} else {
-			mapX = parentVisualRadiusPx;
-			mapY = 0F;
-		}
-
-		return new float[]{mapX, mapY};
-	}
-
-	private double calculateMeanAnomaly(CelestialBody body, double worldTicks) {
-		return 2D * Math.PI * (worldTicks / getOrbitalPeriodTicks(body));
-	}
-
-	private double getOrbitalPeriodTicks(CelestialBody body) {
-		return body.getOrbitalPeriod() * (double) AstronomyUtil.TICKS_IN_DAY;
-	}
-
-	private double calculateEccentricAnomaly(double meanAnomaly, float eccentricity) {
-		double eccentricAnomaly = meanAnomaly;
-		for(int i = 0; i < 4; i++) {
-			eccentricAnomaly = meanAnomaly + eccentricity * Math.sin(eccentricAnomaly);
-		}
-		return eccentricAnomaly;
-	}
-
 	private float getBodyRotationPhase(CelestialBody body, double dayTicks) {
 		double period = body.getRotationalPeriod();
 		return (float) ((dayTicks % period) / period);
@@ -1167,11 +980,6 @@ public class GUIScreenSatSettings extends GuiScreen {
 			this.offsetV = offsetV;
 			this.depth = depth;
 		}
-	}
-
-	private static class BodyPosition {
-		private float mapU;
-		private float mapV;
 	}
 
 	private static int toColorChannel(float value) {
