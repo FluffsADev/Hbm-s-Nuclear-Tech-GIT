@@ -365,7 +365,7 @@ public class GUIScreenSatSettings extends GuiScreen {
 		if(held == null) return;
 
 		float oldValue = editSpeed;
-		float step = isShiftKeyDown() ? 0.1F : 0.01F;
+		float step = isShiftKeyDown() ? 0.05F : 0.005F;
 		float newValue = Math.round((oldValue + (delta > 0 ? step : -step)) * 100F) / 100F;
 
 		newValue = Satellite.clampSpeed(newValue);

@@ -1821,9 +1821,9 @@ public class GUIMachineStardar extends GuiInfoContainer {
 		String owner = satellite.owner != null && !satellite.owner.isEmpty() ? satellite.owner : Satellite.DEFAULT_OWNER;
 		List<String> tooltip = new ArrayList<String>(4);
 		tooltip.add(EnumChatFormatting.YELLOW + I18nUtil.resolveKey("item.sat.desc.owner") + ": " + EnumChatFormatting.GOLD + owner);
+		tooltip.add(EnumChatFormatting.YELLOW + I18nUtil.resolveKey("item.sat.desc.speed") + ": " + EnumChatFormatting.GOLD + formatOrbitSpeed(satellite.altitude, satellite.speed) + "km/s");
 		tooltip.add(EnumChatFormatting.YELLOW + I18nUtil.resolveKey("item.sat.desc.altitude") + ": " + EnumChatFormatting.GOLD + formatValue(satellite.altitude) + "km");
 		tooltip.add(EnumChatFormatting.YELLOW + I18nUtil.resolveKey("item.sat.desc.inclination") + ": " + EnumChatFormatting.GOLD + formatValue(satellite.inclination) + "\u00B0");
-		tooltip.add(EnumChatFormatting.YELLOW + I18nUtil.resolveKey("item.sat.desc.speed") + ": " + EnumChatFormatting.GOLD + formatValue(satellite.speed) + "x");
 
 		int tooltipX = mouseX;
 		int tooltipY = mouseY;
@@ -2302,6 +2302,10 @@ public class GUIMachineStardar extends GuiInfoContainer {
 
 	private static String formatValue(float value) {
 		return value == (int) value ? Integer.toString((int) value) : Float.toString(value);
+	}
+
+	private static String formatOrbitSpeed(float altitude, float speed) {
+		return formatValue(Math.round(Satellite.getOrbitSpeedKmPerSecond(altitude, speed) * 10.0F) / 10.0F);
 	}
 
 	private int colorArrayToRgb(float[] color) {
