@@ -1435,6 +1435,8 @@ public class SkyProviderCelestial extends IRenderHandler {
 	protected void renderHeldSatellitePreview(float partialTicks, WorldClient world, Minecraft mc, float solarAngle) {
 		ItemStack held = mc.thePlayer.getHeldItem();
 		if(held == null || !Satellite.isSatelliteItem(held.getItem())) return;
+		int currentBodyDimensionId = CelestialBody.getTarget(world, (int) mc.thePlayer.posX, (int) mc.thePlayer.posZ).body.dimensionId;
+		if(Satellite.getTargetDimensionId(held, currentBodyDimensionId) != currentBodyDimensionId) return;
 
 		float r = Satellite.getColorR(held);
 		float g = Satellite.getColorG(held);
