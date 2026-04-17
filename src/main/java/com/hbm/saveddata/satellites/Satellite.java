@@ -87,9 +87,9 @@ public abstract class Satellite {
 		registerSatellite(SatelliteRadar.class, ModItems.sat_radar, 0.134F, 1.0F, 0.134F);
 		registerSatellite(SatelliteLaser.class, ModItems.sat_laser, 0.221F, 0.663F, 1.0F);
 		registerSatellite(SatelliteResonator.class, ModItems.sat_resonator, 1.0F, 0.646F, 0.181F);
-		registerSatellite(SatelliteFoeq.class, ModItems.sat_foeq, 0.0F, 0.0F, 0.0F);
-		registerSatellite(SatelliteMiner.class, ModItems.sat_miner, 0.0F, 0.0F, 0.0F);
-		registerSatellite(SatelliteLunarMiner.class, ModItems.sat_lunar_miner, 0.0F, 0.0F, 0.0F);
+		registerSatellite(SatelliteFoeq.class, ModItems.sat_foeq, 1.0F, 0.15F, 0.15F);
+		registerSatellite(SatelliteMiner.class, ModItems.sat_miner, 0.46F, 0.56F, 0.68F);
+		registerSatellite(SatelliteLunarMiner.class, ModItems.sat_lunar_miner, 0.42F, 0.54F, 0.82F);
 		registerSatellite(SatelliteDysonRelay.class, ModItems.sat_dyson_relay, 1.0F, 0.9F, 0.8F);
 		registerSatellite(SatelliteHorizons.class, ModItems.sat_gerald, 0.0F, 0.0F, 0.0F);
 		registerSatellite(SatelliteRailgun.class, ModItems.sat_war, 0.0F, 0.0F, 0.0F);
