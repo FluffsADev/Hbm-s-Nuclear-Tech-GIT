@@ -13,7 +13,6 @@ import org.lwjgl.opengl.GL13;
 import com.hbm.dim.CelestialBody;
 import com.hbm.dim.trait.CBT_Impact;
 import com.hbm.dim.trait.CBT_Lights;
-import com.hbm.items.ISatChip;
 import com.hbm.lib.RefStrings;
 import com.hbm.main.NTMSounds;
 import com.hbm.packet.PacketDispatcher;
@@ -89,12 +88,14 @@ public class GUIScreenSatSettings extends GuiScreen {
 	private float editAltitude;
 	private float editInclination;
 	private float editSpeed;
+	private float editPhaseOffset;
 	private boolean editBlinking;
 	private float editBlinkPeriod;
 	private int editColorR;
 	private int editColorG;
 	private int editColorB;
 	private boolean showSatelliteDetails = true;
+	private int detailsMode = 0;
 
 	public GUIScreenSatSettings(EntityPlayer player) {
 		this.player = player;
@@ -130,9 +131,15 @@ public class GUIScreenSatSettings extends GuiScreen {
 		if(showSatelliteDetails) {
 			drawBatterySlice();
 			drawOrbitPreview(held, partialTicks);
-			drawLeftAligned(10, 130, 140, I18nUtil.resolveKey("item.sat.desc.speed") + ": " + formatOrbitSpeed(editAltitude, editSpeed) + "km/s", 0x00FF00);
-			drawLeftAligned(10, 145, 155, I18nUtil.resolveKey("item.sat.desc.altitude") + ": " + formatValue(editAltitude) + "km", 0x00FF00);
-			drawLeftAligned(10, 160, 170, I18nUtil.resolveKey("item.sat.desc.inclination") + ": " + formatValue(editInclination) + "\u00B0", 0x00FF00);
+			if(detailsMode == 0) {
+				drawLeftAligned(10, 130, 140, I18nUtil.resolveKey("item.sat.desc.speed") + ": " + formatOrbitSpeed(editAltitude, editSpeed) + "km/s", 0x00FF00);
+				drawLeftAligned(10, 145, 155, I18nUtil.resolveKey("item.sat.desc.altitude") + ": " + formatValue(editAltitude) + "km", 0x00FF00);
+				drawLeftAligned(10, 160, 170, I18nUtil.resolveKey("item.sat.desc.inclination") + ": " + formatValue(editInclination) + "\u00B0", 0x00FF00);
+			} else {
+				drawLeftAligned(10, 130, 140, "Orbital Phase: " + formatPhaseOffset(editPhaseOffset) + "\u00B0", 0x00FF00);
+				drawLeftAligned(10, 145, 155, "Satellite owner: " + (editOwner != null ? editOwner : Satellite.DEFAULT_OWNER), 0x00FF00);
+				drawLeftAligned(10, 160, 170, "", 0x00FF00);
+			}
 			drawRect(guiLeft + 81, guiTop + 177, guiLeft + 110, guiTop + 199, 0xFF000000 | (editColorR << 16) | (editColorG << 8) | editColorB);
 			drawRightAligned(108, 204, 213, formatValue(editBlinkPeriod) + "s", 0xFFFFFF, 2F / 3F);
 		}
@@ -148,10 +155,16 @@ public class GUIScreenSatSettings extends GuiScreen {
 
 		if(showSatelliteDetails && isOwnerButtonAt(mouseX, mouseY)) {
 			drawCreativeTabHoveringText(I18nUtil.resolveKey("gui.sat.settings.tooltip.owner_assign"), mouseX, mouseY);
+		} else if(showSatelliteDetails && isModeButtonAt(mouseX, mouseY)) {
+			drawCreativeTabHoveringText("Switch value mode", mouseX, mouseY);
 		} else if(showSatelliteDetails) {
 			int scrollField = getScrollFieldAt(mouseX, mouseY);
 			if(scrollField == 0) {
-				drawCreativeTabHoveringText(I18nUtil.resolveKey("gui.sat.settings.tooltip.scroll_speed"), mouseX, mouseY);
+				if(detailsMode == 0) {
+					drawCreativeTabHoveringText(I18nUtil.resolveKey("gui.sat.settings.tooltip.scroll_speed"), mouseX, mouseY);
+				} else {
+					drawCreativeTabHoveringText("Scroll to adjust orbital phase", mouseX, mouseY);
+				}
 			} else if(scrollField == 1) {
 				drawCreativeTabHoveringText(I18nUtil.resolveKey("gui.sat.settings.tooltip.scroll_altitude"), mouseX, mouseY);
 			} else if(scrollField == 2) {
@@ -204,6 +217,12 @@ public class GUIScreenSatSettings extends GuiScreen {
 			if(owner.equals(editOwner)) return;
 			editOwner = owner;
 			markDirty();
+			return;
+		}
+
+		if(isModeButtonAt(mouseX, mouseY)) {
+			mc.getSoundHandler().playSound(PositionedSoundRecord.func_147674_a(new ResourceLocation("gui.button.press"), 1.0F));
+			detailsMode = detailsMode == 0 ? 1 : 0;
 			return;
 		}
 
@@ -333,7 +352,14 @@ public class GUIScreenSatSettings extends GuiScreen {
 			return;
 		}
 		if(field == 0) {
-			adjustSpeed(delta);
+			if(detailsMode == 0) {
+				adjustSpeed(delta);
+			} else {
+				adjustPhaseOffset(delta);
+			}
+			return;
+		}
+		if(detailsMode != 0) {
 			return;
 		}
 
@@ -373,6 +399,19 @@ public class GUIScreenSatSettings extends GuiScreen {
 		markDirty();
 	}
 
+	private void adjustPhaseOffset(int delta) {
+		ItemStack held = getHeldSatellite();
+		if(held == null) return;
+
+		float oldValue = editPhaseOffset;
+		float step = isShiftKeyDown() ? 15.0F : 1.0F;
+		float newValue = Satellite.normalizePhaseOffset(oldValue + (delta > 0 ? step : -step));
+		if(Math.abs(newValue - oldValue) < 0.0005F) return;
+
+		editPhaseOffset = newValue;
+		markDirty();
+	}
+
 	private void adjustBlinkPeriod(int delta) {
 		ItemStack held = getHeldSatellite();
 		if(held == null) return;
@@ -393,8 +432,10 @@ public class GUIScreenSatSettings extends GuiScreen {
 
 		if(x >= 9 && x < 111) {
 			if(y >= 130 && y <= 140) return 0;
-			if(y >= 145 && y <= 155) return 1;
-			if(y >= 160 && y <= 170) return 2;
+			if(detailsMode == 0) {
+				if(y >= 145 && y <= 155) return 1;
+				if(y >= 160 && y <= 170) return 2;
+			}
 		}
 		if(x >= 81 && x < 111 && y >= 204 && y <= 213) return 3;
 		return -1;
@@ -418,6 +459,12 @@ public class GUIScreenSatSettings extends GuiScreen {
 		return x >= 113 && x < 126 && y >= 128 && y < 141;
 	}
 
+	private boolean isModeButtonAt(int mouseX, int mouseY) {
+		int x = mouseX - guiLeft;
+		int y = mouseY - guiTop;
+		return x >= 113 && x < 126 && y >= 143 && y < 156;
+	}
+
 	private ItemStack getHeldSatellite() {
 		ItemStack held = player.getHeldItem();
 		return held != null && Satellite.isSatelliteItem(held.getItem()) ? held : null;
@@ -432,6 +479,7 @@ public class GUIScreenSatSettings extends GuiScreen {
 		editAltitude = Satellite.getAltitude(held);
 		editInclination = Satellite.getInclination(held);
 		editSpeed = Satellite.getSpeed(held);
+		editPhaseOffset = Satellite.getPhaseOffset(held);
 		editBlinking = Satellite.isBlinking(held);
 		editBlinkPeriod = Satellite.getBlinkPeriod(held);
 		editColorR = toColorChannel(Satellite.getColorR(held));
@@ -448,6 +496,7 @@ public class GUIScreenSatSettings extends GuiScreen {
 		Satellite.setAltitude(held, editAltitude);
 		Satellite.setInclination(held, editInclination);
 		Satellite.setSpeed(held, editSpeed);
+		Satellite.setPhaseOffset(held, editPhaseOffset);
 		Satellite.setBlinking(held, editBlinking);
 		Satellite.setBlinkPeriod(held, editBlinkPeriod);
 		Satellite.setColor(held, editColorR / 255F, editColorG / 255F, editColorB / 255F);
@@ -459,6 +508,7 @@ public class GUIScreenSatSettings extends GuiScreen {
 		data.setFloat("satAltitude", editAltitude);
 		data.setFloat("satInclination", editInclination);
 		data.setFloat("satSpeed", editSpeed);
+		data.setFloat("satPhaseOffset", editPhaseOffset);
 		data.setBoolean("satIsBlinking", editBlinking);
 		data.setFloat("satBlink", editBlinkPeriod);
 		data.setInteger("satColorR", editColorR);
@@ -499,11 +549,11 @@ public class GUIScreenSatSettings extends GuiScreen {
 		float bodySize = MathHelper.clamp_float(bodySizeAt1x * renderZoom, 8F, 96F);
 		float iconSize = MathHelper.clamp_float(bodySize * 0.75F * 0.25F, 0.4F, 9.0F);
 		double angle = getArtificialSatelliteAngle();
-		int heldFrequency = ISatChip.getFreqS(held);
 
 		float heldAltitude = editAltitude;
 		float heldInclination = editInclination;
 		float heldSpeed = editSpeed;
+		float heldPhaseOffset = editPhaseOffset;
 		float heldR = editColorR / 255F;
 		float heldG = editColorG / 255F;
 		float heldB = editColorB / 255F;
@@ -522,12 +572,12 @@ public class GUIScreenSatSettings extends GuiScreen {
 		drawOwnedSatellites(satellites, owner, centerX, centerY, baseOrbitRadiusMapPx, renderZoom, angle, iconSize, false);
 		float heldBlinkAlpha = getBlinkAlpha(editBlinking, editBlinkPeriod);
 		drawSatelliteOrbitHalf(centerX, centerY, baseOrbitRadiusMapPx, renderZoom, heldAltitude, heldInclination, heldR, heldG, heldB, false, 0.45F * heldBlinkAlpha);
-		drawSatelliteIcon(heldTexture, centerX, centerY, baseOrbitRadiusMapPx, renderZoom, heldFrequency, heldAltitude, heldInclination, heldSpeed, angle, false, iconSize * 1.2F);
+		drawSatelliteIcon(heldTexture, centerX, centerY, baseOrbitRadiusMapPx, renderZoom, heldPhaseOffset, heldAltitude, heldInclination, heldSpeed, angle, false, iconSize * 1.2F);
 		drawBodyPreview(body, centerX, centerY, bodySize, dayTicks);
 
 		drawOwnedSatellites(satellites, owner, centerX, centerY, baseOrbitRadiusMapPx, renderZoom, angle, iconSize, true);
 		drawSatelliteOrbitHalf(centerX, centerY, baseOrbitRadiusMapPx, renderZoom, heldAltitude, heldInclination, heldR, heldG, heldB, true, 0.45F * heldBlinkAlpha);
-		drawSatelliteIcon(heldTexture, centerX, centerY, baseOrbitRadiusMapPx, renderZoom, heldFrequency, heldAltitude, heldInclination, heldSpeed, angle, true, iconSize * 1.2F);
+		drawSatelliteIcon(heldTexture, centerX, centerY, baseOrbitRadiusMapPx, renderZoom, heldPhaseOffset, heldAltitude, heldInclination, heldSpeed, angle, true, iconSize * 1.2F);
 		GL11.glPopAttrib();
 
 		GL11.glDisable(GL11.GL_SCISSOR_TEST);
@@ -571,7 +621,7 @@ public class GUIScreenSatSettings extends GuiScreen {
 			Satellite satellite = entry.getValue();
 			if(!owner.equals(satellite.owner)) continue;
 
-			drawSatelliteIcon(getSatelliteTextureByType(satellite.getClass()), centerX, centerY, baseOrbitRadiusMapPx, zoom, entry.getKey(), satellite.altitude, satellite.inclination, satellite.speed, angle, frontHalf, iconSize);
+			drawSatelliteIcon(getSatelliteTextureByType(satellite.getClass()), centerX, centerY, baseOrbitRadiusMapPx, zoom, satellite.phaseOffset, satellite.altitude, satellite.inclination, satellite.speed, angle, frontHalf, iconSize);
 		}
 	}
 
@@ -656,8 +706,8 @@ public class GUIScreenSatSettings extends GuiScreen {
 		GL11.glColor4f(1F, 1F, 1F, 1F);
 	}
 
-	private void drawSatelliteIcon(ResourceLocation texture, float centerX, float centerY, float baseRadiusMapPx, float zoom, int frequency, float altitude, float inclination, float speed, double angle, boolean frontHalf, float size) {
-		float satelliteAngle = Satellite.applyFrequencyToOrbitAngle(frequency, altitude, speed, angle, (float)(2D * Math.PI));
+	private void drawSatelliteIcon(ResourceLocation texture, float centerX, float centerY, float baseRadiusMapPx, float zoom, float phaseOffset, float altitude, float inclination, float speed, double angle, boolean frontHalf, float size) {
+		float satelliteAngle = Satellite.applyPhaseOffsetToOrbitAngle(phaseOffset, altitude, speed, angle, (float)(2D * Math.PI));
 		SatelliteOrbitPoint orbitPoint = getArtificialSatelliteOrbitPoint(altitude, inclination, satelliteAngle, baseRadiusMapPx);
 		float screenX = mapToScreenX(centerX, orbitPoint.offsetU, orbitPoint.offsetV, zoom);
 		float screenY = mapToScreenY(centerY, orbitPoint.offsetU, orbitPoint.offsetV, zoom);
@@ -1015,5 +1065,10 @@ public class GUIScreenSatSettings extends GuiScreen {
 
 	private static String formatOrbitSpeed(float altitude, float speed) {
 		return formatValue(Math.round(Satellite.getOrbitSpeedKmPerSecond(altitude, speed) * 10.0F) / 10.0F);
+	}
+
+	private static String formatPhaseOffset(float phaseOffset) {
+		float rounded = Math.round(Satellite.normalizePhaseOffset(phaseOffset) * 10.0F) / 10.0F;
+		return formatValue(rounded);
 	}
 }

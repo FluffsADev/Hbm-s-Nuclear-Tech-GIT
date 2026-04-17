@@ -173,6 +173,7 @@ public class ItemSatellite extends ItemCustomMissilePart implements ISatChip, IG
 		Satellite.setColor(stack, r / 255F, g / 255F, b / 255F);
 		Satellite.setAltitude(stack, MathHelper.clamp_float(data.getFloat("satAltitude"), Satellite.MIN_ALTITUDE_KM, Satellite.MAX_ALTITUDE_KM));
 		Satellite.setSpeed(stack, data.getFloat("satSpeed"));
+		Satellite.setPhaseOffset(stack, data.getFloat("satPhaseOffset"));
 		Satellite.setInclination(stack, MathHelper.clamp_float(data.getFloat("satInclination"), Satellite.MIN_INCLINATION, Satellite.MAX_INCLINATION));
 		Satellite.setOwner(stack, data.getString("satOwner"));
 		Satellite.setBlinking(stack, data.getBoolean("satIsBlinking"));

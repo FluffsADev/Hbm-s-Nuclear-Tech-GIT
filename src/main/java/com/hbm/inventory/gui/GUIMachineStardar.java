@@ -738,7 +738,7 @@ public class GUIMachineStardar extends GuiInfoContainer {
 				continue;
 			}
 
-			float satelliteAngle = Satellite.applyFrequencyToOrbitAngle(frequency, satellite.altitude, satellite.speed, angle, (float)(2D * Math.PI));
+			float satelliteAngle = Satellite.applyPhaseOffsetToOrbitAngle(satellite.phaseOffset, satellite.altitude, satellite.speed, angle, (float)(2D * Math.PI));
 			SatelliteOrbitPoint orbitPoint = getArtificialSatelliteOrbitPoint(satellite, satelliteAngle, baseOrbitRadiusMapPx);
 			float screenX = mapToScreenX(bodyMapU + orbitPoint.offsetU, bodyMapV + orbitPoint.offsetV);
 			float screenY = mapToScreenY(bodyMapU + orbitPoint.offsetU, bodyMapV + orbitPoint.offsetV);
@@ -1684,7 +1684,7 @@ public class GUIMachineStardar extends GuiInfoContainer {
 			return false;
 		}
 
-		float satelliteAngle = Satellite.applyFrequencyToOrbitAngle(frequency, satellite.altitude, satellite.speed, getArtificialSatelliteAngle(), (float)(2D * Math.PI));
+		float satelliteAngle = Satellite.applyPhaseOffsetToOrbitAngle(satellite.phaseOffset, satellite.altitude, satellite.speed, getArtificialSatelliteAngle(), (float)(2D * Math.PI));
 		SatelliteOrbitPoint orbitPoint = getArtificialSatelliteOrbitPoint(satellite, satelliteAngle, baseOrbitRadiusMapPx);
 		outPosition.mapU = trackedBodyPosition.mapU + orbitPoint.offsetU;
 		outPosition.mapV = trackedBodyPosition.mapV + orbitPoint.offsetV;

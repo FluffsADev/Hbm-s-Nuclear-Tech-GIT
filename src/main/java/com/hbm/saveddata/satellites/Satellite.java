@@ -45,6 +45,7 @@ public abstract class Satellite {
 	public static final boolean DEFAULT_IS_BLINKING = false;
 	public static final float DEFAULT_BLINK_PERIOD = MIN_BLINK_PERIOD;
 	public static final String DEFAULT_OWNER = "None";
+	public static final float DEFAULT_PHASE_OFFSET = 0.0F;
 
 	private static final ResourceLocation satelliteTexture = new ResourceLocation(RefStrings.MODID, "textures/misc/space/satellite.png");
 
@@ -72,6 +73,7 @@ public abstract class Satellite {
 	public float inclination = DEFAULT_INCLINATION;
 	public float altitude = DEFAULT_ALTITUDE_KM;
 	public float speed = DEFAULT_SPEED;
+	public float phaseOffset = DEFAULT_PHASE_OFFSET;
 	public boolean isBlinking = DEFAULT_IS_BLINKING;
 	public float blinkPeriod = DEFAULT_BLINK_PERIOD;
 	public String owner = DEFAULT_OWNER;
@@ -122,6 +124,7 @@ public abstract class Satellite {
 			nbt.setFloat("satInclination", DEFAULT_INCLINATION);
 			nbt.setFloat("satAltitude", DEFAULT_ALTITUDE_KM);
 			nbt.setFloat("satSpeed", DEFAULT_SPEED);
+			nbt.setFloat("satPhaseOffset", DEFAULT_PHASE_OFFSET);
 			nbt.setBoolean("satIsBlinking", DEFAULT_IS_BLINKING);
 			nbt.setFloat("satBlink", DEFAULT_BLINK_PERIOD);
 			nbt.setString("satOwner", DEFAULT_OWNER);
@@ -132,6 +135,7 @@ public abstract class Satellite {
 		} else {
 			nbt.setFloat("satInclination", nbt.hasKey("satInclination") ? nbt.getFloat("satInclination") : DEFAULT_INCLINATION);
 			nbt.setFloat("satSpeed", nbt.hasKey("satSpeed") ? clampSpeed(nbt.getFloat("satSpeed")) : DEFAULT_SPEED);
+			nbt.setFloat("satPhaseOffset", nbt.hasKey("satPhaseOffset") ? normalizePhaseOffset(nbt.getFloat("satPhaseOffset")) : DEFAULT_PHASE_OFFSET);
 			if(!nbt.hasKey("satIsBlinking")) {
 				nbt.setBoolean("satIsBlinking", DEFAULT_IS_BLINKING);
 			}
@@ -151,6 +155,10 @@ public abstract class Satellite {
 
 	public static float getSpeed(ItemStack stack) {
 		return getItemData(stack).getFloat("satSpeed");
+	}
+
+	public static float getPhaseOffset(ItemStack stack) {
+		return getItemData(stack).getFloat("satPhaseOffset");
 	}
 
 	public static String getOwner(ItemStack stack) {
@@ -189,6 +197,10 @@ public abstract class Satellite {
 		getItemData(stack).setFloat("satSpeed", clampSpeed(speed));
 	}
 
+	public static void setPhaseOffset(ItemStack stack, float phaseOffset) {
+		getItemData(stack).setFloat("satPhaseOffset", normalizePhaseOffset(phaseOffset));
+	}
+
 	public static void setOwner(ItemStack stack, String owner) {
 		getItemData(stack).setString("satOwner", owner);
 	}
@@ -216,11 +228,18 @@ public abstract class Satellite {
 		return Math.max(MIN_SPEED, Math.min(MAX_SPEED, speed));
 	}
 
+	public static float normalizePhaseOffset(float phaseOffset) {
+		float wrapped = phaseOffset % 360.0F;
+		if(wrapped < 0.0F) wrapped += 360.0F;
+		return wrapped;
+	}
+
 	public static void copyItemData(ItemStack from, ItemStack to) {
 		if(to == null) return;
 		setInclination(to, getInclination(from));
 		setAltitude(to, getAltitude(from));
 		setSpeed(to, getSpeed(from));
+		setPhaseOffset(to, getPhaseOffset(from));
 		setOwner(to, getOwner(from));
 		setColor(to, getColorR(from), getColorG(from), getColorB(from));
 		setBlinking(to, isBlinking(from));
@@ -249,18 +268,19 @@ public abstract class Satellite {
 
 		if(sat != null) {
 			int targetDimensionId = getTargetDimensionId(sat.getClass(), world.provider.dimensionId);
-			if(world.provider.dimensionId != targetDimensionId) {
-				World targetWorld = DimensionManager.getWorld(targetDimensionId);
-				if(targetWorld == null) {
-					DimensionManager.initDimension(targetDimensionId);
-					targetWorld = DimensionManager.getWorld(targetDimensionId);
+				if(world.provider.dimensionId != targetDimensionId) {
+					World targetWorld = DimensionManager.getWorld(targetDimensionId);
+					if(targetWorld == null) {
+						DimensionManager.initDimension(targetDimensionId);
+						targetWorld = DimensionManager.getWorld(targetDimensionId);
+					}
+					if(targetWorld != null) world = targetWorld;
 				}
-				if(targetWorld != null) world = targetWorld;
-			}
 			
 			sat.inclination = getInclination(stack);
 			sat.altitude = getAltitude(stack);
 			sat.speed = getSpeed(stack);
+			sat.phaseOffset = getPhaseOffset(stack);
 			sat.isBlinking = isBlinking(stack);
 			sat.blinkPeriod = getBlinkPeriod(stack);
 			sat.owner = getOwner(stack);
@@ -306,6 +326,7 @@ public abstract class Satellite {
 		nbt.setFloat("satInclination", inclination);
 		nbt.setFloat("satAltitude", altitude);
 		nbt.setFloat("satSpeed", speed);
+		nbt.setFloat("satPhaseOffset", normalizePhaseOffset(phaseOffset));
 		nbt.setBoolean("satIsBlinking", isBlinking);
 		nbt.setFloat("satBlink", blinkPeriod);
 		nbt.setString("satOwner", owner);
@@ -317,6 +338,7 @@ public abstract class Satellite {
 		inclination = nbt.getFloat("satInclination");
 		altitude = nbt.hasKey("satAltitude") ? nbt.getFloat("satAltitude") : DEFAULT_ALTITUDE_KM;
 		speed = nbt.hasKey("satSpeed") ? clampSpeed(nbt.getFloat("satSpeed")) : DEFAULT_SPEED;
+		phaseOffset = nbt.hasKey("satPhaseOffset") ? normalizePhaseOffset(nbt.getFloat("satPhaseOffset")) : DEFAULT_PHASE_OFFSET;
 		isBlinking = nbt.hasKey("satIsBlinking") ? nbt.getBoolean("satIsBlinking") : DEFAULT_IS_BLINKING;
 		blinkPeriod = nbt.hasKey("satBlink") ? clampBlinkPeriod(nbt.getFloat("satBlink")) : DEFAULT_BLINK_PERIOD;
 		owner = nbt.hasKey("satOwner") ? nbt.getString("satOwner") : DEFAULT_OWNER;
@@ -330,6 +352,7 @@ public abstract class Satellite {
 		buf.writeFloat(inclination);
 		buf.writeFloat(altitude);
 		buf.writeFloat(speed);
+		buf.writeFloat(normalizePhaseOffset(phaseOffset));
 		BufferUtil.writeString(buf, owner);
 		buf.writeFloat(colorR);
 		buf.writeFloat(colorG);
@@ -341,6 +364,7 @@ public abstract class Satellite {
 		inclination = buf.readFloat();
 		altitude = buf.readFloat();
 		speed = clampSpeed(buf.readFloat());
+		phaseOffset = normalizePhaseOffset(buf.readFloat());
 		owner = BufferUtil.readString(buf);
 		colorR = buf.readFloat();
 		colorG = buf.readFloat();
@@ -374,18 +398,22 @@ public abstract class Satellite {
 
 
 	public void render(float partialTicks, WorldClient world, Minecraft mc, float solarAngle, long id) {
-		renderDefault(partialTicks, world, mc, solarAngle, id, colorR, colorG, colorB, inclination, altitude, speed, isBlinking, blinkPeriod);
+		renderDefault(partialTicks, world, mc, solarAngle, id, colorR, colorG, colorB, inclination, altitude, speed, phaseOffset, isBlinking, blinkPeriod);
 	}
 
 	public static void renderDefault(float partialTicks, WorldClient world, Minecraft mc, float solarAngle, long seed, float r, float g, float b, float inclination, float altitude, boolean isBlinking, float blinkPeriod) {
-		renderDefault(partialTicks, world, mc, solarAngle, seed, r, g, b, inclination, altitude, DEFAULT_SPEED, isBlinking, blinkPeriod);
+		renderDefault(partialTicks, world, mc, solarAngle, seed, r, g, b, inclination, altitude, DEFAULT_SPEED, DEFAULT_PHASE_OFFSET, isBlinking, blinkPeriod);
 	}
 
 	public static void renderDefault(float partialTicks, WorldClient world, Minecraft mc, float solarAngle, long seed, float r, float g, float b, float inclination, float altitude, float speed, boolean isBlinking, float blinkPeriod) {
+		renderDefault(partialTicks, world, mc, solarAngle, seed, r, g, b, inclination, altitude, speed, DEFAULT_PHASE_OFFSET, isBlinking, blinkPeriod);
+	}
+
+	public static void renderDefault(float partialTicks, WorldClient world, Minecraft mc, float solarAngle, long seed, float r, float g, float b, float inclination, float altitude, float speed, float phaseOffset, boolean isBlinking, float blinkPeriod) {
 		Tessellator tessellator = Tessellator.instance;
 
 		double ticks = (double)System.currentTimeMillis() / 50.0D;
-		float orbitAngle = applyFrequencyToOrbitAngle(seed, altitude, speed, (ticks / 600.0D) * -360.0D, 360.0F);
+		float orbitAngle = applyPhaseOffsetToOrbitAngle(phaseOffset, altitude, speed, (ticks / 600.0D) * -360.0D, 360.0F);
 		float renderAltitude = Math.max(1.0F, altitude);
 
 		GL11.glPushMatrix();
@@ -441,13 +469,13 @@ public abstract class Satellite {
 		GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
 	}
 
-	public static float applyFrequencyToOrbitAngle(long frequency, float altitude, double baseAngle, float fullRotation) {
-		return applyFrequencyToOrbitAngle(frequency, altitude, DEFAULT_SPEED, baseAngle, fullRotation);
+	public static float applyPhaseOffsetToOrbitAngle(float phaseOffset, float altitude, double baseAngle, float fullRotation) {
+		return applyPhaseOffsetToOrbitAngle(phaseOffset, altitude, DEFAULT_SPEED, baseAngle, fullRotation);
 	}
 
-	public static float applyFrequencyToOrbitAngle(long frequency, float altitude, float speed, double baseAngle, float fullRotation) {
+	public static float applyPhaseOffsetToOrbitAngle(float phaseOffset, float altitude, float speed, double baseAngle, float fullRotation) {
 		double orbitSpeed = getAltitudeOrbitSpeed(altitude) * clampSpeed(speed);
-		double phase = getFrequencyFloat(frequency, 0xC2B2AE3D27D4EB4FL) * fullRotation;
+		double phase = normalizePhaseOffset(phaseOffset) / 360.0D * fullRotation;
 		double angle = baseAngle * orbitSpeed + phase;
 		double wrapped = angle % fullRotation;
 		if(wrapped < 0.0D) wrapped += fullRotation;
@@ -462,16 +490,6 @@ public abstract class Satellite {
 
 	private static double getAltitudeOrbitSpeed(float altitude) {
 		return Math.pow((double)DEFAULT_ALTITUDE_KM / Math.max(1.0D, altitude), 1.5D);
-	}
-
-	private static float getFrequencyFloat(long frequency, long salt) {
-		long x = frequency + salt;
-		x ^= (x >>> 30);
-		x *= 0xBF58476D1CE4E5B9L;
-		x ^= (x >>> 27);
-		x *= 0x94D049BB133111EBL;
-		x ^= (x >>> 31);
-		return (float)((x & 0xFFFFFFL) / (double)0x1000000L);
 	}
 
 	// killing myself

@@ -50,10 +50,10 @@ public class SatelliteSavedData extends WorldSavedData {
 
 		for(int i = 0; i < satCount; i++) {
 			Satellite sat = Satellite.create(nbt.getInteger("sat_id_" + i));
-			sat.readFromNBT((NBTTagCompound) nbt.getTag("sat_data_" + i));
+			NBTTagCompound satNbt = (NBTTagCompound) nbt.getTag("sat_data_" + i);
+			sat.readFromNBT(satNbt);
 
 			int freq = nbt.getInteger("sat_freq_" + i);
-
 			sats.put(freq, sat);
 		}
 	}
