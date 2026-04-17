@@ -6778,6 +6778,7 @@ gui.sat.settings.tooltip.owner_assign=点击将自己设为卫星所有者
 gui.sat.settings.tooltip.scroll_speed=滚动鼠标滚轮以调整速度
 gui.sat.settings.tooltip.scroll_altitude=滚动鼠标滚轮以调整高度
 gui.sat.settings.tooltip.scroll_inclination=滚动鼠标滚轮以调整倾角
+gui.sat.settings.tooltip.scroll_phase=滚动鼠标滚轮以调整轨道相位
 gui.sat.settings.tooltip.scroll_altitude_inclination=滚动鼠标滚轮以调整高度/倾角
 gui.sat.settings.tooltip.scroll_blink=滚动鼠标滚轮以调整闪烁周期
 item.stick_pvc.name=PVC棍

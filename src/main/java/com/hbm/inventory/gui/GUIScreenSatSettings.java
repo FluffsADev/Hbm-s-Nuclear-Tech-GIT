@@ -159,13 +159,13 @@ public class GUIScreenSatSettings extends GuiScreen {
 			drawCreativeTabHoveringText("Switch value mode", mouseX, mouseY);
 		} else if(showSatelliteDetails) {
 			int scrollField = getScrollFieldAt(mouseX, mouseY);
-			if(scrollField == 0) {
-				if(detailsMode == 0) {
-					drawCreativeTabHoveringText(I18nUtil.resolveKey("gui.sat.settings.tooltip.scroll_speed"), mouseX, mouseY);
-				} else {
-					drawCreativeTabHoveringText("Scroll to adjust orbital phase", mouseX, mouseY);
-				}
-			} else if(scrollField == 1) {
+				if(scrollField == 0) {
+					if(detailsMode == 0) {
+						drawCreativeTabHoveringText(I18nUtil.resolveKey("gui.sat.settings.tooltip.scroll_speed"), mouseX, mouseY);
+					} else {
+						drawCreativeTabHoveringText(I18nUtil.resolveKey("gui.sat.settings.tooltip.scroll_phase"), mouseX, mouseY);
+					}
+				} else if(scrollField == 1) {
 				drawCreativeTabHoveringText(I18nUtil.resolveKey("gui.sat.settings.tooltip.scroll_altitude"), mouseX, mouseY);
 			} else if(scrollField == 2) {
 				drawCreativeTabHoveringText(I18nUtil.resolveKey("gui.sat.settings.tooltip.scroll_inclination"), mouseX, mouseY);
