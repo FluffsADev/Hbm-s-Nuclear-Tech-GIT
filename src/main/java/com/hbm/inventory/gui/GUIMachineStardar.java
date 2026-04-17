@@ -738,7 +738,7 @@ public class GUIMachineStardar extends GuiInfoContainer {
 				continue;
 			}
 
-			float satelliteAngle = Satellite.applyFrequencyToOrbitAngle(frequency, satellite.altitude, angle, (float)(2D * Math.PI));
+			float satelliteAngle = Satellite.applyFrequencyToOrbitAngle(frequency, satellite.altitude, satellite.speed, angle, (float)(2D * Math.PI));
 			SatelliteOrbitPoint orbitPoint = getArtificialSatelliteOrbitPoint(satellite, satelliteAngle, baseOrbitRadiusMapPx);
 			float screenX = mapToScreenX(bodyMapU + orbitPoint.offsetU, bodyMapV + orbitPoint.offsetV);
 			float screenY = mapToScreenY(bodyMapU + orbitPoint.offsetU, bodyMapV + orbitPoint.offsetV);
@@ -1684,7 +1684,7 @@ public class GUIMachineStardar extends GuiInfoContainer {
 			return false;
 		}
 
-		float satelliteAngle = Satellite.applyFrequencyToOrbitAngle(frequency, satellite.altitude, getArtificialSatelliteAngle(), (float)(2D * Math.PI));
+		float satelliteAngle = Satellite.applyFrequencyToOrbitAngle(frequency, satellite.altitude, satellite.speed, getArtificialSatelliteAngle(), (float)(2D * Math.PI));
 		SatelliteOrbitPoint orbitPoint = getArtificialSatelliteOrbitPoint(satellite, satelliteAngle, baseOrbitRadiusMapPx);
 		outPosition.mapU = trackedBodyPosition.mapU + orbitPoint.offsetU;
 		outPosition.mapV = trackedBodyPosition.mapV + orbitPoint.offsetV;
@@ -1819,10 +1819,11 @@ public class GUIMachineStardar extends GuiInfoContainer {
 
 		Satellite satellite = satelliteInfo.satellite;
 		String owner = satellite.owner != null && !satellite.owner.isEmpty() ? satellite.owner : Satellite.DEFAULT_OWNER;
-		List<String> tooltip = new ArrayList<String>(3);
+		List<String> tooltip = new ArrayList<String>(4);
 		tooltip.add(EnumChatFormatting.YELLOW + I18nUtil.resolveKey("item.sat.desc.owner") + ": " + EnumChatFormatting.GOLD + owner);
 		tooltip.add(EnumChatFormatting.YELLOW + I18nUtil.resolveKey("item.sat.desc.altitude") + ": " + EnumChatFormatting.GOLD + formatValue(satellite.altitude) + "km");
 		tooltip.add(EnumChatFormatting.YELLOW + I18nUtil.resolveKey("item.sat.desc.inclination") + ": " + EnumChatFormatting.GOLD + formatValue(satellite.inclination) + "\u00B0");
+		tooltip.add(EnumChatFormatting.YELLOW + I18nUtil.resolveKey("item.sat.desc.speed") + ": " + EnumChatFormatting.GOLD + formatValue(satellite.speed) + "x");
 
 		int tooltipX = mouseX;
 		int tooltipY = mouseY;

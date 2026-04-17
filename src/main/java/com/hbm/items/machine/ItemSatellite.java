@@ -73,6 +73,7 @@ public class ItemSatellite extends ItemCustomMissilePart implements ISatChip, IG
 			list.add(formatTooltipEntry(I18nUtil.resolveKey("item.sat.desc.owner"), Satellite.getOwner(itemstack)));
 			list.add(formatTooltipEntry(I18nUtil.resolveKey("item.sat.desc.inclination"), formatValue(Satellite.getInclination(itemstack)) + "°"));
 			list.add(formatTooltipEntry(I18nUtil.resolveKey("item.sat.desc.altitude"), formatValue(Satellite.getAltitude(itemstack)) + "km"));
+			list.add(formatTooltipEntry(I18nUtil.resolveKey("item.sat.desc.speed"), formatValue(Satellite.getSpeed(itemstack)) + "x"));
 			list.add(formatTooltipEntry(I18nUtil.resolveKey("item.sat.desc.color"), getHexColor(itemstack)));
 		} else {
 			list.add(EnumChatFormatting.DARK_GRAY + "" + EnumChatFormatting.ITALIC + "Hold <" + EnumChatFormatting.YELLOW + "" + EnumChatFormatting.ITALIC + "LSHIFT" + EnumChatFormatting.DARK_GRAY
@@ -166,47 +167,16 @@ public class ItemSatellite extends ItemCustomMissilePart implements ISatChip, IG
 
 	@Override
 	public void receiveControl(ItemStack stack, NBTTagCompound data) {
-		int r = Math.round(Satellite.getColorR(stack) * 255F);
-		int g = Math.round(Satellite.getColorG(stack) * 255F);
-		int b = Math.round(Satellite.getColorB(stack) * 255F);
-		boolean updateColor = false;
-
-		if(data.hasKey("satColorR")) {
-			r = MathHelper.clamp_int(data.getInteger("satColorR"), 0, 255);
-			updateColor = true;
-		}
-		if(data.hasKey("satColorG")) {
-			g = MathHelper.clamp_int(data.getInteger("satColorG"), 0, 255);
-			updateColor = true;
-		}
-		if(data.hasKey("satColorB")) {
-			b = MathHelper.clamp_int(data.getInteger("satColorB"), 0, 255);
-			updateColor = true;
-		}
-
-		if(updateColor) {
-			Satellite.setColor(stack, r / 255F, g / 255F, b / 255F);
-		}
-
-		if(data.hasKey("satAltitude")) {
-			Satellite.setAltitude(stack, MathHelper.clamp_float(data.getFloat("satAltitude"), Satellite.MIN_ALTITUDE_KM, Satellite.MAX_ALTITUDE_KM));
-		}
-
-		if(data.hasKey("satInclination")) {
-			Satellite.setInclination(stack, MathHelper.clamp_float(data.getFloat("satInclination"), Satellite.MIN_INCLINATION, Satellite.MAX_INCLINATION));
-		}
-
-		if(data.hasKey("satOwner")) {
-			Satellite.setOwner(stack, data.getString("satOwner"));
-		}
-
-		if(data.hasKey("satIsBlinking")) {
-			Satellite.setBlinking(stack, data.getBoolean("satIsBlinking"));
-		}
-
-		if(data.hasKey("satBlink")) {
-			Satellite.setBlinkPeriod(stack, data.getFloat("satBlink"));
-		}
+		int r = MathHelper.clamp_int(data.getInteger("satColorR"), 0, 255);
+		int g = MathHelper.clamp_int(data.getInteger("satColorG"), 0, 255);
+		int b = MathHelper.clamp_int(data.getInteger("satColorB"), 0, 255);
+		Satellite.setColor(stack, r / 255F, g / 255F, b / 255F);
+		Satellite.setAltitude(stack, MathHelper.clamp_float(data.getFloat("satAltitude"), Satellite.MIN_ALTITUDE_KM, Satellite.MAX_ALTITUDE_KM));
+		Satellite.setSpeed(stack, data.getFloat("satSpeed"));
+		Satellite.setInclination(stack, MathHelper.clamp_float(data.getFloat("satInclination"), Satellite.MIN_INCLINATION, Satellite.MAX_INCLINATION));
+		Satellite.setOwner(stack, data.getString("satOwner"));
+		Satellite.setBlinking(stack, data.getBoolean("satIsBlinking"));
+		Satellite.setBlinkPeriod(stack, data.getFloat("satBlink"));
 	}
 
 	private static String formatValue(float value) {

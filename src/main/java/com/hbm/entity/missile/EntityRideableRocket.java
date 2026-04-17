@@ -91,6 +91,7 @@ public class EntityRideableRocket extends EntityMissileBaseNT implements ILookOv
 	private int satFreq = 0;
 	private float satInclination = Satellite.DEFAULT_INCLINATION;
 	private float satAltitude = Satellite.DEFAULT_ALTITUDE_KM;
+	private float satSpeed = Satellite.DEFAULT_SPEED;
 	private boolean satIsBlinking = Satellite.DEFAULT_IS_BLINKING;
 	private float satBlinkPeriod = Satellite.DEFAULT_BLINK_PERIOD;
 	private String satOwner = Satellite.DEFAULT_OWNER;
@@ -128,6 +129,7 @@ public class EntityRideableRocket extends EntityMissileBaseNT implements ILookOv
 		satFreq = ISatChip.getFreqS(stack);
 		satInclination = Satellite.getInclination(stack);
 		satAltitude = Satellite.getAltitude(stack);
+		satSpeed = Satellite.getSpeed(stack);
 		satIsBlinking = Satellite.isBlinking(stack);
 		satBlinkPeriod = Satellite.getBlinkPeriod(stack);
 		satOwner = Satellite.getOwner(stack);
@@ -878,6 +880,7 @@ public class EntityRideableRocket extends EntityMissileBaseNT implements ILookOv
 		satFreq = nbt.getInteger("freq");
 		satInclination = nbt.hasKey("satInclination") ? nbt.getFloat("satInclination") : Satellite.DEFAULT_INCLINATION;
 		satAltitude = nbt.hasKey("satAltitude") ? nbt.getFloat("satAltitude") : Satellite.DEFAULT_ALTITUDE_KM;
+		satSpeed = nbt.hasKey("satSpeed") ? Satellite.clampSpeed(nbt.getFloat("satSpeed")) : Satellite.DEFAULT_SPEED;
 		satIsBlinking = nbt.hasKey("satIsBlinking") ? nbt.getBoolean("satIsBlinking") : Satellite.DEFAULT_IS_BLINKING;
 		satBlinkPeriod = nbt.hasKey("satBlink") ? Satellite.clampBlinkPeriod(nbt.getFloat("satBlink")) : Satellite.DEFAULT_BLINK_PERIOD;
 		satOwner = nbt.hasKey("satOwner") ? nbt.getString("satOwner") : Satellite.DEFAULT_OWNER;
@@ -915,6 +918,7 @@ public class EntityRideableRocket extends EntityMissileBaseNT implements ILookOv
 		nbt.setInteger("freq", satFreq);
 		nbt.setFloat("satInclination", satInclination);
 		nbt.setFloat("satAltitude", satAltitude);
+		nbt.setFloat("satSpeed", satSpeed);
 		nbt.setBoolean("satIsBlinking", satIsBlinking);
 		nbt.setFloat("satBlink", satBlinkPeriod);
 		nbt.setString("satOwner", satOwner);
@@ -933,6 +937,7 @@ public class EntityRideableRocket extends EntityMissileBaseNT implements ILookOv
 	private void applySatData(ItemStack stack) {
 		Satellite.setInclination(stack, satInclination);
 		Satellite.setAltitude(stack, satAltitude);
+		Satellite.setSpeed(stack, satSpeed);
 		Satellite.setBlinking(stack, satIsBlinking);
 		Satellite.setBlinkPeriod(stack, satBlinkPeriod);
 		Satellite.setOwner(stack, satOwner);
