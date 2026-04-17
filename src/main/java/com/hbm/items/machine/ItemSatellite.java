@@ -71,10 +71,10 @@ public class ItemSatellite extends ItemCustomMissilePart implements ISatChip, IG
 		if(Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) || Keyboard.isKeyDown(Keyboard.KEY_RSHIFT)) {
 			list.add(formatTooltipEntry(I18nUtil.resolveKey("item.sat.desc.frequency"), Integer.toString(getFreq(itemstack))));
 			list.add(formatTooltipEntry(I18nUtil.resolveKey("item.sat.desc.owner"), Satellite.getOwner(itemstack)));
-			list.add(formatTooltipEntry(I18nUtil.resolveKey("item.sat.desc.phase"), formatPhaseOffset(itemstack) + "°"));
 			list.add(formatTooltipEntry(I18nUtil.resolveKey("item.sat.desc.speed"), formatOrbitSpeed(itemstack) + "km/s"));
 			list.add(formatTooltipEntry(I18nUtil.resolveKey("item.sat.desc.altitude"), formatValue(Satellite.getAltitude(itemstack)) + "km"));
 			list.add(formatTooltipEntry(I18nUtil.resolveKey("item.sat.desc.inclination"), formatValue(Satellite.getInclination(itemstack)) + "°"));
+			list.add(formatTooltipEntry(I18nUtil.resolveKey("item.sat.desc.phase"), formatPhaseOffset(itemstack) + "°"));
 			list.add(formatTooltipEntry(I18nUtil.resolveKey("item.sat.desc.color"), getHexColor(itemstack)));
 		} else {
 			list.add(EnumChatFormatting.DARK_GRAY + "" + EnumChatFormatting.ITALIC + "Hold <" + EnumChatFormatting.YELLOW + "" + EnumChatFormatting.ITALIC + "LSHIFT" + EnumChatFormatting.DARK_GRAY
