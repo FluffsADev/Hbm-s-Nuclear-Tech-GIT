@@ -4662,6 +4662,7 @@ item.sat_scanner.name=Спутник с модулем глубинно-ресу
 
 item.sat.desc.frequency=Частота спутника
 item.sat.desc.owner=Владелец спутника
+item.sat.desc.phase=Орбитальная фаза
 item.sat.desc.inclination=Наклонение спутника
 item.sat.desc.altitude=Высота орбиты спутника
 item.sat.desc.speed=Скорость спутника

@@ -1444,11 +1444,12 @@ public class SkyProviderCelestial extends IRenderHandler {
 		float inclination = Satellite.getInclination(held);
 		float altitude = Satellite.getAltitude(held);
 		float speed = Satellite.getSpeed(held);
+		float phaseOffset = Satellite.getPhaseOffset(held);
 		boolean isBlinking = Satellite.isBlinking(held);
 		float blinkPeriod = Satellite.getBlinkPeriod(held);
 
 		Satellite.renderOrbitLine(solarAngle, r, g, b, inclination, altitude, isBlinking, blinkPeriod);
-		Satellite.renderDefault(partialTicks, world, mc, solarAngle, ISatChip.getFreqS(held), r, g, b, inclination, altitude, speed, isBlinking, blinkPeriod);
+		Satellite.renderDefault(partialTicks, world, mc, solarAngle, ISatChip.getFreqS(held), r, g, b, inclination, altitude, speed, phaseOffset, isBlinking, blinkPeriod);
 	}
 
 	protected void renderStation(float partialTicks, WorldClient world, Minecraft mc, OrbitalStation station, float solarAngle) {

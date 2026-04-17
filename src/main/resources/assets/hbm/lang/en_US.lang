@@ -4953,6 +4953,7 @@ item.sat_scanner.name=Satellite with Depth-Resource Scanning Module
 
 item.sat.desc.frequency=Satellite frequency
 item.sat.desc.owner=Satellite owner
+item.sat.desc.phase=Orbital phase
 item.sat.desc.inclination=Satellite inclination
 item.sat.desc.altitude=Satellite altitude
 item.sat.desc.speed=Satellite speed

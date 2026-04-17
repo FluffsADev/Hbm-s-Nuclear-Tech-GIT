@@ -1819,8 +1819,9 @@ public class GUIMachineStardar extends GuiInfoContainer {
 
 		Satellite satellite = satelliteInfo.satellite;
 		String owner = satellite.owner != null && !satellite.owner.isEmpty() ? satellite.owner : Satellite.DEFAULT_OWNER;
-		List<String> tooltip = new ArrayList<String>(4);
+		List<String> tooltip = new ArrayList<String>(5);
 		tooltip.add(EnumChatFormatting.YELLOW + I18nUtil.resolveKey("item.sat.desc.owner") + ": " + EnumChatFormatting.GOLD + owner);
+		tooltip.add(EnumChatFormatting.YELLOW + I18nUtil.resolveKey("item.sat.desc.phase") + ": " + EnumChatFormatting.GOLD + formatPhaseOffset(satellite.phaseOffset) + "\u00B0");
 		tooltip.add(EnumChatFormatting.YELLOW + I18nUtil.resolveKey("item.sat.desc.speed") + ": " + EnumChatFormatting.GOLD + formatOrbitSpeed(satellite.altitude, satellite.speed) + I18nUtil.resolveKey("gui.sat.settings.unit.km_per_second"));
 		tooltip.add(EnumChatFormatting.YELLOW + I18nUtil.resolveKey("item.sat.desc.altitude") + ": " + EnumChatFormatting.GOLD + formatValue(satellite.altitude) + I18nUtil.resolveKey("gui.sat.settings.unit.km"));
 		tooltip.add(EnumChatFormatting.YELLOW + I18nUtil.resolveKey("item.sat.desc.inclination") + ": " + EnumChatFormatting.GOLD + formatValue(satellite.inclination) + "\u00B0");
@@ -2306,6 +2307,11 @@ public class GUIMachineStardar extends GuiInfoContainer {
 
 	private static String formatOrbitSpeed(float altitude, float speed) {
 		return formatValue(Math.round(Satellite.getOrbitSpeedKmPerSecond(altitude, speed) * 10.0F) / 10.0F);
+	}
+
+	private static String formatPhaseOffset(float phaseOffset) {
+		float rounded = Math.round(Satellite.normalizePhaseOffset(phaseOffset) * 10.0F) / 10.0F;
+		return formatValue(rounded);
 	}
 
 	private int colorArrayToRgb(float[] color) {
