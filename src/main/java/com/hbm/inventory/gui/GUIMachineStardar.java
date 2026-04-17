@@ -204,9 +204,9 @@ public class GUIMachineStardar extends GuiInfoContainer {
 
 		super.drawScreen(mouseX, mouseY, partialTicks);
 
-		this.drawCustomInfoStat(mouseX, mouseY, guiLeft + 129, guiTop + 124, 18, 18, mouseX, mouseY, "Focus current body");
-		this.drawCustomInfoStat(mouseX, mouseY, guiLeft + 129, guiTop + 143, 18, 18, mouseX, mouseY, "Program new orbital station into drive");
-		this.drawCustomInfoStat(mouseX, mouseY, guiLeft + 149, guiTop + 143, 18, 18, mouseX, mouseY, "Program current body into drive");
+		this.drawCustomInfoStat(mouseX, mouseY, guiLeft + 129, guiTop + 124, 18, 18, mouseX, mouseY, I18nUtil.resolveKey("gui.stardar.tooltip.focus_current_body"));
+		this.drawCustomInfoStat(mouseX, mouseY, guiLeft + 129, guiTop + 143, 18, 18, mouseX, mouseY, I18nUtil.resolveKey("gui.stardar.tooltip.program_new_station"));
+		this.drawCustomInfoStat(mouseX, mouseY, guiLeft + 149, guiTop + 143, 18, 18, mouseX, mouseY, I18nUtil.resolveKey("gui.stardar.tooltip.program_current_body"));
 		drawSatelliteTooltip(mouseX, mouseY);
 
 	}
@@ -237,8 +237,8 @@ public class GUIMachineStardar extends GuiInfoContainer {
 
 	private void drawMapForeground() {
 		if (focusedSatelliteFrequency != null) {
-			fontRendererObj.drawString("Focus: Satellite", 10, 128, 0x00FF00);
-			fontRendererObj.drawString("Right click to unfocus", 10, 148, 0x00FF00);
+			fontRendererObj.drawString(I18nUtil.resolveKey("gui.stardar.label.focus_satellite"), 10, 128, 0x00FF00);
+			fontRendererObj.drawString(I18nUtil.resolveKey("gui.stardar.label.unfocus_hint"), 10, 148, 0x00FF00);
 			return;
 		}
 
@@ -246,34 +246,34 @@ public class GUIMachineStardar extends GuiInfoContainer {
 		CelestialBody displayBody = hoveredBody != null ? hoveredBody.body : activeFocus;
 
 		if (displayBody == null) {
-			fontRendererObj.drawString("Drag to move map", 10, 128, 0x00FF00);
-			fontRendererObj.drawString("Click body to focus", 10, 148, 0x00FF00);
+			fontRendererObj.drawString(I18nUtil.resolveKey("gui.stardar.label.drag_map"), 10, 128, 0x00FF00);
+			fontRendererObj.drawString(I18nUtil.resolveKey("gui.stardar.label.click_body_focus"), 10, 148, 0x00FF00);
 			return;
 		}
 
-		fontRendererObj.drawString("Focus: " + getBodyDisplayName(displayBody), 10, 128, 0x00FF00);
+		fontRendererObj.drawString(I18nUtil.resolveKey("gui.stardar.label.focus_body", getBodyDisplayName(displayBody)), 10, 128, 0x00FF00);
 		if (activeFocus != null && displayBody == activeFocus) {
 			if (!displayBody.canLand) {
-				fontRendererObj.drawString("Can't land here!", 10, 148, 0xFF4040);
+				fontRendererObj.drawString(I18nUtil.resolveKey("gui.stardar.label.cant_land"), 10, 148, 0xFF4040);
 			} else {
 				ItemStack slotStack = inventorySlots.getSlot(0).getStack();
 
 				if (slotStack == null) {
-					fontRendererObj.drawString("Insert drive", 10, 148, 0x00FF00);
+					fontRendererObj.drawString(I18nUtil.resolveKey("gui.stardar.label.insert_drive"), 10, 148, 0x00FF00);
 				} else if (slotStack.getItem() == ModItems.hard_drive) {
-					fontRendererObj.drawString("Click again to land", 10, 148, 0x00FF00);
+					fontRendererObj.drawString(I18nUtil.resolveKey("gui.stardar.label.click_again_land"), 10, 148, 0x00FF00);
 				} else {
-					fontRendererObj.drawString("Insert drive", 10, 148, 0x00FF00);
+					fontRendererObj.drawString(I18nUtil.resolveKey("gui.stardar.label.insert_drive"), 10, 148, 0x00FF00);
 				}
 			}
 		} else {
-			fontRendererObj.drawString("Click body to focus", 10, 148, 0x00FF00);
+			fontRendererObj.drawString(I18nUtil.resolveKey("gui.stardar.label.click_body_focus"), 10, 148, 0x00FF00);
 		}
 	}
 
 	private void drawLandingForeground() {
 		if (star.heightmap == null) {
-			fontRendererObj.drawString("Loading surface map...", 10, 148, 0x00FF00);
+			fontRendererObj.drawString(I18nUtil.resolveKey("gui.stardar.label.loading_surface_map"), 10, 148, 0x00FF00);
 			return;
 		}
 
@@ -281,7 +281,7 @@ public class GUIMachineStardar extends GuiInfoContainer {
 		int sy = lastMouseY - ((lastMouseY + (int) surfaceY) % 2);
 
 		if (lastMouseX < guiLeft + MAP_X || lastMouseX >= guiLeft + MAP_X + MAP_W || lastMouseY < guiTop + MAP_Y || lastMouseY >= guiTop + MAP_Y + MAP_H) {
-			fontRendererObj.drawString("Select landing zone", 10, 128, 0x00FF00);
+			fontRendererObj.drawString(I18nUtil.resolveKey("gui.stardar.label.select_landing_zone"), 10, 128, 0x00FF00);
 			return;
 		}
 
@@ -296,8 +296,8 @@ public class GUIMachineStardar extends GuiInfoContainer {
 		drawTexturedModalRect(sx - guiLeft - 6, sy - guiTop - 6, xSize + (canLand ? 14 : 0), 28, 14, 14);
 		popScissor();
 
-		fontRendererObj.drawString(canLand ? "Valid location" : info, 10, 128, canLand ? 0x00FF00 : 0xFF0000);
-		if (altitude > 0) fontRendererObj.drawString("Target altitude: " + altitude, 10, 148, 0x00FF00);
+		fontRendererObj.drawString(canLand ? I18nUtil.resolveKey("gui.stardar.label.valid_location") : info, 10, 128, canLand ? 0x00FF00 : 0xFF0000);
+		if (altitude > 0) fontRendererObj.drawString(I18nUtil.resolveKey("gui.stardar.label.target_altitude", altitude), 10, 148, 0x00FF00);
 	}
 
 	private void drawSystemMap(float partialTicks) {
@@ -1821,8 +1821,8 @@ public class GUIMachineStardar extends GuiInfoContainer {
 		String owner = satellite.owner != null && !satellite.owner.isEmpty() ? satellite.owner : Satellite.DEFAULT_OWNER;
 		List<String> tooltip = new ArrayList<String>(4);
 		tooltip.add(EnumChatFormatting.YELLOW + I18nUtil.resolveKey("item.sat.desc.owner") + ": " + EnumChatFormatting.GOLD + owner);
-		tooltip.add(EnumChatFormatting.YELLOW + I18nUtil.resolveKey("item.sat.desc.speed") + ": " + EnumChatFormatting.GOLD + formatOrbitSpeed(satellite.altitude, satellite.speed) + "km/s");
-		tooltip.add(EnumChatFormatting.YELLOW + I18nUtil.resolveKey("item.sat.desc.altitude") + ": " + EnumChatFormatting.GOLD + formatValue(satellite.altitude) + "km");
+		tooltip.add(EnumChatFormatting.YELLOW + I18nUtil.resolveKey("item.sat.desc.speed") + ": " + EnumChatFormatting.GOLD + formatOrbitSpeed(satellite.altitude, satellite.speed) + I18nUtil.resolveKey("gui.sat.settings.unit.km_per_second"));
+		tooltip.add(EnumChatFormatting.YELLOW + I18nUtil.resolveKey("item.sat.desc.altitude") + ": " + EnumChatFormatting.GOLD + formatValue(satellite.altitude) + I18nUtil.resolveKey("gui.sat.settings.unit.km"));
 		tooltip.add(EnumChatFormatting.YELLOW + I18nUtil.resolveKey("item.sat.desc.inclination") + ": " + EnumChatFormatting.GOLD + formatValue(satellite.inclination) + "\u00B0");
 
 		int tooltipX = mouseX;
@@ -2271,13 +2271,13 @@ public class GUIMachineStardar extends GuiInfoContainer {
 	}
 
 	private String landingInfo(int x, int z) {
-		if (star.heightmap == null) return "No heightmap";
-		if (x < 3 || x > 252 || z < 3 || z > 252) return "Outside bounds";
+		if (star.heightmap == null) return I18nUtil.resolveKey("gui.stardar.landing.no_heightmap");
+		if (x < 3 || x > 252 || z < 3 || z > 252) return I18nUtil.resolveKey("gui.stardar.landing.outside_bounds");
 
 		for (int ox = x - 2; ox <= x + 2; ox++) {
 			for (int oz = z - 2; oz <= z + 2; oz++) {
 				if (star.heightmap[256 * oz + ox] != star.heightmap[256 * z + x]) {
-					return "Area not flat";
+					return I18nUtil.resolveKey("gui.stardar.landing.area_not_flat");
 				}
 			}
 		}
@@ -2292,7 +2292,7 @@ public class GUIMachineStardar extends GuiInfoContainer {
 	}
 
 	private String getBodyDisplayName(CelestialBody body) {
-		if (body == null || body.name == null) return "Unknown";
+		if (body == null || body.name == null) return I18nUtil.resolveKey("gui.stardar.body.unknown");
 		String key = "body." + body.name;
 		String translated = I18nUtil.resolveKey(key);
 		if (translated != null && !translated.equals(key)) return translated;
