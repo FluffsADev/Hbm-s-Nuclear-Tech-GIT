@@ -31,6 +31,7 @@ public class SatelliteMiner extends Satellite {
 
 	/**
 	 * Replaces cargo of the satellite.
+	 *
 	 * @param cargo - Array of {@link WeightedRandomObject} representing the loot that will be delivered.
 	 */
 	public static void registerCargo(Class<? extends SatelliteMiner> minerSatelliteClass, String cargo) {
@@ -39,6 +40,7 @@ public class SatelliteMiner extends Satellite {
 
 	/**
 	 * Gets items the satellite can deliver.
+	 *
 	 * @return - Array of {@link WeightedRandomObject} of satellite loot.
 	 */
 	public String getCargo() {
@@ -47,6 +49,7 @@ public class SatelliteMiner extends Satellite {
 
 	/**
 	 * Gets the cargo key for the satellite item. If the item is not a miner satellite null is returned.
+	 *
 	 * @param satelliteItem - Satellite item
 	 * @return - Returns {@link com.hbm.itempool.ItemPool} key or null if the item is not a mining satellite.
 	 */

@@ -22,8 +22,8 @@ public class SatelliteHorizons extends Satellite {
 
 	public void onOrbit(World world, double x, double y, double z) {
 
-		for(Object p : world.playerEntities)
-			((EntityPlayer)p).triggerAchievement(MainRegistry.horizonsStart);
+		for (Object p : world.playerEntities)
+			((EntityPlayer) p).triggerAchievement(MainRegistry.horizonsStart);
 	}
 
 	public void writeToNBT(NBTTagCompound nbt) {
@@ -38,7 +38,7 @@ public class SatelliteHorizons extends Satellite {
 
 	public void onCoordAction(World world, EntityPlayer player, int x, int y, int z) {
 
-		if(used)
+		if (used)
 			return;
 
 		used = true;
@@ -52,11 +52,11 @@ public class SatelliteHorizons extends Satellite {
 		provider.loadChunk(x >> 4, z >> 4);
 
 		world.spawnEntityInWorld(tom);
-		for(Object p : world.playerEntities)
-			((EntityPlayer)p).triggerAchievement(MainRegistry.horizonsEnd);
+		for (Object p : world.playerEntities)
+			((EntityPlayer) p).triggerAchievement(MainRegistry.horizonsEnd);
 
 		//not necessary but JUST to make sure
-		if(!world.isRemote) {
+		if (!world.isRemote) {
 
 			MinecraftServer.getServer().getConfigurationManager().sendChatMsg(new ChatComponentText(EnumChatFormatting.RED + "Horizons has been activated."));
 		}

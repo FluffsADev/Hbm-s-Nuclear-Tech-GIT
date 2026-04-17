@@ -28,18 +28,18 @@ public class SatelliteLaser extends Satellite {
 
 	public void onClick(World world, int x, int z) {
 
-		if(lastOp + 10000 < System.currentTimeMillis()) {
-    		lastOp = System.currentTimeMillis();
+		if (lastOp + 10000 < System.currentTimeMillis()) {
+			lastOp = System.currentTimeMillis();
 
-    		int y = world.getHeightValue(x, z);
+			int y = world.getHeightValue(x, z);
 
-    		EntityDeathBlast blast = new EntityDeathBlast(world);
-    		blast.posX = x;
-    		blast.posY = y;
-    		blast.posZ = z;
+			EntityDeathBlast blast = new EntityDeathBlast(world);
+			blast.posX = x;
+			blast.posY = y;
+			blast.posZ = z;
 
-    		world.spawnEntityInWorld(blast);
-    	}
+			world.spawnEntityInWorld(blast);
+		}
 	}
 
 }

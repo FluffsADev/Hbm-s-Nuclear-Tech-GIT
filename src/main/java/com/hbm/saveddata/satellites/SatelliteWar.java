@@ -58,6 +58,7 @@ public class SatelliteWar extends Satellite {
 	public int magSize() {
 		return 0;
 	}
+
 	@Override
 	public void serialize(ByteBuf buf) {
 		super.serialize(buf);
