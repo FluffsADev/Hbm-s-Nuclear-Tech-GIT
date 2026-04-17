@@ -227,6 +227,19 @@ public abstract class Satellite {
 		setBlinkPeriod(to, getBlinkPeriod(from));
 	}
 
+	public static int getTargetDimensionId(Class<? extends Satellite> satelliteClass, int fallbackDimensionId) {
+		if(satelliteClass == null) return fallbackDimensionId;
+		if(SatelliteFoeq.class.isAssignableFrom(satelliteClass)) return SolarSystem.Body.DUNA.getDimensionId();
+		if(SatelliteLunarMiner.class.isAssignableFrom(satelliteClass)) return SolarSystem.Body.MUN.getDimensionId();
+		if(SatelliteMiner.class.isAssignableFrom(satelliteClass)) return SolarSystem.Body.DRES.getDimensionId();
+		return fallbackDimensionId;
+	}
+
+	public static int getTargetDimensionId(ItemStack stack, int fallbackDimensionId) {
+		if(stack == null || stack.getItem() == null) return fallbackDimensionId;
+		return getTargetDimensionId(itemToClass.get(stack.getItem()), fallbackDimensionId);
+	}
+
 	public static void orbit(World world, int id, int freq, double x, double y, double z, ItemStack stack) {
 		if(world.isRemote) {
 			return;
@@ -235,9 +248,15 @@ public abstract class Satellite {
 		Satellite sat = create(id);
 
 		if(sat != null) {
-			if(sat instanceof SatelliteFoeq) world = DimensionManager.getWorld(SolarSystem.Body.DUNA.getDimensionId()); // dunaian probe goes to duna
-			if(sat instanceof SatelliteLunarMiner) world = DimensionManager.getWorld(SolarSystem.Body.MUN.getDimensionId()); // lunar miner goes to mun
-			if(sat instanceof SatelliteMiner) world = DimensionManager.getWorld(SolarSystem.Body.DRES.getDimensionId()); // asteroid miner goes to dres, logical explanation is to mine the dres' asteroid ring
+			int targetDimensionId = getTargetDimensionId(sat.getClass(), world.provider.dimensionId);
+			if(world.provider.dimensionId != targetDimensionId) {
+				World targetWorld = DimensionManager.getWorld(targetDimensionId);
+				if(targetWorld == null) {
+					DimensionManager.initDimension(targetDimensionId);
+					targetWorld = DimensionManager.getWorld(targetDimensionId);
+				}
+				if(targetWorld != null) world = targetWorld;
+			}
 			
 			sat.inclination = getInclination(stack);
 			sat.altitude = getAltitude(stack);

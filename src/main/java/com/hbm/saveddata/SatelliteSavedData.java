@@ -11,7 +11,9 @@ import net.minecraft.world.World;
 import net.minecraft.world.WorldSavedData;
 import net.minecraftforge.common.DimensionManager;
 
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Map.Entry;
 
 public class SatelliteSavedData extends WorldSavedData {
@@ -126,6 +128,7 @@ public class SatelliteSavedData extends WorldSavedData {
 	}
 
 	public static HashMap<Integer, Satellite> clientSats = new HashMap<>();
+	public static HashMap<Integer, HashMap<Integer, Satellite>> clientSatsByDimension = new HashMap<Integer, HashMap<Integer, Satellite>>();
 
 	@SideOnly(Side.CLIENT)
 	public static void setClientSats(HashMap<Integer, Satellite> sats) {
@@ -135,6 +138,17 @@ public class SatelliteSavedData extends WorldSavedData {
 	@SideOnly(Side.CLIENT)
 	public static HashMap<Integer, Satellite> getClientSats() {
 		return clientSats;
+	}
+
+	@SideOnly(Side.CLIENT)
+	public static void setClientSatsByDimension(HashMap<Integer, HashMap<Integer, Satellite>> satsByDimension) {
+		clientSatsByDimension = satsByDimension != null ? satsByDimension : new HashMap<Integer, HashMap<Integer, Satellite>>();
+	}
+
+	@SideOnly(Side.CLIENT)
+	public static Map<Integer, Satellite> getClientSats(int dimensionId) {
+		HashMap<Integer, Satellite> sats = clientSatsByDimension.get(dimensionId);
+		return sats != null ? sats : Collections.<Integer, Satellite>emptyMap();
 	}
 
 }

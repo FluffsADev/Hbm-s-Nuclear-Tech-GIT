@@ -11,7 +11,6 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL13;
 
 import com.hbm.dim.CelestialBody;
-import com.hbm.dim.SolarSystem;
 import com.hbm.dim.trait.CBT_Impact;
 import com.hbm.dim.trait.CBT_Lights;
 import com.hbm.items.ISatChip;
@@ -22,11 +21,8 @@ import com.hbm.packet.toserver.NBTItemControlPacket;
 import com.hbm.render.shader.Shader;
 import com.hbm.saveddata.SatelliteSavedData;
 import com.hbm.saveddata.satellites.Satellite;
-import com.hbm.saveddata.satellites.SatelliteFoeq;
 import com.hbm.saveddata.satellites.SatelliteLaser;
-import com.hbm.saveddata.satellites.SatelliteLunarMiner;
 import com.hbm.saveddata.satellites.SatelliteMapper;
-import com.hbm.saveddata.satellites.SatelliteMiner;
 import com.hbm.saveddata.satellites.SatelliteRadar;
 import com.hbm.saveddata.satellites.SatelliteResonator;
 import com.hbm.saveddata.satellites.SatelliteScanner;
@@ -485,7 +481,7 @@ public class GUIScreenSatSettings extends GuiScreen {
 		CelestialBody body = getPreviewBody(held);
 		float bodySizeAt1x = getBodySizePxAt1x(body);
 		float baseOrbitRadiusMapPx = bodySizeAt1x * 1.5F;
-		Map<Integer, Satellite> satellites = SatelliteSavedData.getClientSats();
+		Map<Integer, Satellite> satellites = SatelliteSavedData.getClientSats(body.dimensionId);
 		String owner = editOwner;
 		float maxAltitude = editAltitude;
 
@@ -761,12 +757,9 @@ public class GUIScreenSatSettings extends GuiScreen {
 		float v1 = frontHalf ? 0.5F : 0F;
 		float v2 = frontHalf ? 1F : 0.5F;
 
-		GL11.glEnable(GL11.GL_BLEND);
-		GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
 		GL11.glColor4f(r, g, b, a);
 		mc.getTextureManager().bindTexture(ringTexture);
 		drawPartialTex(drawX, drawY, drawW, drawH, 0F, v1, 1F, v2);
-		GL11.glDisable(GL11.GL_BLEND);
 		GL11.glColor4f(1F, 1F, 1F, 1F);
 	}
 
@@ -950,13 +943,8 @@ public class GUIScreenSatSettings extends GuiScreen {
 	}
 
 	private CelestialBody getPreviewBody(ItemStack held) {
-		Class<? extends Satellite> satClass = Satellite.itemToClass.get(held.getItem());
-		if(satClass != null) {
-			if(SatelliteFoeq.class.isAssignableFrom(satClass)) return CelestialBody.getBody(SolarSystem.Body.DUNA.getDimensionId());
-			if(SatelliteLunarMiner.class.isAssignableFrom(satClass)) return CelestialBody.getBody(SolarSystem.Body.MUN.getDimensionId());
-			if(SatelliteMiner.class.isAssignableFrom(satClass)) return CelestialBody.getBody(SolarSystem.Body.DRES.getDimensionId());
-		}
-		return getCurrentBody();
+		int previewDimensionId = Satellite.getTargetDimensionId(held, getCurrentBody().dimensionId);
+		return CelestialBody.getBody(previewDimensionId);
 	}
 
 	private float getBodyRotationPhase(CelestialBody body, double dayTicks) {
