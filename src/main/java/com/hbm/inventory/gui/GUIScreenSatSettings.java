@@ -132,16 +132,16 @@ public class GUIScreenSatSettings extends GuiScreen {
 			drawBatterySlice();
 			drawOrbitPreview(held, partialTicks);
 			if(detailsMode == 0) {
-				drawLeftAligned(10, 130, 140, I18nUtil.resolveKey("item.sat.desc.speed") + ": " + formatOrbitSpeed(editAltitude, editSpeed) + "km/s", 0x00FF00);
-				drawLeftAligned(10, 145, 155, I18nUtil.resolveKey("item.sat.desc.altitude") + ": " + formatValue(editAltitude) + "km", 0x00FF00);
+				drawLeftAligned(10, 130, 140, I18nUtil.resolveKey("item.sat.desc.speed") + ": " + formatOrbitSpeed(editAltitude, editSpeed) + I18nUtil.resolveKey("gui.sat.settings.unit.km_per_second"), 0x00FF00);
+				drawLeftAligned(10, 145, 155, I18nUtil.resolveKey("item.sat.desc.altitude") + ": " + formatValue(editAltitude) + I18nUtil.resolveKey("gui.sat.settings.unit.km"), 0x00FF00);
 				drawLeftAligned(10, 160, 170, I18nUtil.resolveKey("item.sat.desc.inclination") + ": " + formatValue(editInclination) + "\u00B0", 0x00FF00);
 			} else {
-				drawLeftAligned(10, 130, 140, "Orbital Phase: " + formatPhaseOffset(editPhaseOffset) + "\u00B0", 0x00FF00);
-				drawLeftAligned(10, 145, 155, "Satellite owner: " + (editOwner != null ? editOwner : Satellite.DEFAULT_OWNER), 0x00FF00);
+				drawLeftAligned(10, 130, 140, I18nUtil.resolveKey("gui.sat.settings.label.orbital_phase") + ": " + formatPhaseOffset(editPhaseOffset) + "\u00B0", 0x00FF00);
+				drawLeftAligned(10, 145, 155, I18nUtil.resolveKey("item.sat.desc.owner") + ": " + (editOwner != null ? editOwner : Satellite.DEFAULT_OWNER), 0x00FF00);
 				drawLeftAligned(10, 160, 170, "", 0x00FF00);
 			}
 			drawRect(guiLeft + 81, guiTop + 177, guiLeft + 110, guiTop + 199, 0xFF000000 | (editColorR << 16) | (editColorG << 8) | editColorB);
-			drawRightAligned(108, 204, 213, formatValue(editBlinkPeriod) + "s", 0xFFFFFF, 2F / 3F);
+			drawRightAligned(108, 204, 213, formatValue(editBlinkPeriod) + I18nUtil.resolveKey("gui.sat.settings.unit.seconds"), 0xFFFFFF, 2F / 3F);
 		}
 
 		Minecraft.getMinecraft().getTextureManager().bindTexture(texture);
@@ -156,7 +156,7 @@ public class GUIScreenSatSettings extends GuiScreen {
 		if(showSatelliteDetails && isOwnerButtonAt(mouseX, mouseY)) {
 			drawCreativeTabHoveringText(I18nUtil.resolveKey("gui.sat.settings.tooltip.owner_assign"), mouseX, mouseY);
 		} else if(showSatelliteDetails && isModeButtonAt(mouseX, mouseY)) {
-			drawCreativeTabHoveringText("Switch value mode", mouseX, mouseY);
+			drawCreativeTabHoveringText(I18nUtil.resolveKey("gui.sat.settings.tooltip.switch_settings_list"), mouseX, mouseY);
 		} else if(showSatelliteDetails) {
 			int scrollField = getScrollFieldAt(mouseX, mouseY);
 				if(scrollField == 0) {
