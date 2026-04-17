@@ -344,7 +344,8 @@ public class GUIScreenSatSettings extends GuiScreen {
 		if(held == null) return;
 
 		float oldValue = altitude ? editAltitude : editInclination;
-		float newValue = MathHelper.clamp_float(oldValue + delta,
+		float step = altitude ? (isShiftKeyDown() ? 5.0F : 1.0F) : (isShiftKeyDown() ? 15.0F : 1.0F);
+		float newValue = MathHelper.clamp_float(oldValue + (delta > 0 ? step : -step),
 			altitude ? Satellite.MIN_ALTITUDE_KM : Satellite.MIN_INCLINATION,
 			altitude ? Satellite.MAX_ALTITUDE_KM : Satellite.MAX_INCLINATION
 		);
@@ -364,7 +365,8 @@ public class GUIScreenSatSettings extends GuiScreen {
 		if(held == null) return;
 
 		float oldValue = editSpeed;
-		float newValue = Math.round((oldValue + (delta > 0 ? 0.1F : -0.1F)) * 10F) / 10F;
+		float step = isShiftKeyDown() ? 0.1F : 0.01F;
+		float newValue = Math.round((oldValue + (delta > 0 ? step : -step)) * 100F) / 100F;
 
 		newValue = Satellite.clampSpeed(newValue);
 		if(newValue == oldValue) return;

@@ -73,7 +73,7 @@ public class ItemSatellite extends ItemCustomMissilePart implements ISatChip, IG
 			list.add(formatTooltipEntry(I18nUtil.resolveKey("item.sat.desc.owner"), Satellite.getOwner(itemstack)));
 			list.add(formatTooltipEntry(I18nUtil.resolveKey("item.sat.desc.inclination"), formatValue(Satellite.getInclination(itemstack)) + "°"));
 			list.add(formatTooltipEntry(I18nUtil.resolveKey("item.sat.desc.altitude"), formatValue(Satellite.getAltitude(itemstack)) + "km"));
-			list.add(formatTooltipEntry(I18nUtil.resolveKey("item.sat.desc.speed"), formatValue(Satellite.getSpeed(itemstack)) + "x"));
+			list.add(formatTooltipEntry(I18nUtil.resolveKey("item.sat.desc.speed"), formatOrbitSpeed(itemstack) + "km/s"));
 			list.add(formatTooltipEntry(I18nUtil.resolveKey("item.sat.desc.color"), getHexColor(itemstack)));
 		} else {
 			list.add(EnumChatFormatting.DARK_GRAY + "" + EnumChatFormatting.ITALIC + "Hold <" + EnumChatFormatting.YELLOW + "" + EnumChatFormatting.ITALIC + "LSHIFT" + EnumChatFormatting.DARK_GRAY
@@ -182,6 +182,11 @@ public class ItemSatellite extends ItemCustomMissilePart implements ISatChip, IG
 	private static String formatValue(float value) {
 		if(value == (int)value) return Integer.toString((int)value);
 		return Float.toString(value);
+	}
+
+	private static String formatOrbitSpeed(ItemStack stack) {
+		float orbitSpeed = Satellite.getOrbitSpeedKmPerSecond(Satellite.getAltitude(stack), Satellite.getSpeed(stack));
+		return formatValue(Math.round(orbitSpeed * 10.0F) / 10.0F);
 	}
 
 	private static String getHexColor(ItemStack stack) {
