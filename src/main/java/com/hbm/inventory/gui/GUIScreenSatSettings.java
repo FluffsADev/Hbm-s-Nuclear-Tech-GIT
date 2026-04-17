@@ -154,8 +154,10 @@ public class GUIScreenSatSettings extends GuiScreen {
 			int scrollField = getScrollFieldAt(mouseX, mouseY);
 			if(scrollField == 0) {
 				drawCreativeTabHoveringText(I18nUtil.resolveKey("gui.sat.settings.tooltip.scroll_speed"), mouseX, mouseY);
-			} else if(scrollField == 1 || scrollField == 2) {
-				drawCreativeTabHoveringText(I18nUtil.resolveKey("gui.sat.settings.tooltip.scroll_altitude_inclination"), mouseX, mouseY);
+			} else if(scrollField == 1) {
+				drawCreativeTabHoveringText(I18nUtil.resolveKey("gui.sat.settings.tooltip.scroll_altitude"), mouseX, mouseY);
+			} else if(scrollField == 2) {
+				drawCreativeTabHoveringText(I18nUtil.resolveKey("gui.sat.settings.tooltip.scroll_inclination"), mouseX, mouseY);
 			} else if(scrollField == 3) {
 				drawCreativeTabHoveringText(I18nUtil.resolveKey("gui.sat.settings.tooltip.scroll_blink"), mouseX, mouseY);
 			}

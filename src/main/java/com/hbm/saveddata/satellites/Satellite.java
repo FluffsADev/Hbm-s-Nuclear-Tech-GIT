@@ -38,8 +38,8 @@ public abstract class Satellite {
 	public static final float MIN_ALTITUDE_KM = 80.0F;
 	public static final float MAX_ALTITUDE_KM = 125.0F;
 	public static final float DEFAULT_SPEED = 1.0F;
-	public static final float MIN_SPEED = 0.1F;
-	public static final float MAX_SPEED = 3.0F;
+	public static final float MIN_SPEED = 0.8F;
+	public static final float MAX_SPEED = 1.5F;
 	public static final float MIN_BLINK_PERIOD = 0.3F;
 	public static final float MAX_BLINK_PERIOD = 1.0F;
 	public static final boolean DEFAULT_IS_BLINKING = false;
