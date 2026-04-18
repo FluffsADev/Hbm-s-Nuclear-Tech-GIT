@@ -4983,7 +4983,6 @@ gui.sat.settings.tooltip.scroll_speed=Scroll with your mouse wheel to change spe
 gui.sat.settings.tooltip.scroll_altitude=Scroll with your mouse wheel to change altitude
 gui.sat.settings.tooltip.scroll_inclination=Scroll with your mouse wheel to change inclination
 gui.sat.settings.tooltip.scroll_phase=Scroll with your mouse wheel to change orbital phase
-gui.sat.settings.tooltip.scroll_altitude_inclination=Scroll with your mouse wheel to change altitude/inclination
 gui.sat.settings.tooltip.scroll_blink=Scroll with your mouse wheel to change blink time
 gui.stardar.tooltip.focus_current_body=Focus current body
 gui.stardar.tooltip.program_new_station=Program new orbital station into drive

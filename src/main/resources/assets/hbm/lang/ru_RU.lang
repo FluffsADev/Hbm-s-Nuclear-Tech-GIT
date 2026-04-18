@@ -4691,7 +4691,6 @@ gui.sat.settings.tooltip.scroll_speed=Прокрутите колесо мыши
 gui.sat.settings.tooltip.scroll_altitude=Прокрутите колесо мыши, чтобы изменить высоту
 gui.sat.settings.tooltip.scroll_inclination=Прокрутите колесо мыши, чтобы изменить наклонение
 gui.sat.settings.tooltip.scroll_phase=Прокрутите колесо мыши, чтобы изменить орбитальную фазу
-gui.sat.settings.tooltip.scroll_altitude_inclination=Прокрутите колесо мыши, чтобы изменить высоту/наклонение
 gui.sat.settings.tooltip.scroll_blink=Прокрутите колесо мыши, чтобы изменить период мигания
 
 
