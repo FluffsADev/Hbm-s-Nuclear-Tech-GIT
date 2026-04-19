@@ -39,10 +39,12 @@ public class SatelliteRailgun extends SatelliteWar {
 	private CelestialBody target;
 
 	public void writeToNBT(NBTTagCompound nbt) {
+		super.writeToNBT(nbt);
 		nbt.setLong("lastOp", lastOp);
 	}
 
 	public void readFromNBT(NBTTagCompound nbt) {
+		super.readFromNBT(nbt);
 		lastOp = nbt.getLong("lastOp");
 	}
 
@@ -50,12 +52,7 @@ public class SatelliteRailgun extends SatelliteWar {
 	public void onClick(World world, int x, int z) {
 		fireAtTarget(target);
 
-		if(!hasTarget) {
-			canFire = false;
-		}
-		else {
-			canFire = true;
-		}
+		canFire = hasTarget;
 	}
 
 	@Override
@@ -76,7 +73,7 @@ public class SatelliteRailgun extends SatelliteWar {
 	@Override
 	public void setTarget(CelestialBody body) {
 		target = CelestialBody.getBody(body.dimensionId);
-		if(target != null) {
+		if (target != null) {
 			hasTarget = true;
 		}
 
@@ -84,12 +81,12 @@ public class SatelliteRailgun extends SatelliteWar {
 
 	@Override
 	public void fireAtTarget(CelestialBody body) {
-		if(hasTarget) {
-			if(!target.hasTrait(CBT_War.class)) {
+		if (hasTarget) {
+			if (!target.hasTrait(CBT_War.class)) {
 				target.modifyTraits(new CBT_War(100, 0));
 			} else {
 				CBT_War war = target.getTrait(CBT_War.class);
-				if(war != null) {
+				if (war != null) {
 					float rand = Minecraft.getMinecraft().theWorld.rand.nextFloat();
 					//TODO: be able to choose projectile types
 					Projectile projectile = new Projectile(100, 20, 50, 28 * rand * 5, 55, 20, ProjectileType.SMALL, body.dimensionId);
@@ -106,11 +103,6 @@ public class SatelliteRailgun extends SatelliteWar {
 		Minecraft.getMinecraft().thePlayer.playSound("hbm:misc.fireflash", 10F, 1F);
 	}
 
-	@Override
-	protected float[] getColor() {
-		return new float[] { 0.0F, 0.0F, 0.0F, 0.0F };
-	}
-
 	public float getInterp() {
 		return interp;
 	}
@@ -118,14 +110,17 @@ public class SatelliteRailgun extends SatelliteWar {
 	public int magSize() {
 		return 0;
 	}
+
 	@Override
 	public void serialize(ByteBuf buf) {
+		super.serialize(buf);
 		buf.writeFloat(interp);
 
 	}
 
 	@Override
 	public void deserialize(ByteBuf buf) {
+		super.deserialize(buf);
 		this.interp = buf.readFloat();
 	}
 
@@ -168,9 +163,9 @@ public class SatelliteRailgun extends SatelliteWar {
 			{
 
 				GL11.glTranslated(1, 5.5, 0);
-				BeamPronter.prontBeam(Vec3.createVectorHelper(0, fuck * 2 , 0), EnumWaveType.SPIRAL, EnumBeamType.SOLID, 0x202060, 0x202060, 0, 1, 0F, 6, (float)1.6 * 1.2F * alped, alped * 0.2F );
-				BeamPronter.prontBeam(Vec3.createVectorHelper(0, fuck * 2, 0), EnumWaveType.SPIRAL, EnumBeamType.SOLID, 0x202060, 0x202060, 0, 1, 0F, 6, (float)0.7 * 0.6F, alped * 0.6F );
-				BeamPronter.prontBeam(Vec3.createVectorHelper(0, fuck * 2, 0), EnumWaveType.RANDOM, EnumBeamType.SOLID, 0x202060, 0x202060, (int)(world.getTotalWorldTime() / 5) % 1000, 35, 0.2F, 6, (float)0.2 * 0.1F, alped );
+				BeamPronter.prontBeam(Vec3.createVectorHelper(0, fuck * 2, 0), EnumWaveType.SPIRAL, EnumBeamType.SOLID, 0x202060, 0x202060, 0, 1, 0F, 6, (float) 1.6 * 1.2F * alped, alped * 0.2F);
+				BeamPronter.prontBeam(Vec3.createVectorHelper(0, fuck * 2, 0), EnumWaveType.SPIRAL, EnumBeamType.SOLID, 0x202060, 0x202060, 0, 1, 0F, 6, (float) 0.7 * 0.6F, alped * 0.6F);
+				BeamPronter.prontBeam(Vec3.createVectorHelper(0, fuck * 2, 0), EnumWaveType.RANDOM, EnumBeamType.SOLID, 0x202060, 0x202060, (int) (world.getTotalWorldTime() / 5) % 1000, 35, 0.2F, 6, (float) 0.2 * 0.1F, alped);
 				GL11.glClear(GL11.GL_DEPTH_BUFFER_BIT);
 				GL11.glDisable(GL11.GL_LIGHTING);
 				GL11.glEnable(GL11.GL_CULL_FACE);
