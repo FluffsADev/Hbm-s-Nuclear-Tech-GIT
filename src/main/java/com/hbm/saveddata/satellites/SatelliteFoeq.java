@@ -13,7 +13,7 @@ public class SatelliteFoeq extends Satellite {
 
 	public void onOrbit(World world, double x, double y, double z) {
 
-		for (Object p : world.playerEntities)
+		for(Object p : world.playerEntities)
 			((EntityPlayer) p).triggerAchievement(MainRegistry.achFOEQ);
 	}
 

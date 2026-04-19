@@ -57,23 +57,21 @@ public class SatelliteRailgun extends SatelliteWar {
 
 	@Override
 	public void fire() {
-		if (canFire) {
+		if(canFire) {
 			interp += 0.5f;
 			interp = Math.min(100.0f, interp + 0.3f * (100.0f - interp) * 0.15f);
 
-			if (interp >= 100) {
+			if(interp >= 100) {
 				interp = 0;
 				canFire = false;
 			}
-
 		}
-
 	}
 
 	@Override
 	public void setTarget(CelestialBody body) {
 		target = CelestialBody.getBody(body.dimensionId);
-		if (target != null) {
+		if(target != null) {
 			hasTarget = true;
 		}
 
@@ -81,12 +79,12 @@ public class SatelliteRailgun extends SatelliteWar {
 
 	@Override
 	public void fireAtTarget(CelestialBody body) {
-		if (hasTarget) {
-			if (!target.hasTrait(CBT_War.class)) {
+		if(hasTarget) {
+			if(!target.hasTrait(CBT_War.class)) {
 				target.modifyTraits(new CBT_War(100, 0));
 			} else {
 				CBT_War war = target.getTrait(CBT_War.class);
-				if (war != null) {
+				if(war != null) {
 					float rand = Minecraft.getMinecraft().theWorld.rand.nextFloat();
 					//TODO: be able to choose projectile types
 					Projectile projectile = new Projectile(100, 20, 50, 28 * rand * 5, 55, 20, ProjectileType.SMALL, body.dimensionId);
