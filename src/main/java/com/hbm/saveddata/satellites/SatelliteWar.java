@@ -51,10 +51,6 @@ public class SatelliteWar extends Satellite {
 		Minecraft.getMinecraft().thePlayer.playSound("hbm:misc.fireflash", 10F, 1F);
 	}
 
-	public float getInterp() {
-		return interp;
-	}
-
 	public int magSize() {
 		return 0;
 	}

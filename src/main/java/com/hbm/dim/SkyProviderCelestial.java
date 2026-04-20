@@ -246,7 +246,7 @@ public class SkyProviderCelestial extends IRenderHandler {
 				// JEFF BOZOS WOULD LIKE TO KNOW YOUR LOCATION
 				// ... to send you a pakedge :)))
 				if(world.provider.dimensionId == 0) {
-					Satellite.renderDefault(partialTicks, world, mc, solarAngle, 1916169, 1.0F, 0.534F, 0.385F, Satellite.DEFAULT_INCLINATION, Satellite.DEFAULT_ALTITUDE_KM, Satellite.DEFAULT_SPEED, Satellite.DEFAULT_IS_BLINKING, Satellite.DEFAULT_BLINK_PERIOD);
+					Satellite.renderDefault(partialTicks, world, mc, solarAngle, 1916169, 1.0F, 0.534F, 0.385F, Satellite.DEFAULT_INCLINATION, Satellite.DEFAULT_ALTITUDE_KM, Satellite.DEFAULT_IS_BLINKING, Satellite.DEFAULT_BLINK_PERIOD);
 				}
 
 				// Light up the sky
@@ -1441,13 +1441,12 @@ public class SkyProviderCelestial extends IRenderHandler {
 		float b = Satellite.getColorB(held);
 		float inclination = Satellite.getInclination(held);
 		float altitude = Satellite.getAltitude(held);
-		float speed = Satellite.getSpeed(held);
 		float phaseOffset = Satellite.getPhaseOffset(held);
 		boolean isBlinking = Satellite.isBlinking(held);
 		float blinkPeriod = Satellite.getBlinkPeriod(held);
 
 		Satellite.renderOrbitLine(solarAngle, r, g, b, inclination, altitude, isBlinking, blinkPeriod);
-		Satellite.renderDefault(partialTicks, world, mc, solarAngle, ISatChip.getFreqS(held), r, g, b, inclination, altitude, speed, phaseOffset, isBlinking, blinkPeriod);
+		Satellite.renderDefault(partialTicks, world, mc, solarAngle, ISatChip.getFreqS(held), r, g, b, inclination, altitude, phaseOffset, isBlinking, blinkPeriod);
 	}
 
 	protected void renderStation(float partialTicks, WorldClient world, Minecraft mc, OrbitalStation station, float solarAngle) {

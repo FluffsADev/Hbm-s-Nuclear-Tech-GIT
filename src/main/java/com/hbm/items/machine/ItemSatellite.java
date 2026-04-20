@@ -52,7 +52,7 @@ public class ItemSatellite extends ItemCustomMissilePart implements ISatChip, IG
 		Satellite.ensureItemData(stack);
 	}
 
-	@SuppressWarnings({ "rawtypes", "unchecked" })
+	@SuppressWarnings({ "rawtypes" })
 	@Override
 	@SideOnly(Side.CLIENT)
 	public void getSubItems(Item item, CreativeTabs tab, List list) {
@@ -173,7 +173,6 @@ public class ItemSatellite extends ItemCustomMissilePart implements ISatChip, IG
 		int b = MathHelper.clamp_int(data.getInteger("satColorB"), 0, 255);
 		Satellite.setColor(stack, r / 255F, g / 255F, b / 255F);
 		Satellite.setAltitude(stack, MathHelper.clamp_float(data.getFloat("satAltitude"), Satellite.MIN_ALTITUDE_KM, Satellite.MAX_ALTITUDE_KM));
-		Satellite.setSpeed(stack, data.getFloat("satSpeed"));
 		Satellite.setPhaseOffset(stack, data.getFloat("satPhaseOffset"));
 		Satellite.setInclination(stack, MathHelper.clamp_float(data.getFloat("satInclination"), Satellite.MIN_INCLINATION, Satellite.MAX_INCLINATION));
 		Satellite.setOwner(stack, data.getString("satOwner"));
@@ -187,7 +186,7 @@ public class ItemSatellite extends ItemCustomMissilePart implements ISatChip, IG
 	}
 
 	private static String formatOrbitSpeed(ItemStack stack) {
-		float orbitSpeed = Satellite.getOrbitSpeedKmPerSecond(Satellite.getAltitude(stack), Satellite.getSpeed(stack));
+		float orbitSpeed = Satellite.getOrbitSpeedKmPerSecond(Satellite.getAltitude(stack));
 		return formatValue(Math.round(orbitSpeed * 10.0F) / 10.0F);
 	}
 

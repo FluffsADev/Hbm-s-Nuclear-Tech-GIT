@@ -1,5 +1,7 @@
 package com.hbm.saveddata.satellites;
 
+import java.util.Random;
+
 import org.lwjgl.opengl.GL11;
 
 import com.hbm.dim.CelestialBody;
@@ -85,13 +87,13 @@ public class SatelliteRailgun extends SatelliteWar {
 			} else {
 				CBT_War war = target.getTrait(CBT_War.class);
 				if(war != null) {
-					float rand = Minecraft.getMinecraft().theWorld.rand.nextFloat();
+					// don't crash servers please
+					float rand = (new Random()).nextFloat();
+
 					//TODO: be able to choose projectile types
 					Projectile projectile = new Projectile(100, 20, 50, 28 * rand * 5, 55, 20, ProjectileType.SMALL, body.dimensionId);
 					projectile.GUIangle = (int) (rand * 360);
 					war.launchProjectile(projectile);
-					System.out.println(war.health);
-
 				}
 			}
 		}
@@ -99,10 +101,6 @@ public class SatelliteRailgun extends SatelliteWar {
 
 	public void playsound() {
 		Minecraft.getMinecraft().thePlayer.playSound("hbm:misc.fireflash", 10F, 1F);
-	}
-
-	public float getInterp() {
-		return interp;
 	}
 
 	public int magSize() {
@@ -113,7 +111,6 @@ public class SatelliteRailgun extends SatelliteWar {
 	public void serialize(ByteBuf buf) {
 		super.serialize(buf);
 		buf.writeFloat(interp);
-
 	}
 
 	@Override
@@ -138,7 +135,7 @@ public class SatelliteRailgun extends SatelliteWar {
 			double yPos = Math.min(Math.max(-rounded - 20 + y, -50), 50);
 
 			GL11.glTranslated(xPos, yPos, 20);
-			float fuck = this.getInterp();
+			float fuck = this.interp;
 			float alped = 1.0F - Math.min(1.0F, fuck / 100);
 
 			GL11.glPushMatrix();
