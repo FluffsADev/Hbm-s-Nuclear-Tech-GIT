@@ -3,3 +3,6 @@ Includes all changes and bugfixes from the latest upstream NTMain update - [X567
 ## Changed
 * Refueling Station now shows the currently assigned fluid
 * Earth heavy bedrock solvent fraction is now zinc
+
+## Fixed
+* HUD and Magnet notifications always showing ON even when turning OFF
