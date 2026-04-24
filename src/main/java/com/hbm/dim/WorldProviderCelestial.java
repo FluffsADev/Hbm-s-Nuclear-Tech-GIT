@@ -607,7 +607,50 @@ public abstract class WorldProviderCelestial extends WorldProviderSurface {
 	@Override
 	@SideOnly(Side.CLIENT)
 	public Vec3 drawClouds(float partialTicks) {
-		return super.drawClouds(partialTicks);
+		Vec3 clouds = super.drawClouds(partialTicks);
+		CBT_Atmosphere atmosphere = CelestialBody.getTrait(worldObj, CBT_Atmosphere.class);
+
+		if(atmosphere == null || atmosphere.fluids.isEmpty()) {
+			return clouds;
+		}
+
+		double totalPressure = 0.0D;
+		double tintR = 0.0D;
+		double tintG = 0.0D;
+		double tintB = 0.0D;
+
+		for(int i = 0; i < atmosphere.fluids.size(); i++) {
+			FluidEntry entry = atmosphere.fluids.get(i);
+			if(entry == null || entry.fluid == null || entry.pressure <= 0.0D) {
+				continue;
+			}
+
+			Vec3 fluidColor = getAtmosphereFluidColor(entry.fluid);
+			totalPressure += entry.pressure;
+			tintR += fluidColor.xCoord * entry.pressure;
+			tintG += fluidColor.yCoord * entry.pressure;
+			tintB += fluidColor.zCoord * entry.pressure;
+		}
+
+		if(totalPressure <= 0.0D) {
+			return clouds;
+		}
+
+		tintR /= totalPressure;
+		tintG /= totalPressure;
+		tintB /= totalPressure;
+
+		// Keep clouds readable while still tinting them toward the atmospheric mix.
+		double tintStrength = MathHelper.clamp_double(totalPressure * 0.35D, 0.25D, 0.65D);
+		double tintFactorR = 0.4D + tintR * 0.6D;
+		double tintFactorG = 0.4D + tintG * 0.6D;
+		double tintFactorB = 0.4D + tintB * 0.6D;
+
+		return Vec3.createVectorHelper(
+			clouds.xCoord * (1.0D - tintStrength + tintFactorR * tintStrength),
+			clouds.yCoord * (1.0D - tintStrength + tintFactorG * tintStrength),
+			clouds.zCoord * (1.0D - tintStrength + tintFactorB * tintStrength)
+		);
 	}
 
 	@Override
