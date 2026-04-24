@@ -640,11 +640,15 @@ public abstract class WorldProviderCelestial extends WorldProviderSurface {
 		tintG /= totalPressure;
 		tintB /= totalPressure;
 
-		// Keep clouds readable while still tinting them toward the atmospheric mix.
-		double tintStrength = MathHelper.clamp_double(totalPressure * 0.35D, 0.25D, 0.65D);
-		double tintFactorR = 0.4D + tintR * 0.6D;
-		double tintFactorG = 0.4D + tintG * 0.6D;
-		double tintFactorB = 0.4D + tintB * 0.6D;
+		double tintLuma = tintR * 0.299D + tintG * 0.587D + tintB * 0.114D;
+		if(tintLuma <= 0.0D) {
+			return clouds;
+		}
+
+		double tintStrength = MathHelper.clamp_double(totalPressure * 0.6D, 0.3D, 0.85D);
+		double tintFactorR = MathHelper.clamp_double(tintR / tintLuma, 0.8D, 1.35D);
+		double tintFactorG = MathHelper.clamp_double(tintG / tintLuma, 0.8D, 1.35D);
+		double tintFactorB = MathHelper.clamp_double(tintB / tintLuma, 0.8D, 1.35D);
 
 		return Vec3.createVectorHelper(
 			clouds.xCoord * (1.0D - tintStrength + tintFactorR * tintStrength),
