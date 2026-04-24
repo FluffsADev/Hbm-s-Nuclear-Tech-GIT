@@ -56,7 +56,7 @@ public abstract class WorldProviderCelestial extends WorldProviderSurface {
 
 	private double eclipseAmount;
 	private long localTime = -1;
-	
+
 	public static ArrayList<Meteor> meteors = new ArrayList<>();
 
 	private static final Map<Integer, SolarEclipseCache> surfaceEclipseCache = new HashMap<>();
@@ -122,7 +122,7 @@ public abstract class WorldProviderCelestial extends WorldProviderSurface {
 		worldObj.prevThunderingStrength = 0.0F;
 		worldObj.thunderingStrength = 0.0F;
 	}
-	
+
 
 	// Can be overridden to provide fog changing events based on weather
 	public float fogDensity(FogDensity event) {
@@ -640,20 +640,21 @@ public abstract class WorldProviderCelestial extends WorldProviderSurface {
 		tintG /= totalPressure;
 		tintB /= totalPressure;
 
-		double tintLuma = tintR * 0.299D + tintG * 0.587D + tintB * 0.114D;
-		if(tintLuma <= 0.0D) {
+		double tintPeak = Math.max(tintR, Math.max(tintG, tintB));
+		if(tintPeak <= 0.0D) {
 			return clouds;
 		}
 
-		double tintStrength = MathHelper.clamp_double(totalPressure * 0.6D, 0.3D, 0.85D);
-		double tintFactorR = MathHelper.clamp_double(tintR / tintLuma, 0.8D, 1.35D);
-		double tintFactorG = MathHelper.clamp_double(tintG / tintLuma, 0.8D, 1.35D);
-		double tintFactorB = MathHelper.clamp_double(tintB / tintLuma, 0.8D, 1.35D);
+		double tintStrength = MathHelper.clamp_double(totalPressure * 0.65D, 0.35D, 0.9D);
+		double tintFactorR = MathHelper.clamp_double(tintR / tintPeak, 0.5D, 1.0D);
+		double tintFactorG = MathHelper.clamp_double(tintG / tintPeak, 0.5D, 1.0D);
+		double tintFactorB = MathHelper.clamp_double(tintB / tintPeak, 0.5D, 1.0D);
+		double cloudBrightness = 0.9D;
 
 		return Vec3.createVectorHelper(
-			clouds.xCoord * (1.0D - tintStrength + tintFactorR * tintStrength),
-			clouds.yCoord * (1.0D - tintStrength + tintFactorG * tintStrength),
-			clouds.zCoord * (1.0D - tintStrength + tintFactorB * tintStrength)
+			clouds.xCoord * (1.0D - tintStrength + tintFactorR * tintStrength) * cloudBrightness,
+			clouds.yCoord * (1.0D - tintStrength + tintFactorG * tintStrength) * cloudBrightness,
+			clouds.zCoord * (1.0D - tintStrength + tintFactorB * tintStrength) * cloudBrightness
 		);
 	}
 
