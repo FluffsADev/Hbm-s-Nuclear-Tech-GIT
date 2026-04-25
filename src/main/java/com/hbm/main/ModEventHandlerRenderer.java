@@ -36,6 +36,7 @@ import net.minecraft.client.entity.AbstractClientPlayer;
 import net.minecraft.client.particle.EffectRenderer;
 import net.minecraft.client.particle.EntityDropParticleFX;
 import net.minecraft.client.particle.EntityRainFX;
+import net.minecraft.client.particle.EntitySplashFX;
 import net.minecraft.client.model.ModelBiped;
 import net.minecraft.client.gui.GuiIngame;
 import net.minecraft.client.model.ModelRenderer;
@@ -121,7 +122,9 @@ public class ModEventHandlerRenderer {
 				Object particle = layer.get(i);
 				if(particle instanceof EntityRainFX) {
 					EntityRainFX rainParticle = (EntityRainFX)particle;
-					rainParticle.setParticleTextureIndex(112 + Math.abs(rainParticle.getEntityId()) % 3);
+					if(!(rainParticle instanceof EntitySplashFX)) {
+						rainParticle.setParticleTextureIndex(112 + Math.abs(rainParticle.getEntityId()) % 3);
+					}
 					rainParticle.setRBGColorF((float)weatherColor.xCoord, (float)weatherColor.yCoord, (float)weatherColor.zCoord);
 				} else if(shouldTintWaterDropParticle(particle)) {
 					((EntityDropParticleFX)particle).setRBGColorF((float)weatherColor.xCoord, (float)weatherColor.yCoord, (float)weatherColor.zCoord);
