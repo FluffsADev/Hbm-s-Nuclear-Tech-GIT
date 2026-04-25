@@ -610,6 +610,14 @@ public abstract class WorldProviderCelestial extends WorldProviderSurface {
 		Vec3 clouds = super.drawClouds(partialTicks);
 		CBT_Atmosphere atmosphere = CelestialBody.getTrait(worldObj, CBT_Atmosphere.class);
 
+		return getTintedCloudColor(atmosphere, clouds);
+	}
+
+	public static Vec3 getTintedCloudColor(CBT_Atmosphere atmosphere, Vec3 clouds) {
+		if(clouds == null) {
+			clouds = Vec3.createVectorHelper(1.0D, 1.0D, 1.0D);
+		}
+
 		if(atmosphere == null || atmosphere.fluids.isEmpty()) {
 			return clouds;
 		}

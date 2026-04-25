@@ -109,8 +109,7 @@ void main() {
 		float cloudPresence = max(cloudMask, jetMask * 0.75);
 
 		vec3 shadowColor = baseColor * mix(0.72, 0.55, density);
-		vec3 brightCloudTint = mix(cloudTint, vec3(1.0), 0.78);
-		vec3 cloudColor = min(brightCloudTint * (1.28 + density * 0.34) + vec3(0.18 + density * 0.12), vec3(1.0));
+		vec3 cloudColor = min(cloudTint * (1.18 + density * 0.18) + vec3(0.04 + density * 0.04), vec3(1.0));
 		vec3 airColor = mix(shadowColor, baseColor, 0.35 + turbulence * 0.3);
 		layeredColor = mix(airColor, cloudColor, cloudMask * (0.92 + density * 0.28));
 		layeredColor = mix(layeredColor, cloudColor, jetMask * (0.42 + density * 0.2));

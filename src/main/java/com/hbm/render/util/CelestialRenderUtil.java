@@ -132,8 +132,10 @@ public class CelestialRenderUtil {
 	}
 
 	public static Vec3 getBodyCloudColor(CelestialBody body) {
+		Vec3 baseClouds = Vec3.createVectorHelper(1.0D, 1.0D, 1.0D);
+
 		if(body == null) {
-			return Vec3.createVectorHelper(1.0D, 1.0D, 1.0D);
+			return baseClouds;
 		}
 
 		if(body.gas != null) {
@@ -151,46 +153,7 @@ public class CelestialRenderUtil {
 		}
 
 		CBT_Atmosphere atmosphere = body.getTrait(CBT_Atmosphere.class);
-		if(atmosphere == null || atmosphere.fluids.isEmpty()) {
-			return getBodyAtmosphereColor(body);
-		}
-
-		double totalPressure = 0.0D;
-		double tintR = 0.0D;
-		double tintG = 0.0D;
-		double tintB = 0.0D;
-
-		for(FluidEntry entry : atmosphere.fluids) {
-			if(entry == null || entry.fluid == null || entry.pressure <= 0.0D) {
-				continue;
-			}
-
-			Vec3 fluidColor = WorldProviderCelestial.getAtmosphereFluidColor(entry.fluid);
-			totalPressure += entry.pressure;
-			tintR += fluidColor.xCoord * entry.pressure;
-			tintG += fluidColor.yCoord * entry.pressure;
-			tintB += fluidColor.zCoord * entry.pressure;
-		}
-
-		if(totalPressure <= 0.0D) {
-			return getBodyAtmosphereColor(body);
-		}
-
-		tintR /= totalPressure;
-		tintG /= totalPressure;
-		tintB /= totalPressure;
-
-		double tintPeak = Math.max(tintR, Math.max(tintG, tintB));
-		if(tintPeak <= 0.0D) {
-			return getBodyAtmosphereColor(body);
-		}
-
-		double cloudBrightness = 0.85D;
-		return Vec3.createVectorHelper(
-			MathHelper.clamp_double((tintR / tintPeak) * cloudBrightness, 0.0D, 1.0D),
-			MathHelper.clamp_double((tintG / tintPeak) * cloudBrightness, 0.0D, 1.0D),
-			MathHelper.clamp_double((tintB / tintPeak) * cloudBrightness, 0.0D, 1.0D)
-		);
+		return WorldProviderCelestial.getTintedCloudColor(atmosphere, baseClouds);
 	}
 
 	public static void renderAtmosphereGlow2D(Tessellator tessellator, CelestialBody body, double centerX, double centerY, double size, float visibility) {
