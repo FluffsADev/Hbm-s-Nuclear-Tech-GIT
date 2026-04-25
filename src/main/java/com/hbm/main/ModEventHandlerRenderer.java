@@ -1,7 +1,6 @@
 package com.hbm.main;
 
 import java.util.List;
-
 import com.hbm.blocks.ICustomBlockHighlight;
 import com.hbm.config.ClientConfig;
 import com.hbm.config.RadiationConfig;

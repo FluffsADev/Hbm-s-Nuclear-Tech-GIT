@@ -58,6 +58,7 @@ public class WeatherProviderCelestial extends IRenderHandler {
 		int playerHeight = MathHelper.floor_double(interpY);
 		int renderLayerCount = mc.gameSettings.fancyGraphics ? 10 : 5;
 		Vec3 rainColor = getRainColor(world);
+		Vec3 snowColor = getSnowColor(world);
 
 		Tessellator tessellator = Tessellator.instance;
 		GL11.glDisable(GL11.GL_CULL_FACE);
@@ -149,9 +150,9 @@ public class WeatherProviderCelestial extends IRenderHandler {
 
 					tessellator.setBrightness((world.getLightBrightnessForSkyBlocks(layerX, layerY, layerZ, 0) * 3 + 15728880) / 4);
 					tessellator.setColorRGBA_F(
-						(float)rainColor.xCoord,
-						(float)rainColor.yCoord,
-						(float)rainColor.zCoord,
+						(float)snowColor.xCoord,
+						(float)snowColor.yCoord,
+						(float)snowColor.zCoord,
 						((1.0F - intensityMod * intensityMod) * 0.3F + 0.5F) * intensity
 					);
 					tessellator.setTranslation(-interpX, -interpY, -interpZ);
@@ -214,6 +215,14 @@ public class WeatherProviderCelestial extends IRenderHandler {
 	private Vec3 getRainColor(WorldClient world) {
 		if(world.provider instanceof WorldProviderCelestial) {
 			return ((WorldProviderCelestial)world.provider).getWeatherColor();
+		}
+
+		return Vec3.createVectorHelper(1.0D, 1.0D, 1.0D);
+	}
+
+	private Vec3 getSnowColor(WorldClient world) {
+		if(world.provider instanceof WorldProviderCelestial) {
+			return ((WorldProviderCelestial)world.provider).getSnowColor();
 		}
 
 		return Vec3.createVectorHelper(1.0D, 1.0D, 1.0D);

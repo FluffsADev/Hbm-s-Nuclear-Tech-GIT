@@ -686,6 +686,16 @@ public abstract class WorldProviderCelestial extends WorldProviderSurface {
 		);
 	}
 
+	@SideOnly(Side.CLIENT)
+	public Vec3 getSnowColor() {
+		CBT_Water water = CelestialBody.getTrait(worldObj, CBT_Water.class);
+		if(water == null || water.fluid == null || water.fluid == Fluids.WATER) {
+			return Vec3.createVectorHelper(1.0D, 1.0D, 1.0D);
+		}
+
+		return getWeatherColor();
+	}
+
 	@Override
 	public boolean canDoLightning(Chunk chunk) {
 		return hasWeatherCycle();
