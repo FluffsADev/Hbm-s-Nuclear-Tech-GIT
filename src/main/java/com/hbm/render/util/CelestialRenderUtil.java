@@ -110,6 +110,8 @@ public final class CelestialRenderUtil {
 		float b = MathHelper.clamp_float((float) atmo.zCoord * 1.15F, 0.0F, 1.0F);
 
 		double radius = size * 0.5D;
+		float leadingGlow = glowAlpha;
+		float trailingGlow = glowAlpha;
 		double innerSize = radius * 0.98D;
 		double middleSize = radius * 1.075D;
 		double outerSize = radius * 1.15D * (1.0D + glowAlpha * 0.25D);
@@ -117,6 +119,7 @@ public final class CelestialRenderUtil {
 		GL11.glEnable(GL11.GL_BLEND);
 		OpenGlHelper.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ZERO);
 		GL11.glDisable(GL11.GL_TEXTURE_2D);
+		GL11.glDisable(GL11.GL_CULL_FACE);
 		GL11.glShadeModel(GL11.GL_SMOOTH);
 
 		tessellator.startDrawingQuads();
@@ -125,28 +128,30 @@ public final class CelestialRenderUtil {
 		tessellator.setColorRGBA_F(r, g, b, 0.0F);
 		tessellator.addVertex(centerX - outerSize, centerY - outerSize, 0.0D);
 		tessellator.addVertex(centerX + outerSize, centerY - outerSize, 0.0D);
-		tessellator.setColorRGBA_F(r, g, b, glowAlpha / 2.0F);
+		tessellator.setColorRGBA_F(r, g, b, leadingGlow / 2.0F);
 		tessellator.addVertex(centerX + middleSize, centerY - middleSize, 0.0D);
+		tessellator.setColorRGBA_F(r, g, b, trailingGlow / 2.0F);
 		tessellator.addVertex(centerX - middleSize, centerY - middleSize, 0.0D);
 
 		tessellator.addVertex(centerX - middleSize, centerY - middleSize, 0.0D);
-		tessellator.setColorRGBA_F(r, g, b, glowAlpha / 2.0F);
+		tessellator.setColorRGBA_F(r, g, b, leadingGlow / 2.0F);
 		tessellator.addVertex(centerX + middleSize, centerY - middleSize, 0.0D);
-		tessellator.setColorRGBA_F(r, g, b, glowAlpha);
+		tessellator.setColorRGBA_F(r, g, b, leadingGlow);
 		tessellator.addVertex(centerX + innerSize, centerY - innerSize, 0.0D);
+		tessellator.setColorRGBA_F(r, g, b, trailingGlow);
 		tessellator.addVertex(centerX - innerSize, centerY - innerSize, 0.0D);
 
 		// Left band
 		tessellator.setColorRGBA_F(r, g, b, 0.0F);
 		tessellator.addVertex(centerX + outerSize, centerY - outerSize, 0.0D);
 		tessellator.addVertex(centerX + outerSize, centerY + outerSize, 0.0D);
-		tessellator.setColorRGBA_F(r, g, b, glowAlpha / 2.0F);
+		tessellator.setColorRGBA_F(r, g, b, leadingGlow / 2.0F);
 		tessellator.addVertex(centerX + middleSize, centerY + middleSize, 0.0D);
 		tessellator.addVertex(centerX + middleSize, centerY - middleSize, 0.0D);
 
 		tessellator.addVertex(centerX + middleSize, centerY - middleSize, 0.0D);
 		tessellator.addVertex(centerX + middleSize, centerY + middleSize, 0.0D);
-		tessellator.setColorRGBA_F(r, g, b, glowAlpha);
+		tessellator.setColorRGBA_F(r, g, b, leadingGlow);
 		tessellator.addVertex(centerX + innerSize, centerY + innerSize, 0.0D);
 		tessellator.addVertex(centerX + innerSize, centerY - innerSize, 0.0D);
 
@@ -154,36 +159,37 @@ public final class CelestialRenderUtil {
 		tessellator.setColorRGBA_F(r, g, b, 0.0F);
 		tessellator.addVertex(centerX + outerSize, centerY + outerSize, 0.0D);
 		tessellator.addVertex(centerX - outerSize, centerY + outerSize, 0.0D);
-		tessellator.setColorRGBA_F(r, g, b, glowAlpha / 2.0F);
+		tessellator.setColorRGBA_F(r, g, b, trailingGlow / 2.0F);
 		tessellator.addVertex(centerX - middleSize, centerY + middleSize, 0.0D);
-		tessellator.setColorRGBA_F(r, g, b, glowAlpha / 2.0F);
+		tessellator.setColorRGBA_F(r, g, b, leadingGlow / 2.0F);
 		tessellator.addVertex(centerX + middleSize, centerY + middleSize, 0.0D);
 
 		tessellator.addVertex(centerX + middleSize, centerY + middleSize, 0.0D);
-		tessellator.setColorRGBA_F(r, g, b, glowAlpha / 2.0F);
+		tessellator.setColorRGBA_F(r, g, b, trailingGlow / 2.0F);
 		tessellator.addVertex(centerX - middleSize, centerY + middleSize, 0.0D);
-		tessellator.setColorRGBA_F(r, g, b, glowAlpha);
+		tessellator.setColorRGBA_F(r, g, b, trailingGlow);
 		tessellator.addVertex(centerX - innerSize, centerY + innerSize, 0.0D);
-		tessellator.setColorRGBA_F(r, g, b, glowAlpha);
+		tessellator.setColorRGBA_F(r, g, b, leadingGlow);
 		tessellator.addVertex(centerX + innerSize, centerY + innerSize, 0.0D);
 
 		// Right band
 		tessellator.setColorRGBA_F(r, g, b, 0.0F);
 		tessellator.addVertex(centerX - outerSize, centerY + outerSize, 0.0D);
 		tessellator.addVertex(centerX - outerSize, centerY - outerSize, 0.0D);
-		tessellator.setColorRGBA_F(r, g, b, glowAlpha / 2.0F);
+		tessellator.setColorRGBA_F(r, g, b, trailingGlow / 2.0F);
 		tessellator.addVertex(centerX - middleSize, centerY - middleSize, 0.0D);
 		tessellator.addVertex(centerX - middleSize, centerY + middleSize, 0.0D);
 
 		tessellator.addVertex(centerX - middleSize, centerY + middleSize, 0.0D);
 		tessellator.addVertex(centerX - middleSize, centerY - middleSize, 0.0D);
-		tessellator.setColorRGBA_F(r, g, b, glowAlpha);
+		tessellator.setColorRGBA_F(r, g, b, trailingGlow);
 		tessellator.addVertex(centerX - innerSize, centerY - innerSize, 0.0D);
 		tessellator.addVertex(centerX - innerSize, centerY + innerSize, 0.0D);
 
 		tessellator.draw();
 
 		GL11.glShadeModel(GL11.GL_FLAT);
+		GL11.glEnable(GL11.GL_CULL_FACE);
 		GL11.glEnable(GL11.GL_TEXTURE_2D);
 		OpenGlHelper.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ZERO);
 	}
