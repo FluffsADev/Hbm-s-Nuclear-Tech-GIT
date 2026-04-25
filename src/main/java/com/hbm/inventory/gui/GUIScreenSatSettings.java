@@ -18,6 +18,7 @@ import com.hbm.main.NTMSounds;
 import com.hbm.packet.PacketDispatcher;
 import com.hbm.packet.toserver.NBTItemControlPacket;
 import com.hbm.render.shader.Shader;
+import com.hbm.render.util.CelestialRenderUtil;
 import com.hbm.saveddata.SatelliteSavedData;
 import com.hbm.saveddata.satellites.Satellite;
 import com.hbm.saveddata.satellites.SatelliteFoeq;
@@ -66,7 +67,9 @@ public class GUIScreenSatSettings extends GuiScreen {
 		new ResourceLocation(RefStrings.MODID, "textures/misc/space/citylights_2.png"),
 		new ResourceLocation(RefStrings.MODID, "textures/misc/space/citylights_3.png")
 	};
-	private static final Shader planetShader = new Shader(new ResourceLocation(RefStrings.MODID, "shaders/crescent.frag"));
+	private static final Shader crescentShader = new Shader(new ResourceLocation(RefStrings.MODID, "shaders/crescent.frag"));
+	private static final Shader atmosphereShader = new Shader(new ResourceLocation(RefStrings.MODID, "shaders/atmosphere.frag"));
+	private static final Shader nightLightsShader = new Shader(new ResourceLocation(RefStrings.MODID, "shaders/nightlights.frag"));
 
 	static {
 		satelliteTextureByClass.put(SatelliteMapper.class, satelliteTextureMapper);
@@ -746,6 +749,8 @@ public class GUIScreenSatSettings extends GuiScreen {
 			if(body.parent == null) {
 				drawTexturedQuad(centerX, centerY, size, 0F);
 			} else {
+				CelestialRenderUtil.renderAtmosphereGlow2D(Tessellator.instance, body, centerX, centerY, size, 1.0F);
+
 				float phase = getBodyRotationPhase(body, dayTicks);
 				float bodyRotationAngle = phase * 360F;
 				boolean rotateBody = hasTransparentPixels(body.texture);
@@ -758,7 +763,7 @@ public class GUIScreenSatSettings extends GuiScreen {
 					textureUOffset = phase;
 				}
 
-				drawBodyCrescentOverlay(body, centerX, centerY, size, rotateBody, bodyRotationAngle, dayTicks, textureUOffset);
+				drawBodyOverlays(body, centerX, centerY, size, rotateBody, bodyRotationAngle, dayTicks, textureUOffset);
 			}
 		} else {
 			int color = 0xFF666666;
@@ -793,26 +798,77 @@ public class GUIScreenSatSettings extends GuiScreen {
 		GL11.glColor4f(1F, 1F, 1F, 1F);
 	}
 
-	private void drawBodyCrescentOverlay(CelestialBody body, float bodyScreenX, float bodyScreenY, float drawSize, boolean rotateBody, float bodyRotationAngle, double dayTicks, float textureUOffset) {
+	private void drawBodyOverlays(CelestialBody body, float bodyScreenX, float bodyScreenY, float drawSize, boolean rotateBody, float bodyRotationAngle, double dayTicks, float textureUOffset) {
 		float phase = calculateBodyCrescentPhase(body, dayTicks);
 		CBT_Impact impact = body.getTrait(CBT_Impact.class);
 		CBT_Lights light = body.getTrait(CBT_Lights.class);
 		double impactTime = impact != null ? dayTicks - impact.time : 0.0D;
 		int lightIntensity = light != null && impactTime < 40.0D ? MathHelper.clamp_int(light.getIntensity(), 0, citylights.length - 1) : 0;
 		int activeBlackouts = Math.max(0, Math.min((int) (impactTime / 8.0D), 5));
+		float atmosphereAlpha = CelestialRenderUtil.getAtmosphereSurfaceAlpha(body);
+		float atmosphereDensity = CelestialRenderUtil.getAtmosphereDensity(body);
+		net.minecraft.util.Vec3 atmosphereColor = CelestialRenderUtil.getBodyAtmosphereColor(body);
+
+		if(atmosphereAlpha > 0.001F) {
+			GL11.glEnable(GL11.GL_BLEND);
+			GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+			GL11.glColor4f(1F, 1F, 1F, 1F);
+
+			atmosphereShader.use();
+			atmosphereShader.setUniform1f("offset", textureUOffset);
+			atmosphereShader.setUniform1i("bodyTex", 0);
+			atmosphereShader.setUniform1i("useBodyAlphaMask", 1);
+			atmosphereShader.setUniform1f("atmosphereColorR", (float) atmosphereColor.xCoord);
+			atmosphereShader.setUniform1f("atmosphereColorG", (float) atmosphereColor.yCoord);
+			atmosphereShader.setUniform1f("atmosphereColorB", (float) atmosphereColor.zCoord);
+			atmosphereShader.setUniform1f("atmosphereAlpha", atmosphereAlpha);
+
+			GL13.glActiveTexture(GL13.GL_TEXTURE0);
+			mc.getTextureManager().bindTexture(body.texture);
+
+			if(rotateBody) {
+				drawTexturedQuadRotating(bodyScreenX, bodyScreenY, drawSize, bodyRotationAngle);
+			} else {
+				drawTexturedQuad(bodyScreenX, bodyScreenY, drawSize, 0F);
+			}
+
+			atmosphereShader.stop();
+		}
 
 		GL11.glEnable(GL11.GL_BLEND);
 		GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
 		GL11.glColor4f(1F, 1F, 1F, 1F);
 
-		planetShader.use();
-		planetShader.setUniform1f("phase", phase);
-		planetShader.setUniform1f("offset", textureUOffset);
-		planetShader.setUniform1i("bodyTex", 0);
-		planetShader.setUniform1i("lights", 1);
-		planetShader.setUniform1i("cityMask", 2);
-		planetShader.setUniform1i("blackouts", activeBlackouts);
-		planetShader.setUniform1i("useBodyAlphaMask", 1);
+		crescentShader.use();
+		crescentShader.setUniform1f("phase", phase);
+		crescentShader.setUniform1f("offset", textureUOffset);
+		crescentShader.setUniform1i("bodyTex", 0);
+		crescentShader.setUniform1i("useBodyAlphaMask", 1);
+
+		GL13.glActiveTexture(GL13.GL_TEXTURE0);
+		mc.getTextureManager().bindTexture(body.texture);
+
+		if(rotateBody) {
+			drawTexturedQuadRotating(bodyScreenX, bodyScreenY, drawSize, bodyRotationAngle);
+		} else {
+			drawTexturedQuad(bodyScreenX, bodyScreenY, drawSize, 0F);
+		}
+
+		crescentShader.stop();
+
+		GL11.glEnable(GL11.GL_BLEND);
+		GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE);
+		GL11.glColor4f(1F, 1F, 1F, 1F);
+
+		nightLightsShader.use();
+		nightLightsShader.setUniform1f("phase", phase);
+		nightLightsShader.setUniform1f("offset", textureUOffset);
+		nightLightsShader.setUniform1f("atmosphereDensity", atmosphereDensity);
+		nightLightsShader.setUniform1i("bodyTex", 0);
+		nightLightsShader.setUniform1i("lights", 1);
+		nightLightsShader.setUniform1i("cityMask", 2);
+		nightLightsShader.setUniform1i("blackouts", activeBlackouts);
+		nightLightsShader.setUniform1i("useBodyAlphaMask", 1);
 
 		GL13.glActiveTexture(GL13.GL_TEXTURE0);
 		mc.getTextureManager().bindTexture(body.texture);
@@ -828,7 +884,8 @@ public class GUIScreenSatSettings extends GuiScreen {
 			drawTexturedQuad(bodyScreenX, bodyScreenY, drawSize, 0F);
 		}
 
-		planetShader.stop();
+		nightLightsShader.stop();
+		GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
 
 		if(impact != null) {
 			float lavaAlpha = (float) Math.min(impactTime * 0.1D, 1.0D);

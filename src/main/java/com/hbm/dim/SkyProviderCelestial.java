@@ -9,7 +9,6 @@ import org.lwjgl.opengl.GL11;
 import com.hbm.dim.SolarSystem.AstroMetric;
 import com.hbm.dim.orbit.OrbitalStation;
 import com.hbm.dim.trait.CBT_Atmosphere;
-import com.hbm.dim.trait.CBT_Atmosphere.FluidEntry;
 import com.hbm.dim.trait.CBT_Dyson;
 import com.hbm.dim.trait.CelestialBodyTrait.CBT_COMPROMISED;
 import com.hbm.dim.trait.CBT_War;
@@ -18,6 +17,7 @@ import com.hbm.extprop.HbmLivingProps;
 import com.hbm.lib.RefStrings;
 import com.hbm.main.ResourceManager;
 import com.hbm.render.shader.Shader;
+import com.hbm.render.util.CelestialRenderUtil;
 import com.hbm.saveddata.SatelliteSavedData;
 import com.hbm.saveddata.satellites.Satellite;
 import com.hbm.util.BobMathUtil;
@@ -70,7 +70,9 @@ public class SkyProviderCelestial extends IRenderHandler {
 
 	private static final ResourceLocation noise = new ResourceLocation(RefStrings.MODID, "shaders/iChannel1.png");
 
-	protected static final Shader planetShader = new Shader(new ResourceLocation(RefStrings.MODID, "shaders/crescent.frag"));
+	protected static final Shader crescentShader = new Shader(new ResourceLocation(RefStrings.MODID, "shaders/crescent.frag"));
+	protected static final Shader atmosphereShader = new Shader(new ResourceLocation(RefStrings.MODID, "shaders/atmosphere.frag"));
+	protected static final Shader nightLightsShader = new Shader(new ResourceLocation(RefStrings.MODID, "shaders/nightlights.frag"));
 	protected static final Shader swarmShader = new Shader(new ResourceLocation(RefStrings.MODID, "shaders/swarm.vert"), new ResourceLocation(RefStrings.MODID, "shaders/swarm.frag"));
 
 	private static final ResourceLocation particleBase = new ResourceLocation(RefStrings.MODID + ":textures/particle/particle_base.png");
@@ -1016,45 +1018,20 @@ public class SkyProviderCelestial extends IRenderHandler {
 						CBT_Lights light = metric.body.getTrait(CBT_Lights.class);
 
 						double impactTime = impact != null ? (world.getTotalWorldTime() - impact.time) + partialTicks : 0;
-						int lightIntensity = light != null && impactTime < 40 ? light.getIntensity() : 0;
+						int lightIntensity = light != null && impactTime < 40 ? MathHelper.clamp_int(light.getIntensity(), 0, citylights.length - 1) : 0;
 
 						int blackoutInterval = 8;
 						int maxBlackouts = 5;
 
 						int activeBlackouts = Math.min((int) (impactTime / blackoutInterval), maxBlackouts);
 
-						GL11.glEnable(GL11.GL_BLEND);
-						// Draw a shader on top to render celestial phase
-						OpenGlHelper.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ZERO);
+						Vec3 atmosphereColor = CelestialRenderUtil.getBodyAtmosphereColor(metric.body);
+						float atmosphereOverlayAlpha = CelestialRenderUtil.getAtmosphereSurfaceAlpha(metric.body) * visibility;
+						float atmosphereDensity = CelestialRenderUtil.getAtmosphereDensity(metric.body);
 
-						GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-
-						planetShader.use();
-						planetShader.setUniform1f("phase", (float) -metric.phase);
-						planetShader.setUniform1f("offset", (float) uvOffset);
-						planetShader.setUniform1i("bodyTex", 0);
-						planetShader.setUniform1i("useBodyAlphaMask", 0);
-						planetShader.setUniform1i("lights", 0);
-						planetShader.setUniform1i("cityMask", 1);
-						planetShader.setUniform1i("blackouts", activeBlackouts);
-
-						mc.renderEngine.bindTexture(citylights[lightIntensity]);
-						if(gl13) {
-							GL13.glActiveTexture(GL13.GL_TEXTURE1);
-							mc.renderEngine.bindTexture(metric.body.cityMask != null ? metric.body.cityMask : defaultMask);
-							GL13.glActiveTexture(GL13.GL_TEXTURE0);
-						}
-
-						tessellator.startDrawingQuads();
-						tessellator.addVertexWithUV(-size, 100.0D, -size, 0.0D, 0.0D);
-						tessellator.addVertexWithUV(size, 100.0D, -size, 1.0D, 0.0D);
-						tessellator.addVertexWithUV(size, 100.0D, size, 1.0D, 1.0D);
-						tessellator.addVertexWithUV(-size, 100.0D, size, 0.0D, 1.0D);
-						tessellator.draw();
-
-						GL11.glEnable(GL11.GL_TEXTURE_2D);
-
-						planetShader.stop();
+						renderAtmosphereSurface(tessellator, atmosphereColor, atmosphereOverlayAlpha, uvOffset, size);
+						renderCrescentShadow(tessellator, (float) -metric.phase, uvOffset, size);
+						renderNightLights(tessellator, mc, metric.body, (float) -metric.phase, uvOffset, size, lightIntensity, activeBlackouts, atmosphereDensity);
 
 						OpenGlHelper.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ONE, GL11.GL_ZERO);
 
@@ -1174,8 +1151,78 @@ public class SkyProviderCelestial extends IRenderHandler {
 		}
 	}
 
+	private void drawPlanetShaderQuad(Tessellator tessellator, double size) {
+		tessellator.startDrawingQuads();
+		tessellator.addVertexWithUV(-size, 100.0D, -size, 0.0D, 0.0D);
+		tessellator.addVertexWithUV(size, 100.0D, -size, 1.0D, 0.0D);
+		tessellator.addVertexWithUV(size, 100.0D, size, 1.0D, 1.0D);
+		tessellator.addVertexWithUV(-size, 100.0D, size, 0.0D, 1.0D);
+		tessellator.draw();
+	}
+
+	private void renderAtmosphereSurface(Tessellator tessellator, Vec3 atmosphereColor, float atmosphereAlpha, double uvOffset, double size) {
+		if(atmosphereAlpha <= 0.001F) {
+			return;
+		}
+
+		GL11.glEnable(GL11.GL_BLEND);
+		OpenGlHelper.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ZERO);
+		GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+
+		atmosphereShader.use();
+		atmosphereShader.setUniform1f("offset", (float) uvOffset);
+		atmosphereShader.setUniform1i("bodyTex", 0);
+		atmosphereShader.setUniform1i("useBodyAlphaMask", 0);
+		atmosphereShader.setUniform1f("atmosphereColorR", (float) atmosphereColor.xCoord);
+		atmosphereShader.setUniform1f("atmosphereColorG", (float) atmosphereColor.yCoord);
+		atmosphereShader.setUniform1f("atmosphereColorB", (float) atmosphereColor.zCoord);
+		atmosphereShader.setUniform1f("atmosphereAlpha", atmosphereAlpha);
+		drawPlanetShaderQuad(tessellator, size);
+		atmosphereShader.stop();
+	}
+
+	private void renderCrescentShadow(Tessellator tessellator, float phase, double uvOffset, double size) {
+		GL11.glEnable(GL11.GL_BLEND);
+		OpenGlHelper.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ZERO);
+		GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+
+		crescentShader.use();
+		crescentShader.setUniform1f("phase", phase);
+		crescentShader.setUniform1f("offset", (float) uvOffset);
+		crescentShader.setUniform1i("bodyTex", 0);
+		crescentShader.setUniform1i("useBodyAlphaMask", 0);
+		drawPlanetShaderQuad(tessellator, size);
+		crescentShader.stop();
+	}
+
+	private void renderNightLights(Tessellator tessellator, Minecraft mc, CelestialBody body, float phase, double uvOffset, double size, int lightIntensity, int activeBlackouts, float atmosphereDensity) {
+		GL11.glEnable(GL11.GL_BLEND);
+		OpenGlHelper.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ONE, GL11.GL_ZERO);
+		GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+
+		nightLightsShader.use();
+		nightLightsShader.setUniform1f("phase", phase);
+		nightLightsShader.setUniform1f("offset", (float) uvOffset);
+		nightLightsShader.setUniform1f("atmosphereDensity", atmosphereDensity);
+		nightLightsShader.setUniform1i("bodyTex", 0);
+		nightLightsShader.setUniform1i("lights", 0);
+		nightLightsShader.setUniform1i("cityMask", 1);
+		nightLightsShader.setUniform1i("blackouts", activeBlackouts);
+		nightLightsShader.setUniform1i("useBodyAlphaMask", 0);
+
+		mc.renderEngine.bindTexture(citylights[lightIntensity]);
+		if(gl13) {
+			GL13.glActiveTexture(GL13.GL_TEXTURE1);
+			mc.renderEngine.bindTexture(body.cityMask != null ? body.cityMask : defaultMask);
+			GL13.glActiveTexture(GL13.GL_TEXTURE0);
+		}
+
+		drawPlanetShaderQuad(tessellator, size);
+		nightLightsShader.stop();
+	}
+
 	private void renderAtmosphereGlow(Tessellator tessellator, Minecraft mc, CelestialBody body, double size, float visibility, double phase) {
-		float glowAlpha = getAtmosphereGlowAlpha(body) * visibility;
+		float glowAlpha = CelestialRenderUtil.getAtmosphereGlowAlpha(body) * visibility;
 		if(glowAlpha <= 0.001F) {
 			return;
 		}
@@ -1184,7 +1231,7 @@ public class SkyProviderCelestial extends IRenderHandler {
 		float leadingGlow = glowAlpha;// * MathHelper.clamp_float((float)Math.abs(0.5 - phase) * 2, 0, 1);
 		float trailingGlow = glowAlpha;// * MathHelper.clamp_float((float)Math.abs(-0.5 - phase) * 2, 0, 1);
 
-		Vec3 atmo = getBodyAtmosphereColor(body);
+		Vec3 atmo = CelestialRenderUtil.getBodyAtmosphereColor(body);
 		float r = MathHelper.clamp_float((float) atmo.xCoord * 1.15F, 0.0F, 1.0F);
 		float g = MathHelper.clamp_float((float) atmo.yCoord * 1.15F, 0.0F, 1.0F);
 		float b = MathHelper.clamp_float((float) atmo.zCoord * 1.15F, 0.0F, 1.0F);
@@ -1270,67 +1317,6 @@ public class SkyProviderCelestial extends IRenderHandler {
 		GL11.glEnable(GL11.GL_CULL_FACE);
 		GL11.glEnable(GL11.GL_TEXTURE_2D);
 		OpenGlHelper.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ZERO);
-	}
-
-	private float getAtmosphereGlowAlpha(CelestialBody body) {
-		if(body == null) {
-			return 0.0F;
-		}
-
-		if(body.gas != null) {
-			return 0.35F;
-		}
-
-		CBT_Atmosphere atmosphere = body.getTrait(CBT_Atmosphere.class);
-		if(atmosphere != null) {
-			float pressure = MathHelper.clamp_float((float) atmosphere.getPressure(), 0.0F, 3.0F);
-			if(pressure <= 0.02F) {
-				return 0.0F;
-			}
-			return MathHelper.clamp_float(0.08F + pressure * 0.16F, 0.08F, 0.5F);
-		}
-
-		return 0.0F;
-	}
-
-	private Vec3 getBodyAtmosphereColor(CelestialBody body) {
-		if(body == null) {
-			return Vec3.createVectorHelper(1.0D, 1.0D, 1.0D);
-		}
-
-		if(body.gas != null) {
-			return WorldProviderCelestial.getAtmosphereFluidColor(body.gas);
-		}
-
-		CBT_Atmosphere atmosphere = body.getTrait(CBT_Atmosphere.class);
-		if(atmosphere != null && !atmosphere.fluids.isEmpty()) {
-			double totalPressure = 0.0D;
-			double r = 0.0D;
-			double g = 0.0D;
-			double b = 0.0D;
-
-			for(FluidEntry entry : atmosphere.fluids) {
-				if(entry == null || entry.fluid == null || entry.pressure <= 0.0D) {
-					continue;
-				}
-
-				Vec3 fluidColor = WorldProviderCelestial.getAtmosphereFluidColor(entry.fluid);
-				r += fluidColor.xCoord * entry.pressure;
-				g += fluidColor.yCoord * entry.pressure;
-				b += fluidColor.zCoord * entry.pressure;
-				totalPressure += entry.pressure;
-			}
-
-			if(totalPressure > 0.0D) {
-				return Vec3.createVectorHelper(
-					MathHelper.clamp_double(r / totalPressure, 0.0D, 1.0D),
-					MathHelper.clamp_double(g / totalPressure, 0.0D, 1.0D),
-					MathHelper.clamp_double(b / totalPressure, 0.0D, 1.0D)
-				);
-			}
-		}
-
-		return Vec3.createVectorHelper(1.0D, 1.0D, 1.0D);
 	}
 
 	protected void renderRings(float partialTicks, WorldClient world, Minecraft mc, float ringTilt, float[] ringColor, float ringSize, float visibility) {
