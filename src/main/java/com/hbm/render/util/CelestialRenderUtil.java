@@ -109,9 +109,10 @@ public final class CelestialRenderUtil {
 		float g = MathHelper.clamp_float((float) atmo.yCoord * 1.15F, 0.0F, 1.0F);
 		float b = MathHelper.clamp_float((float) atmo.zCoord * 1.15F, 0.0F, 1.0F);
 
-		double innerSize = size * 0.98D;
-		double middleSize = size * 1.075D;
-		double outerSize = size * 1.15D * (1.0D + glowAlpha * 0.25D);
+		double radius = size * 0.5D;
+		double innerSize = radius * 0.98D;
+		double middleSize = radius * 1.075D;
+		double outerSize = radius * 1.15D * (1.0D + glowAlpha * 0.25D);
 
 		GL11.glEnable(GL11.GL_BLEND);
 		OpenGlHelper.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ZERO);
