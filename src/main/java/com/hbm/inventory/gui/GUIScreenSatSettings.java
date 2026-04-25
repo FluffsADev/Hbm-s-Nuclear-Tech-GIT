@@ -809,8 +809,18 @@ public class GUIScreenSatSettings extends GuiScreen {
 		float atmosphereDensity = CelestialRenderUtil.getAtmosphereDensity(body);
 		net.minecraft.util.Vec3 atmosphereColor = CelestialRenderUtil.getBodyAtmosphereColor(body);
 		net.minecraft.util.Vec3 cloudColor = CelestialRenderUtil.getBodyCloudColor(body);
+		float cloudTintStrength = CelestialRenderUtil.getBodyCloudTintStrength(body);
+		float weatherPartialTicks = (float) (dayTicks - Math.floor(dayTicks));
+		float cloudStormDarkness = CelestialRenderUtil.getBodyCloudStormDarkness(body, weatherPartialTicks);
 		int atmosphereStyle = CelestialRenderUtil.getAtmosphereStyle(body);
 		float atmosphereTime = (float) (dayTicks / 20.0D);
+		float atmospherePatternOffset = textureUOffset;
+		if(!rotateBody && body != null) {
+			double period = body.getRotationalPeriod();
+			if(period > 0D && !Double.isNaN(period) && !Double.isInfinite(period)) {
+				atmospherePatternOffset = (float) (dayTicks / period);
+			}
+		}
 
 		if(atmosphereAlpha > 0.001F) {
 			GL11.glEnable(GL11.GL_BLEND);
@@ -819,6 +829,7 @@ public class GUIScreenSatSettings extends GuiScreen {
 
 			atmosphereShader.use();
 			atmosphereShader.setUniform1f("offset", textureUOffset);
+			atmosphereShader.setUniform1f("patternOffset", atmospherePatternOffset);
 			atmosphereShader.setUniform1i("bodyTex", 0);
 			atmosphereShader.setUniform1i("useBodyAlphaMask", 1);
 			atmosphereShader.setUniform1f("atmosphereColorR", (float) atmosphereColor.xCoord);
@@ -827,6 +838,8 @@ public class GUIScreenSatSettings extends GuiScreen {
 			atmosphereShader.setUniform1f("cloudColorR", (float) cloudColor.xCoord);
 			atmosphereShader.setUniform1f("cloudColorG", (float) cloudColor.yCoord);
 			atmosphereShader.setUniform1f("cloudColorB", (float) cloudColor.zCoord);
+			atmosphereShader.setUniform1f("cloudTintStrength", cloudTintStrength);
+			atmosphereShader.setUniform1f("cloudStormDarkness", cloudStormDarkness);
 			atmosphereShader.setUniform1f("atmosphereAlpha", atmosphereAlpha);
 			atmosphereShader.setUniform1f("atmosphereTime", atmosphereTime);
 			atmosphereShader.setUniform1i("atmosphereStyle", atmosphereStyle);

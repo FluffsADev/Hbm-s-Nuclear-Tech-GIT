@@ -613,13 +613,9 @@ public abstract class WorldProviderCelestial extends WorldProviderSurface {
 		return getTintedCloudColor(atmosphere, clouds);
 	}
 
-	public static Vec3 getTintedCloudColor(CBT_Atmosphere atmosphere, Vec3 clouds) {
-		if(clouds == null) {
-			clouds = Vec3.createVectorHelper(1.0D, 1.0D, 1.0D);
-		}
-
+	private static double[] getCloudTintData(CBT_Atmosphere atmosphere) {
 		if(atmosphere == null || atmosphere.fluids.isEmpty()) {
-			return clouds;
+			return null;
 		}
 
 		double totalPressure = 0.0D;
@@ -648,7 +644,7 @@ public abstract class WorldProviderCelestial extends WorldProviderSurface {
 		}
 
 		if(totalPressure <= 0.0D || tintPressure <= 0.0D) {
-			return clouds;
+			return null;
 		}
 
 		tintR /= tintPressure;
@@ -657,15 +653,39 @@ public abstract class WorldProviderCelestial extends WorldProviderSurface {
 
 		double tintPeak = Math.max(tintR, Math.max(tintG, tintB));
 		if(tintPeak <= 0.0D) {
+			return null;
+		}
+
+		double tintStrength = MathHelper.clamp_double(tintPressure / totalPressure, 0.0D, 0.65D);
+		return new double[] {
+			tintStrength,
+			MathHelper.clamp_double(tintR / tintPeak, 0.0D, 1.0D),
+			MathHelper.clamp_double(tintG / tintPeak, 0.0D, 1.0D),
+			MathHelper.clamp_double(tintB / tintPeak, 0.0D, 1.0D)
+		};
+	}
+
+	public static float getCloudTintStrength(CBT_Atmosphere atmosphere) {
+		double[] tintData = getCloudTintData(atmosphere);
+		return tintData != null ? (float) tintData[0] : 0.0F;
+	}
+
+	public static Vec3 getTintedCloudColor(CBT_Atmosphere atmosphere, Vec3 clouds) {
+		if(clouds == null) {
+			clouds = Vec3.createVectorHelper(1.0D, 1.0D, 1.0D);
+		}
+
+		double[] tintData = getCloudTintData(atmosphere);
+		if(tintData == null) {
 			return clouds;
 		}
 
 		double cloudLuma = clouds.xCoord * 0.299D + clouds.yCoord * 0.587D + clouds.zCoord * 0.114D;
 		double cloudBrightness = MathHelper.clamp_double(cloudLuma * 0.9D, 0.0D, 1.0D);
-		double tintStrength = MathHelper.clamp_double(tintPressure / totalPressure, 0.0D, 0.65D);
-		double cloudColorR = MathHelper.clamp_double((tintR / tintPeak) * cloudBrightness, 0.0D, 1.0D);
-		double cloudColorG = MathHelper.clamp_double((tintG / tintPeak) * cloudBrightness, 0.0D, 1.0D);
-		double cloudColorB = MathHelper.clamp_double((tintB / tintPeak) * cloudBrightness, 0.0D, 1.0D);
+		double tintStrength = tintData[0];
+		double cloudColorR = MathHelper.clamp_double(tintData[1] * cloudBrightness, 0.0D, 1.0D);
+		double cloudColorG = MathHelper.clamp_double(tintData[2] * cloudBrightness, 0.0D, 1.0D);
+		double cloudColorB = MathHelper.clamp_double(tintData[3] * cloudBrightness, 0.0D, 1.0D);
 
 		return Vec3.createVectorHelper(
 			MathHelper.clamp_double(clouds.xCoord + (cloudColorR - clouds.xCoord) * tintStrength, 0.0D, 1.0D),

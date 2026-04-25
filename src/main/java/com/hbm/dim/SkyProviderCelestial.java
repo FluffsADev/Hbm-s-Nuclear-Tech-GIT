@@ -859,6 +859,7 @@ public class SkyProviderCelestial extends IRenderHandler {
 			boolean orbitingThis = metric.body == orbiting;
 
 			double uvOffset = orbitingThis ? 1 - ((((double) world.getWorldTime() + partialTicks) / 1024) % 1) : 0;
+			double atmospherePatternOffset = orbitingThis ? -(((double) world.getWorldTime() + partialTicks) / 1024.0D) : 0.0D;
 			float axialTilt = orbitingThis ? 0 : metric.body.axialTilt;
 
 			GL11.glPushMatrix();
@@ -1027,12 +1028,14 @@ public class SkyProviderCelestial extends IRenderHandler {
 
 						Vec3 atmosphereColor = CelestialRenderUtil.getBodyAtmosphereColor(metric.body);
 						Vec3 cloudColor = CelestialRenderUtil.getBodyCloudColor(metric.body);
+						float cloudTintStrength = CelestialRenderUtil.getBodyCloudTintStrength(metric.body);
+						float cloudStormDarkness = CelestialRenderUtil.getBodyCloudStormDarkness(metric.body, partialTicks);
 						float atmosphereOverlayAlpha = CelestialRenderUtil.getAtmosphereSurfaceAlpha(metric.body) * visibility;
 						float atmosphereDensity = CelestialRenderUtil.getAtmosphereDensity(metric.body);
 						int atmosphereStyle = CelestialRenderUtil.getAtmosphereStyle(metric.body);
 
 						float atmosphereTime = ((float) world.getTotalWorldTime() + partialTicks) / 20.0F;
-						renderAtmosphereSurface(tessellator, atmosphereColor, cloudColor, atmosphereOverlayAlpha, uvOffset, size, atmosphereTime, atmosphereStyle);
+						renderAtmosphereSurface(tessellator, atmosphereColor, cloudColor, cloudTintStrength, cloudStormDarkness, atmosphereOverlayAlpha, uvOffset, atmospherePatternOffset, size, atmosphereTime, atmosphereStyle);
 						renderCrescentShadow(tessellator, (float) -metric.phase, uvOffset, size);
 						renderNightLights(tessellator, mc, metric.body, (float) -metric.phase, uvOffset, size, lightIntensity, activeBlackouts, atmosphereDensity);
 
@@ -1163,7 +1166,7 @@ public class SkyProviderCelestial extends IRenderHandler {
 		tessellator.draw();
 	}
 
-	private void renderAtmosphereSurface(Tessellator tessellator, Vec3 atmosphereColor, Vec3 cloudColor, float atmosphereAlpha, double uvOffset, double size, float atmosphereTime, int atmosphereStyle) {
+	private void renderAtmosphereSurface(Tessellator tessellator, Vec3 atmosphereColor, Vec3 cloudColor, float cloudTintStrength, float cloudStormDarkness, float atmosphereAlpha, double uvOffset, double patternOffset, double size, float atmosphereTime, int atmosphereStyle) {
 		if(atmosphereAlpha <= 0.001F) {
 			return;
 		}
@@ -1174,6 +1177,7 @@ public class SkyProviderCelestial extends IRenderHandler {
 
 		atmosphereShader.use();
 		atmosphereShader.setUniform1f("offset", (float) uvOffset);
+		atmosphereShader.setUniform1f("patternOffset", (float) patternOffset);
 		atmosphereShader.setUniform1i("bodyTex", 0);
 		atmosphereShader.setUniform1i("useBodyAlphaMask", 0);
 		atmosphereShader.setUniform1f("atmosphereColorR", (float) atmosphereColor.xCoord);
@@ -1182,6 +1186,8 @@ public class SkyProviderCelestial extends IRenderHandler {
 		atmosphereShader.setUniform1f("cloudColorR", (float) cloudColor.xCoord);
 		atmosphereShader.setUniform1f("cloudColorG", (float) cloudColor.yCoord);
 		atmosphereShader.setUniform1f("cloudColorB", (float) cloudColor.zCoord);
+		atmosphereShader.setUniform1f("cloudTintStrength", cloudTintStrength);
+		atmosphereShader.setUniform1f("cloudStormDarkness", cloudStormDarkness);
 		atmosphereShader.setUniform1f("atmosphereAlpha", atmosphereAlpha);
 		atmosphereShader.setUniform1f("atmosphereTime", atmosphereTime);
 		atmosphereShader.setUniform1i("atmosphereStyle", atmosphereStyle);

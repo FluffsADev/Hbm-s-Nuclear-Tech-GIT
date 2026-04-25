@@ -7,10 +7,12 @@ import com.hbm.dim.trait.CBT_Atmosphere.FluidEntry;
 
 import org.lwjgl.opengl.GL11;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.util.MathHelper;
 import net.minecraft.util.Vec3;
+import net.minecraft.world.World;
 
 public class CelestialRenderUtil {
 
@@ -154,6 +156,46 @@ public class CelestialRenderUtil {
 
 		CBT_Atmosphere atmosphere = body.getTrait(CBT_Atmosphere.class);
 		return WorldProviderCelestial.getTintedCloudColor(atmosphere, baseClouds);
+	}
+
+	public static float getBodyCloudTintStrength(CelestialBody body) {
+		if(body == null) {
+			return 0.0F;
+		}
+
+		if(body.gas != null) {
+			return 1.0F;
+		}
+
+		CBT_Atmosphere atmosphere = body.getTrait(CBT_Atmosphere.class);
+		return WorldProviderCelestial.getCloudTintStrength(atmosphere);
+	}
+
+	public static float getBodyCloudStormDarkness(CelestialBody body, float partialTicks) {
+		if(body == null) {
+			return 0.0F;
+		}
+
+		Minecraft mc = Minecraft.getMinecraft();
+		World world = mc != null ? mc.theWorld : null;
+		if(world == null || world.provider == null || world.provider.dimensionId != body.dimensionId) {
+			return 0.0F;
+		}
+
+		if(!(world.provider instanceof WorldProviderCelestial)) {
+			return 0.0F;
+		}
+
+		WorldProviderCelestial provider = (WorldProviderCelestial) world.provider;
+		if(!provider.hasWeatherCycle()) {
+			return 0.0F;
+		}
+
+		float rainStrength = world.getRainStrength(partialTicks);
+		float thunderStrength = world.prevThunderingStrength + (world.thunderingStrength - world.prevThunderingStrength) * partialTicks;
+		thunderStrength = MathHelper.clamp_float(thunderStrength, 0.0F, 1.0F);
+
+		return MathHelper.clamp_float(rainStrength * 0.22F + thunderStrength * 0.28F, 0.0F, 0.5F);
 	}
 
 	public static void renderAtmosphereGlow2D(Tessellator tessellator, CelestialBody body, double centerX, double centerY, double size, float visibility) {

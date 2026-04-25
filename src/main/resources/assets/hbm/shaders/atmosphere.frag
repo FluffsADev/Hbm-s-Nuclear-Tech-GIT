@@ -10,8 +10,11 @@ uniform float atmosphereColorB;
 uniform float cloudColorR;
 uniform float cloudColorG;
 uniform float cloudColorB;
+uniform float cloudTintStrength;
+uniform float cloudStormDarkness;
 uniform float atmosphereAlpha;
 uniform float atmosphereTime;
+uniform float patternOffset;
 uniform int atmosphereStyle;
 
 const float PIXEL_GRID = 16.0;
@@ -48,6 +51,7 @@ float fbm(vec2 p) {
 void main() {
 	vec2 movingUV = gl_TexCoord[0].xy + vec2(offset, 0);
 	vec2 wrappedUV = fract(movingUV);
+	vec2 patternUV = gl_TexCoord[0].xy + vec2(patternOffset, 0.0);
 
 	float alphaMask = 1.0;
 	if (useBodyAlphaMask != 0) {
@@ -61,7 +65,9 @@ void main() {
 	float density = clamp(atmosphereAlpha, 0.0, 1.0);
 	vec3 baseColor = vec3(atmosphereColorR, atmosphereColorG, atmosphereColorB);
 	vec3 cloudTint = vec3(cloudColorR, cloudColorG, cloudColorB);
-	vec2 texelCoord = floor(wrappedUV * PIXEL_GRID);
+	float tintStrength = clamp(cloudTintStrength, 0.0, 1.0);
+	float stormDarkness = clamp(cloudStormDarkness, 0.0, 1.0);
+	vec2 texelCoord = floor(patternUV * PIXEL_GRID);
 	vec2 uv = (texelCoord + 0.5) / PIXEL_GRID;
 	vec2 texelFlow = vec2(atmosphereTime * 0.18, -atmosphereTime * 0.11);
 	vec2 flowDrift = texelFlow / PIXEL_GRID;
@@ -110,6 +116,8 @@ void main() {
 
 		vec3 shadowColor = baseColor * mix(0.72, 0.55, density);
 		vec3 cloudColor = min(cloudTint * (1.18 + density * 0.18) + vec3(0.04 + density * 0.04), vec3(1.0));
+		cloudColor *= mix(1.0, 0.82, tintStrength);
+		cloudColor *= (1.0 - stormDarkness);
 		vec3 airColor = mix(shadowColor, baseColor, 0.35 + turbulence * 0.3);
 		layeredColor = mix(airColor, cloudColor, cloudMask * (0.92 + density * 0.28));
 		layeredColor = mix(layeredColor, cloudColor, jetMask * (0.42 + density * 0.2));
