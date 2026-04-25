@@ -13,8 +13,9 @@ import com.hbm.dim.orbit.OrbitalStation;
 import com.hbm.dim.orbit.WorldProviderOrbit;
 import com.hbm.dim.trait.CBT_Atmosphere;
 import com.hbm.dim.trait.CBT_Atmosphere.FluidEntry;
-import com.hbm.dim.trait.CBT_War;
 import com.hbm.dim.trait.CBT_Destroyed;
+import com.hbm.dim.trait.CBT_War;
+import com.hbm.dim.trait.CBT_Water;
 import com.hbm.handler.ImpactWorldHandler;
 import com.hbm.handler.atmosphere.ChunkAtmosphereManager;
 import com.hbm.inventory.FluidStack;
@@ -96,7 +97,6 @@ public abstract class WorldProviderCelestial extends WorldProviderSurface {
 	@Override
 	public void updateWeather() {
 		CBT_Atmosphere atmosphere = CelestialBody.getTrait(worldObj, CBT_Atmosphere.class);
-
 		double pressure = atmosphere != null ? atmosphere.getPressure() : 0;
 
 		// Will prevent water from existing, will be unset immediately before using a bucket if inside a pressurized room
@@ -112,7 +112,7 @@ public abstract class WorldProviderCelestial extends WorldProviderSurface {
 			}
 		}
 
-		if(pressure > 0.5F) {
+		if(hasWeatherCycle()) {
 			super.updateWeather();
 			return;
 		}
@@ -658,16 +658,39 @@ public abstract class WorldProviderCelestial extends WorldProviderSurface {
 		);
 	}
 
+	public boolean hasWeatherCycle() {
+		CBT_Atmosphere atmosphere = CelestialBody.getTrait(worldObj, CBT_Atmosphere.class);
+		CBT_Water water = CelestialBody.getTrait(worldObj, CBT_Water.class);
+		return atmosphere != null && atmosphere.getPressure() > 0.5D && water != null && water.fluid != null;
+	}
+
+	@SideOnly(Side.CLIENT)
+	public Vec3 getWeatherColor() {
+		CBT_Water water = CelestialBody.getTrait(worldObj, CBT_Water.class);
+		if(water == null || water.fluid == null) {
+			return Vec3.createVectorHelper(1.0D, 1.0D, 1.0D);
+		}
+
+		return getColorFromHex(water.fluid.getColor());
+	}
+
 	@Override
 	public boolean canDoLightning(Chunk chunk) {
-		CBT_Atmosphere atmosphere = CelestialBody.getTrait(worldObj, CBT_Atmosphere.class);
-		return atmosphere != null && atmosphere.getPressure() > 0.5;
+		return hasWeatherCycle();
 	}
 
 	@Override
 	public boolean canDoRainSnowIce(Chunk chunk) {
-		CBT_Atmosphere atmosphere = CelestialBody.getTrait(worldObj, CBT_Atmosphere.class);
-		return atmosphere != null && atmosphere.getPressure() > 0.5;
+		return hasWeatherCycle();
+	}
+
+	private IRenderHandler weatherProvider;
+
+	@Override
+	@SideOnly(Side.CLIENT)
+	public IRenderHandler getWeatherRenderer() {
+		if(weatherProvider == null) weatherProvider = new WeatherProviderCelestial();
+		return weatherProvider;
 	}
 
 	// Stars do not show up during the day in a vacuum, common misconception:
