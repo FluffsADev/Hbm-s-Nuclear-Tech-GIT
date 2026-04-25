@@ -26,7 +26,15 @@ public class CelestialRenderUtil {
 	public static final int ATMOSPHERE_STYLE_HAZE = 2;
 	public static final int ATMOSPHERE_STYLE_GAS_BANDS = 3;
 
+	private static float clientGlobalRainStrength;
+	private static float clientGlobalThunderStrength;
+
 	private CelestialRenderUtil() { }
+
+	public static void setClientGlobalWeather(float rainStrength, float thunderStrength) {
+		clientGlobalRainStrength = MathHelper.clamp_float(rainStrength, 0.0F, 1.0F);
+		clientGlobalThunderStrength = MathHelper.clamp_float(thunderStrength, 0.0F, 1.0F);
+	}
 
 	public static float getAtmosphereGlowAlpha(CelestialBody body) {
 		if(body == null) {
@@ -209,6 +217,9 @@ public class CelestialRenderUtil {
 				thunderStrength = Math.max(thunderStrength, 1.0F);
 			}
 		}
+
+		rainStrength = Math.max(rainStrength, clientGlobalRainStrength);
+		thunderStrength = Math.max(thunderStrength, clientGlobalThunderStrength);
 
 		rainStrength = MathHelper.clamp_float(rainStrength, 0.0F, 1.0F);
 		thunderStrength = MathHelper.clamp_float(thunderStrength, 0.0F, 1.0F);

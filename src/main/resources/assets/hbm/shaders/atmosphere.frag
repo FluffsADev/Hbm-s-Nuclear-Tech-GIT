@@ -108,21 +108,24 @@ void main() {
 
 		float cloudField = fbm(cloudUv);
 		float wisps = fbm(cloudUv * 1.3 + vec2(-atmosphereTime * 0.01, atmosphereTime * 0.007) + vec2(cloudField, largeSwirl));
-		float cloudMask = smoothstep(0.44, 0.72, mix(cloudField, wisps, 0.32));
+		float cloudPattern = mix(cloudField, wisps, 0.32);
+		float cloudMask = smoothstep(0.38, 0.64, cloudPattern);
+		float cloudCoverage = smoothstep(0.28, 0.56, cloudPattern + 0.08);
 		float jet = 0.5 + 0.5 * sin((texelCoord.y + largeSwirl * 1.35) * 1.05 + atmosphereTime * 0.45);
-		float jetMask = smoothstep(0.7, 0.96, jet) * smoothstep(0.42, 0.84, wisps);
+		float jetMask = smoothstep(0.62, 0.9, jet) * smoothstep(0.34, 0.74, wisps);
 		float turbulence = noise((texelCoord + vec2(atmosphereTime * 0.16, -atmosphereTime * 0.12)) / 2.75);
-		float cloudPresence = max(cloudMask, jetMask * 0.75);
+		float cloudPresence = max(max(cloudMask, cloudCoverage * 0.9), jetMask * 0.82);
 
 		vec3 shadowColor = baseColor * mix(0.72, 0.55, density);
 		vec3 cloudColor = min(cloudTint * (1.18 + density * 0.18) + vec3(0.04 + density * 0.04), vec3(1.0));
 		cloudColor *= mix(1.0, 0.82, tintStrength);
-		cloudColor *= (1.0 - stormDarkness);
+		cloudColor *= max(0.3, 1.0 - stormDarkness * 1.25);
 		vec3 airColor = mix(shadowColor, baseColor, 0.35 + turbulence * 0.3);
-		layeredColor = mix(airColor, cloudColor, cloudMask * (0.92 + density * 0.28));
-		layeredColor = mix(layeredColor, cloudColor, jetMask * (0.42 + density * 0.2));
-		alphaBoost = 0.96 + cloudPresence * 0.58;
-		overlayAlpha = max(atmosphereAlpha * alphaBoost, cloudPresence * (0.42 + density * 0.95));
+		layeredColor = mix(airColor, cloudColor, cloudMask * (0.96 + density * 0.3));
+		layeredColor = mix(layeredColor, cloudColor, cloudCoverage * (0.48 + density * 0.2));
+		layeredColor = mix(layeredColor, cloudColor, jetMask * (0.5 + density * 0.24));
+		alphaBoost = 0.98 + cloudPresence * 0.64;
+		overlayAlpha = max(atmosphereAlpha * alphaBoost, cloudPresence * (0.56 + density * 1.0));
 	} else {
 		float shimmer = noise(uv * 8.0 + vec2(atmosphereTime * 0.015, -atmosphereTime * 0.011));
 		vec3 tintLow = baseColor * 0.82;
