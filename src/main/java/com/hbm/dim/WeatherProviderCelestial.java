@@ -3,6 +3,7 @@ package com.hbm.dim;
 import java.util.Random;
 
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL13;
 
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
@@ -65,6 +66,7 @@ public class WeatherProviderCelestial extends IRenderHandler {
 		OpenGlHelper.glBlendFunc(770, 771, 1, 0);
 		GL11.glAlphaFunc(GL11.GL_GREATER, 0.1F);
 		GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+		enableTextureAlphaTint();
 
 		int layer = -1;
 
@@ -170,7 +172,24 @@ public class WeatherProviderCelestial extends IRenderHandler {
 		GL11.glDisable(GL11.GL_BLEND);
 		GL11.glAlphaFunc(GL11.GL_GREATER, 0.1F);
 		GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+		disableTextureAlphaTint();
 		mc.entityRenderer.disableLightmap(partialTicks);
+	}
+
+	private void enableTextureAlphaTint() {
+		GL11.glTexEnvi(GL11.GL_TEXTURE_ENV, GL11.GL_TEXTURE_ENV_MODE, GL13.GL_COMBINE);
+		GL11.glTexEnvi(GL11.GL_TEXTURE_ENV, GL13.GL_COMBINE_RGB, GL11.GL_REPLACE);
+		GL11.glTexEnvi(GL11.GL_TEXTURE_ENV, GL13.GL_SOURCE0_RGB, GL13.GL_PRIMARY_COLOR);
+		GL11.glTexEnvi(GL11.GL_TEXTURE_ENV, GL13.GL_OPERAND0_RGB, GL11.GL_SRC_COLOR);
+		GL11.glTexEnvi(GL11.GL_TEXTURE_ENV, GL13.GL_COMBINE_ALPHA, GL11.GL_MODULATE);
+		GL11.glTexEnvi(GL11.GL_TEXTURE_ENV, GL13.GL_SOURCE0_ALPHA, GL11.GL_TEXTURE);
+		GL11.glTexEnvi(GL11.GL_TEXTURE_ENV, GL13.GL_OPERAND0_ALPHA, GL11.GL_SRC_ALPHA);
+		GL11.glTexEnvi(GL11.GL_TEXTURE_ENV, GL13.GL_SOURCE1_ALPHA, GL13.GL_PRIMARY_COLOR);
+		GL11.glTexEnvi(GL11.GL_TEXTURE_ENV, GL13.GL_OPERAND1_ALPHA, GL11.GL_SRC_ALPHA);
+	}
+
+	private void disableTextureAlphaTint() {
+		GL11.glTexEnvi(GL11.GL_TEXTURE_ENV, GL11.GL_TEXTURE_ENV_MODE, GL11.GL_MODULATE);
 	}
 
 	private void initRainCoords() {

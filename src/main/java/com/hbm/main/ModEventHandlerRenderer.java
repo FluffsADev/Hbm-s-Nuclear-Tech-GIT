@@ -75,6 +75,8 @@ public class ModEventHandlerRenderer {
 	private static ModelMan manlyModel;
 	private static boolean[] partsHidden = new boolean[7];
 	private static final String[] FX_LAYER_FIELDS = new String[] { "fxLayers", "field_78876_b" };
+	private static final int WEATHER_DROP_TEXTURE_START = 112;
+	private static final int WEATHER_DROP_TEXTURE_VARIANTS = 3;
 
 	@SubscribeEvent
 	public void onRenderTickPre(TickEvent.RenderTickEvent event) {
@@ -111,21 +113,23 @@ public class ModEventHandlerRenderer {
 				return;
 			}
 
-			for(List layer : fxLayers) {
-				if(layer == null || layer.isEmpty()) {
-					continue;
-				}
+				for(List layer : fxLayers) {
+					if(layer == null || layer.isEmpty()) {
+						continue;
+					}
 
-				for(int i = 0; i < layer.size(); i++) {
-					Object particle = layer.get(i);
-					if(particle instanceof EntityRainFX) {
-						((EntityRainFX)particle).setRBGColorF((float)weatherColor.xCoord, (float)weatherColor.yCoord, (float)weatherColor.zCoord);
+					for(int i = 0; i < layer.size(); i++) {
+						Object particle = layer.get(i);
+						if(particle instanceof EntityRainFX) {
+							EntityRainFX rainParticle = (EntityRainFX)particle;
+							rainParticle.setParticleTextureIndex(WEATHER_DROP_TEXTURE_START + Math.abs(rainParticle.getEntityId()) % WEATHER_DROP_TEXTURE_VARIANTS);
+							rainParticle.setRBGColorF((float)weatherColor.xCoord, (float)weatherColor.yCoord, (float)weatherColor.zCoord);
+						}
 					}
 				}
+			} catch(Exception ignored) {
 			}
-		} catch(Exception ignored) {
 		}
-	}
 
 	@SubscribeEvent(priority = EventPriority.LOWEST, receiveCanceled = true)
 	public void onRenderPlayerPre(RenderPlayerEvent.Pre event) {
