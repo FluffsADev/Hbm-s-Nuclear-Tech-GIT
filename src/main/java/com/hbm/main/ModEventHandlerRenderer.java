@@ -34,6 +34,7 @@ import net.minecraft.block.material.Material;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.AbstractClientPlayer;
 import net.minecraft.client.particle.EffectRenderer;
+import net.minecraft.client.particle.EntityDropParticleFX;
 import net.minecraft.client.particle.EntityRainFX;
 import net.minecraft.client.model.ModelBiped;
 import net.minecraft.client.gui.GuiIngame;
@@ -75,8 +76,7 @@ public class ModEventHandlerRenderer {
 	private static ModelMan manlyModel;
 	private static boolean[] partsHidden = new boolean[7];
 	private static final String[] FX_LAYER_FIELDS = new String[] { "fxLayers", "field_78876_b" };
-	private static final int WEATHER_DROP_TEXTURE_START = 112;
-	private static final int WEATHER_DROP_TEXTURE_VARIANTS = 3;
+	private static final String[] DROP_PARTICLE_MATERIAL_FIELDS = new String[] { "materialType", "field_70563_a" };
 
 	@SubscribeEvent
 	public void onRenderTickPre(TickEvent.RenderTickEvent event) {
@@ -107,29 +107,52 @@ public class ModEventHandlerRenderer {
 
 		Vec3 weatherColor = provider.getWeatherColor();
 
-		try {
-			List[] fxLayers = ReflectionHelper.getPrivateValue(EffectRenderer.class, mc.effectRenderer, FX_LAYER_FIELDS);
-			if(fxLayers == null) {
-				return;
+		List[] fxLayers = ReflectionHelper.getPrivateValue(EffectRenderer.class, mc.effectRenderer, FX_LAYER_FIELDS);
+		if(fxLayers == null) {
+			return;
+		}
+
+		for(List layer : fxLayers) {
+			if(layer == null || layer.isEmpty()) {
+				continue;
 			}
 
-				for(List layer : fxLayers) {
-					if(layer == null || layer.isEmpty()) {
-						continue;
-					}
-
-					for(int i = 0; i < layer.size(); i++) {
-						Object particle = layer.get(i);
-						if(particle instanceof EntityRainFX) {
-							EntityRainFX rainParticle = (EntityRainFX)particle;
-							rainParticle.setParticleTextureIndex(WEATHER_DROP_TEXTURE_START + Math.abs(rainParticle.getEntityId()) % WEATHER_DROP_TEXTURE_VARIANTS);
-							rainParticle.setRBGColorF((float)weatherColor.xCoord, (float)weatherColor.yCoord, (float)weatherColor.zCoord);
-						}
-					}
+			for(int i = 0; i < layer.size(); i++) {
+				Object particle = layer.get(i);
+				if(particle instanceof EntityRainFX) {
+					EntityRainFX rainParticle = (EntityRainFX)particle;
+					rainParticle.setParticleTextureIndex(112 + Math.abs(rainParticle.getEntityId()) % 3);
+					rainParticle.setRBGColorF((float)weatherColor.xCoord, (float)weatherColor.yCoord, (float)weatherColor.zCoord);
+				} else if(shouldTintWaterDropParticle(particle)) {
+					((EntityDropParticleFX)particle).setRBGColorF((float)weatherColor.xCoord, (float)weatherColor.yCoord, (float)weatherColor.zCoord);
 				}
-			} catch(Exception ignored) {
 			}
 		}
+	}
+
+	private boolean shouldTintWaterDropParticle(Object particle) {
+		if(!(particle instanceof EntityDropParticleFX)) {
+			return false;
+		}
+
+		EntityDropParticleFX dropParticle = (EntityDropParticleFX)particle;
+		Material material = ReflectionHelper.getPrivateValue(EntityDropParticleFX.class, dropParticle, DROP_PARTICLE_MATERIAL_FIELDS);
+		return material == Material.water && !hasWaterSourceAbove(dropParticle);
+	}
+
+	private boolean hasWaterSourceAbove(EntityDropParticleFX dropParticle) {
+		World world = dropParticle.worldObj;
+		if(world == null) {
+			return false;
+		}
+
+		int particleX = MathHelper.floor_double(dropParticle.posX);
+		int particleY = MathHelper.floor_double(dropParticle.posY);
+		int particleZ = MathHelper.floor_double(dropParticle.posZ);
+
+		return World.doesBlockHaveSolidTopSurface(world, particleX, particleY + 1, particleZ)
+			&& world.getBlock(particleX, particleY + 2, particleZ).getMaterial() == Material.water;
+	}
 
 	@SubscribeEvent(priority = EventPriority.LOWEST, receiveCanceled = true)
 	public void onRenderPlayerPre(RenderPlayerEvent.Pre event) {
