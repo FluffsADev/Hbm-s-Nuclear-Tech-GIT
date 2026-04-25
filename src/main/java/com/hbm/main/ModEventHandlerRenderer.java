@@ -118,16 +118,16 @@ public class ModEventHandlerRenderer {
 				continue;
 			}
 
-			for(int i = 0; i < layer.size(); i++) {
-				Object particle = layer.get(i);
-				if(particle instanceof EntityRainFX) {
-					EntityRainFX rainParticle = (EntityRainFX)particle;
-					if(!(rainParticle instanceof EntitySplashFX)) {
-						rainParticle.setParticleTextureIndex(112 + Math.abs(rainParticle.getEntityId()) % 3);
-					}
-					rainParticle.setRBGColorF((float)weatherColor.xCoord, (float)weatherColor.yCoord, (float)weatherColor.zCoord);
-				} else if(shouldTintWaterDropParticle(particle)) {
-					((EntityDropParticleFX)particle).setRBGColorF((float)weatherColor.xCoord, (float)weatherColor.yCoord, (float)weatherColor.zCoord);
+				for(int i = 0; i < layer.size(); i++) {
+					Object particle = layer.get(i);
+					if(particle instanceof EntityRainFX) {
+						EntityRainFX rainParticle = (EntityRainFX)particle;
+						if(!(rainParticle instanceof EntitySplashFX)) {
+							rainParticle.setParticleTextureIndex(Math.abs(rainParticle.getEntityId()) % 3);
+						}
+						rainParticle.setRBGColorF((float)weatherColor.xCoord, (float)weatherColor.yCoord, (float)weatherColor.zCoord);
+					} else if(shouldTintWaterDropParticle(particle)) {
+						((EntityDropParticleFX)particle).setRBGColorF((float)weatherColor.xCoord, (float)weatherColor.yCoord, (float)weatherColor.zCoord);
 				}
 			}
 		}
