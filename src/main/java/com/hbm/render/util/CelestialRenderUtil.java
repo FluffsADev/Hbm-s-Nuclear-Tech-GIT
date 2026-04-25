@@ -14,6 +14,15 @@ import net.minecraft.util.Vec3;
 
 public final class CelestialRenderUtil {
 
+	private static final float OPAQUE_ATMOSPHERE_PRESSURE = 5.0F;
+	private static final float CLOUDY_ATMOSPHERE_PRESSURE = 0.5F;
+	private static final float DENSE_HAZE_PRESSURE = 3.0F;
+
+	public static final int ATMOSPHERE_STYLE_CLEAR = 0;
+	public static final int ATMOSPHERE_STYLE_CLOUDS = 1;
+	public static final int ATMOSPHERE_STYLE_HAZE = 2;
+	public static final int ATMOSPHERE_STYLE_GAS_BANDS = 3;
+
 	private CelestialRenderUtil() { }
 
 	public static float getAtmosphereGlowAlpha(CelestialBody body) {
@@ -38,16 +47,16 @@ public final class CelestialRenderUtil {
 	}
 
 	public static float getAtmosphereSurfaceAlpha(CelestialBody body) {
-		return MathHelper.clamp_float(getAtmosphereGlowAlpha(body) * 0.35F, 0.0F, 0.16F);
+		return getAtmosphereDensity(body);
 	}
 
-	public static float getAtmosphereDensity(CelestialBody body) {
+	public static float getAtmospherePressure(CelestialBody body) {
 		if(body == null) {
 			return 0.0F;
 		}
 
 		if(body.gas != null) {
-			return 1.0F;
+			return OPAQUE_ATMOSPHERE_PRESSURE;
 		}
 
 		CBT_Atmosphere atmosphere = body.getTrait(CBT_Atmosphere.class);
@@ -55,7 +64,31 @@ public final class CelestialRenderUtil {
 			return 0.0F;
 		}
 
-		return MathHelper.clamp_float((float) atmosphere.getPressure() / 2.5F, 0.0F, 1.0F);
+		return Math.max(0.0F, (float) atmosphere.getPressure());
+	}
+
+	public static float getAtmosphereDensity(CelestialBody body) {
+		return MathHelper.clamp_float(getAtmospherePressure(body) / OPAQUE_ATMOSPHERE_PRESSURE, 0.0F, 1.0F);
+	}
+
+	public static int getAtmosphereStyle(CelestialBody body) {
+		if(body == null) {
+			return ATMOSPHERE_STYLE_CLEAR;
+		}
+
+		if(body.gas != null) {
+			return ATMOSPHERE_STYLE_GAS_BANDS;
+		}
+
+		float pressure = getAtmospherePressure(body);
+		if(pressure > DENSE_HAZE_PRESSURE) {
+			return ATMOSPHERE_STYLE_HAZE;
+		}
+		if(pressure >= CLOUDY_ATMOSPHERE_PRESSURE) {
+			return ATMOSPHERE_STYLE_CLOUDS;
+		}
+
+		return ATMOSPHERE_STYLE_CLEAR;
 	}
 
 	public static Vec3 getBodyAtmosphereColor(CelestialBody body) {
@@ -96,6 +129,68 @@ public final class CelestialRenderUtil {
 		}
 
 		return Vec3.createVectorHelper(1.0D, 1.0D, 1.0D);
+	}
+
+	public static Vec3 getBodyCloudColor(CelestialBody body) {
+		if(body == null) {
+			return Vec3.createVectorHelper(1.0D, 1.0D, 1.0D);
+		}
+
+		if(body.gas != null) {
+			Vec3 gasColor = getBodyAtmosphereColor(body);
+			double gasPeak = Math.max(gasColor.xCoord, Math.max(gasColor.yCoord, gasColor.zCoord));
+			if(gasPeak <= 0.0D) {
+				return Vec3.createVectorHelper(1.0D, 1.0D, 1.0D);
+			}
+
+			return Vec3.createVectorHelper(
+				MathHelper.clamp_double(gasColor.xCoord / gasPeak, 0.0D, 1.0D),
+				MathHelper.clamp_double(gasColor.yCoord / gasPeak, 0.0D, 1.0D),
+				MathHelper.clamp_double(gasColor.zCoord / gasPeak, 0.0D, 1.0D)
+			);
+		}
+
+		CBT_Atmosphere atmosphere = body.getTrait(CBT_Atmosphere.class);
+		if(atmosphere == null || atmosphere.fluids.isEmpty()) {
+			return getBodyAtmosphereColor(body);
+		}
+
+		double totalPressure = 0.0D;
+		double tintR = 0.0D;
+		double tintG = 0.0D;
+		double tintB = 0.0D;
+
+		for(FluidEntry entry : atmosphere.fluids) {
+			if(entry == null || entry.fluid == null || entry.pressure <= 0.0D) {
+				continue;
+			}
+
+			Vec3 fluidColor = WorldProviderCelestial.getAtmosphereFluidColor(entry.fluid);
+			totalPressure += entry.pressure;
+			tintR += fluidColor.xCoord * entry.pressure;
+			tintG += fluidColor.yCoord * entry.pressure;
+			tintB += fluidColor.zCoord * entry.pressure;
+		}
+
+		if(totalPressure <= 0.0D) {
+			return getBodyAtmosphereColor(body);
+		}
+
+		tintR /= totalPressure;
+		tintG /= totalPressure;
+		tintB /= totalPressure;
+
+		double tintPeak = Math.max(tintR, Math.max(tintG, tintB));
+		if(tintPeak <= 0.0D) {
+			return getBodyAtmosphereColor(body);
+		}
+
+		double cloudBrightness = 0.85D;
+		return Vec3.createVectorHelper(
+			MathHelper.clamp_double((tintR / tintPeak) * cloudBrightness, 0.0D, 1.0D),
+			MathHelper.clamp_double((tintG / tintPeak) * cloudBrightness, 0.0D, 1.0D),
+			MathHelper.clamp_double((tintB / tintPeak) * cloudBrightness, 0.0D, 1.0D)
+		);
 	}
 
 	public static void renderAtmosphereGlow2D(Tessellator tessellator, CelestialBody body, double centerX, double centerY, double size, float visibility) {

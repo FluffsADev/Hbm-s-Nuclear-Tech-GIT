@@ -1026,10 +1026,13 @@ public class SkyProviderCelestial extends IRenderHandler {
 						int activeBlackouts = Math.min((int) (impactTime / blackoutInterval), maxBlackouts);
 
 						Vec3 atmosphereColor = CelestialRenderUtil.getBodyAtmosphereColor(metric.body);
+						Vec3 cloudColor = CelestialRenderUtil.getBodyCloudColor(metric.body);
 						float atmosphereOverlayAlpha = CelestialRenderUtil.getAtmosphereSurfaceAlpha(metric.body) * visibility;
 						float atmosphereDensity = CelestialRenderUtil.getAtmosphereDensity(metric.body);
+						int atmosphereStyle = CelestialRenderUtil.getAtmosphereStyle(metric.body);
 
-						renderAtmosphereSurface(tessellator, atmosphereColor, atmosphereOverlayAlpha, uvOffset, size);
+						float atmosphereTime = ((float) world.getTotalWorldTime() + partialTicks) / 20.0F;
+						renderAtmosphereSurface(tessellator, atmosphereColor, cloudColor, atmosphereOverlayAlpha, uvOffset, size, atmosphereTime, atmosphereStyle);
 						renderCrescentShadow(tessellator, (float) -metric.phase, uvOffset, size);
 						renderNightLights(tessellator, mc, metric.body, (float) -metric.phase, uvOffset, size, lightIntensity, activeBlackouts, atmosphereDensity);
 
@@ -1160,7 +1163,7 @@ public class SkyProviderCelestial extends IRenderHandler {
 		tessellator.draw();
 	}
 
-	private void renderAtmosphereSurface(Tessellator tessellator, Vec3 atmosphereColor, float atmosphereAlpha, double uvOffset, double size) {
+	private void renderAtmosphereSurface(Tessellator tessellator, Vec3 atmosphereColor, Vec3 cloudColor, float atmosphereAlpha, double uvOffset, double size, float atmosphereTime, int atmosphereStyle) {
 		if(atmosphereAlpha <= 0.001F) {
 			return;
 		}
@@ -1176,7 +1179,12 @@ public class SkyProviderCelestial extends IRenderHandler {
 		atmosphereShader.setUniform1f("atmosphereColorR", (float) atmosphereColor.xCoord);
 		atmosphereShader.setUniform1f("atmosphereColorG", (float) atmosphereColor.yCoord);
 		atmosphereShader.setUniform1f("atmosphereColorB", (float) atmosphereColor.zCoord);
+		atmosphereShader.setUniform1f("cloudColorR", (float) cloudColor.xCoord);
+		atmosphereShader.setUniform1f("cloudColorG", (float) cloudColor.yCoord);
+		atmosphereShader.setUniform1f("cloudColorB", (float) cloudColor.zCoord);
 		atmosphereShader.setUniform1f("atmosphereAlpha", atmosphereAlpha);
+		atmosphereShader.setUniform1f("atmosphereTime", atmosphereTime);
+		atmosphereShader.setUniform1i("atmosphereStyle", atmosphereStyle);
 		drawPlanetShaderQuad(tessellator, size);
 		atmosphereShader.stop();
 	}

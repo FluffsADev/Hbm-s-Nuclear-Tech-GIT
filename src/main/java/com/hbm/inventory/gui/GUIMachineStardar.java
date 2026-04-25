@@ -1028,6 +1028,9 @@ public class GUIMachineStardar extends GuiInfoContainer {
 		float atmosphereAlpha = CelestialRenderUtil.getAtmosphereSurfaceAlpha(body);
 		float atmosphereDensity = CelestialRenderUtil.getAtmosphereDensity(body);
 		net.minecraft.util.Vec3 atmosphereColor = CelestialRenderUtil.getBodyAtmosphereColor(body);
+		net.minecraft.util.Vec3 cloudColor = CelestialRenderUtil.getBodyCloudColor(body);
+		int atmosphereStyle = CelestialRenderUtil.getAtmosphereStyle(body);
+		float atmosphereTime = (float) (dayTicks / 20.0D);
 
 		if(atmosphereAlpha > 0.001F) {
 			GL11.glEnable(GL11.GL_BLEND);
@@ -1041,7 +1044,12 @@ public class GUIMachineStardar extends GuiInfoContainer {
 			atmosphereShader.setUniform1f("atmosphereColorR", (float) atmosphereColor.xCoord);
 			atmosphereShader.setUniform1f("atmosphereColorG", (float) atmosphereColor.yCoord);
 			atmosphereShader.setUniform1f("atmosphereColorB", (float) atmosphereColor.zCoord);
+			atmosphereShader.setUniform1f("cloudColorR", (float) cloudColor.xCoord);
+			atmosphereShader.setUniform1f("cloudColorG", (float) cloudColor.yCoord);
+			atmosphereShader.setUniform1f("cloudColorB", (float) cloudColor.zCoord);
 			atmosphereShader.setUniform1f("atmosphereAlpha", atmosphereAlpha);
+			atmosphereShader.setUniform1f("atmosphereTime", atmosphereTime);
+			atmosphereShader.setUniform1i("atmosphereStyle", atmosphereStyle);
 
 			GL13.glActiveTexture(GL13.GL_TEXTURE0);
 			mc.getTextureManager().bindTexture(body.texture);
