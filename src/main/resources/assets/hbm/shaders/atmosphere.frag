@@ -101,13 +101,13 @@ void main() {
 		alphaBoost = 0.94 + hazeMix * 0.06;
 		overlayAlpha = atmosphereAlpha * alphaBoost;
 	} else if (atmosphereStyle == 1) {
-		vec2 cloudBase = (texelCoord + texelFlow) / vec2(5.5, 4.5);
-		float largeSwirl = fbm(cloudBase * 0.9);
-		float shear = fbm((texelCoord.yx + vec2(-atmosphereTime * 0.12, atmosphereTime * 0.09)) / vec2(6.0, 8.0));
-		vec2 cloudUv = cloudBase + vec2(largeSwirl * 0.55, shear * 0.25);
+		vec2 cloudBase = (texelCoord + texelFlow) / vec2(7.5, 6.0);
+		float largeSwirl = fbm(cloudBase * 0.75);
+		float shear = fbm((texelCoord.yx + vec2(-atmosphereTime * 0.12, atmosphereTime * 0.09)) / vec2(8.5, 10.0));
+		vec2 cloudUv = cloudBase + vec2(largeSwirl * 0.48, shear * 0.18);
 
 		float cloudField = fbm(cloudUv);
-		float wisps = fbm(cloudUv * 1.6 + vec2(-atmosphereTime * 0.01, atmosphereTime * 0.007) + vec2(cloudField, largeSwirl));
+		float wisps = fbm(cloudUv * 1.3 + vec2(-atmosphereTime * 0.01, atmosphereTime * 0.007) + vec2(cloudField, largeSwirl));
 		float cloudMask = smoothstep(0.44, 0.72, mix(cloudField, wisps, 0.32));
 		float jet = 0.5 + 0.5 * sin((texelCoord.y + largeSwirl * 1.35) * 1.05 + atmosphereTime * 0.45);
 		float jetMask = smoothstep(0.7, 0.96, jet) * smoothstep(0.42, 0.84, wisps);

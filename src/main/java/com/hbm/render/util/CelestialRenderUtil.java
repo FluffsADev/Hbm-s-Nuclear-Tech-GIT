@@ -4,6 +4,7 @@ import com.hbm.dim.CelestialBody;
 import com.hbm.dim.WorldProviderCelestial;
 import com.hbm.dim.trait.CBT_Atmosphere;
 import com.hbm.dim.trait.CBT_Atmosphere.FluidEntry;
+import com.hbm.dim.trait.CBT_Water;
 
 import org.lwjgl.opengl.GL11;
 
@@ -171,28 +172,45 @@ public class CelestialRenderUtil {
 		return WorldProviderCelestial.getCloudTintStrength(atmosphere);
 	}
 
+	public static boolean bodyHasWeatherCycle(CelestialBody body) {
+		if(body == null || body.gas != null) {
+			return false;
+		}
+
+		CBT_Atmosphere atmosphere = body.getTrait(CBT_Atmosphere.class);
+		CBT_Water water = body.getTrait(CBT_Water.class);
+		return atmosphere != null && atmosphere.getPressure() > 0.5D && water != null && water.fluid != null;
+	}
+
 	public static float getBodyCloudStormDarkness(CelestialBody body, float partialTicks) {
-		if(body == null) {
+		if(!bodyHasWeatherCycle(body)) {
 			return 0.0F;
 		}
 
 		Minecraft mc = Minecraft.getMinecraft();
 		World world = mc != null ? mc.theWorld : null;
-		if(world == null || world.provider == null || world.provider.dimensionId != body.dimensionId) {
+		if(world == null) {
 			return 0.0F;
 		}
 
-		if(!(world.provider instanceof WorldProviderCelestial)) {
-			return 0.0F;
+		float rainStrength = 0.0F;
+		float thunderStrength = 0.0F;
+
+		if(world.provider instanceof WorldProviderCelestial && ((WorldProviderCelestial) world.provider).hasWeatherCycle()) {
+			rainStrength = world.getRainStrength(partialTicks);
+			thunderStrength = world.prevThunderingStrength + (world.thunderingStrength - world.prevThunderingStrength) * partialTicks;
 		}
 
-		WorldProviderCelestial provider = (WorldProviderCelestial) world.provider;
-		if(!provider.hasWeatherCycle()) {
-			return 0.0F;
+		if(world.getWorldInfo() != null) {
+			if(world.getWorldInfo().isRaining()) {
+				rainStrength = Math.max(rainStrength, 1.0F);
+			}
+			if(world.getWorldInfo().isThundering()) {
+				thunderStrength = Math.max(thunderStrength, 1.0F);
+			}
 		}
 
-		float rainStrength = world.getRainStrength(partialTicks);
-		float thunderStrength = world.prevThunderingStrength + (world.thunderingStrength - world.prevThunderingStrength) * partialTicks;
+		rainStrength = MathHelper.clamp_float(rainStrength, 0.0F, 1.0F);
 		thunderStrength = MathHelper.clamp_float(thunderStrength, 0.0F, 1.0F);
 
 		return MathHelper.clamp_float(rainStrength * 0.22F + thunderStrength * 0.28F, 0.0F, 0.5F);
