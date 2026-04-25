@@ -646,7 +646,7 @@ public abstract class WorldProviderCelestial extends WorldProviderSurface {
 		}
 
 		double cloudLuma = clouds.xCoord * 0.299D + clouds.yCoord * 0.587D + clouds.zCoord * 0.114D;
-		double cloudBrightness = MathHelper.clamp_double(cloudLuma * 0.92D, 0.0D, 1.0D);
+		double cloudBrightness = MathHelper.clamp_double(cloudLuma * 0.85D, 0.0D, 1.0D);
 		double cloudColorR = MathHelper.clamp_double(tintR / tintPeak, 0.0D, 1.0D);
 		double cloudColorG = MathHelper.clamp_double(tintG / tintPeak, 0.0D, 1.0D);
 		double cloudColorB = MathHelper.clamp_double(tintB / tintPeak, 0.0D, 1.0D);
