@@ -645,16 +645,16 @@ public abstract class WorldProviderCelestial extends WorldProviderSurface {
 			return clouds;
 		}
 
-		double tintStrength = MathHelper.clamp_double(totalPressure * 0.65D, 0.35D, 0.9D);
-		double tintFactorR = MathHelper.clamp_double(tintR / tintPeak, 0.5D, 1.0D);
-		double tintFactorG = MathHelper.clamp_double(tintG / tintPeak, 0.5D, 1.0D);
-		double tintFactorB = MathHelper.clamp_double(tintB / tintPeak, 0.5D, 1.0D);
-		double cloudBrightness = 0.9D;
+		double cloudLuma = clouds.xCoord * 0.299D + clouds.yCoord * 0.587D + clouds.zCoord * 0.114D;
+		double cloudBrightness = MathHelper.clamp_double(cloudLuma * 0.92D, 0.0D, 1.0D);
+		double cloudColorR = MathHelper.clamp_double(tintR / tintPeak, 0.0D, 1.0D);
+		double cloudColorG = MathHelper.clamp_double(tintG / tintPeak, 0.0D, 1.0D);
+		double cloudColorB = MathHelper.clamp_double(tintB / tintPeak, 0.0D, 1.0D);
 
 		return Vec3.createVectorHelper(
-			clouds.xCoord * (1.0D - tintStrength + tintFactorR * tintStrength) * cloudBrightness,
-			clouds.yCoord * (1.0D - tintStrength + tintFactorG * tintStrength) * cloudBrightness,
-			clouds.zCoord * (1.0D - tintStrength + tintFactorB * tintStrength) * cloudBrightness
+			cloudColorR * cloudBrightness,
+			cloudColorG * cloudBrightness,
+			cloudColorB * cloudBrightness
 		);
 	}
 
