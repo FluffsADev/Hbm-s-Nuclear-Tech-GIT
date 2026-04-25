@@ -12,7 +12,7 @@ import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.util.MathHelper;
 import net.minecraft.util.Vec3;
 
-public final class CelestialRenderUtil {
+public class CelestialRenderUtil {
 
 	private static final float OPAQUE_ATMOSPHERE_PRESSURE = 5.0F;
 	private static final float CLOUDY_ATMOSPHERE_PRESSURE = 0.5F;
