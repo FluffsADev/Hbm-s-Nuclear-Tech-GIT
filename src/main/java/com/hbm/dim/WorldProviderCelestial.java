@@ -671,7 +671,20 @@ public abstract class WorldProviderCelestial extends WorldProviderSurface {
 			return Vec3.createVectorHelper(1.0D, 1.0D, 1.0D);
 		}
 
-		return getColorFromHex(water.fluid.getColor());
+		Vec3 base = getColorFromHex(water.fluid.getColor());
+		double luminance = base.xCoord * 0.299D + base.yCoord * 0.587D + base.zCoord * 0.114D;
+		double saturation = 0.35D;
+		double tintStrength = 0.2D;
+
+		double desaturatedR = luminance + (base.xCoord - luminance) * saturation;
+		double desaturatedG = luminance + (base.yCoord - luminance) * saturation;
+		double desaturatedB = luminance + (base.zCoord - luminance) * saturation;
+
+		return Vec3.createVectorHelper(
+			1.0D + (desaturatedR - 1.0D) * tintStrength,
+			1.0D + (desaturatedG - 1.0D) * tintStrength,
+			1.0D + (desaturatedB - 1.0D) * tintStrength
+		);
 	}
 
 	@Override

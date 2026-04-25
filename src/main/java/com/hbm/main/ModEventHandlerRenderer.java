@@ -1,5 +1,7 @@
 package com.hbm.main;
 
+import java.util.List;
+
 import com.hbm.blocks.ICustomBlockHighlight;
 import com.hbm.config.ClientConfig;
 import com.hbm.config.RadiationConfig;
@@ -26,10 +28,13 @@ import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.gameevent.TickEvent;
 import cpw.mods.fml.common.gameevent.TickEvent.Phase;
 import cpw.mods.fml.common.gameevent.TickEvent.WorldTickEvent;
+import cpw.mods.fml.relauncher.ReflectionHelper;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.AbstractClientPlayer;
+import net.minecraft.client.particle.EffectRenderer;
+import net.minecraft.client.particle.EntityRainFX;
 import net.minecraft.client.model.ModelBiped;
 import net.minecraft.client.gui.GuiIngame;
 import net.minecraft.client.model.ModelRenderer;
@@ -69,6 +74,7 @@ public class ModEventHandlerRenderer {
 
 	private static ModelMan manlyModel;
 	private static boolean[] partsHidden = new boolean[7];
+	private static final String[] FX_LAYER_FIELDS = new String[] { "fxLayers", "field_78876_b" };
 
 	@SubscribeEvent
 	public void onRenderTickPre(TickEvent.RenderTickEvent event) {
@@ -82,6 +88,42 @@ public class ModEventHandlerRenderer {
 			} else {
 				mc.entityRenderer.thirdPersonDistance = 4.0F;
 			}
+
+			tintWeatherParticles(mc);
+		}
+	}
+
+	private void tintWeatherParticles(Minecraft mc) {
+		if(mc == null || mc.theWorld == null || !(mc.theWorld.provider instanceof WorldProviderCelestial) || mc.effectRenderer == null) {
+			return;
+		}
+
+		WorldProviderCelestial provider = (WorldProviderCelestial)mc.theWorld.provider;
+		if(!provider.hasWeatherCycle() || mc.theWorld.getRainStrength(1.0F) <= 0.0F) {
+			return;
+		}
+
+		Vec3 weatherColor = provider.getWeatherColor();
+
+		try {
+			List[] fxLayers = ReflectionHelper.getPrivateValue(EffectRenderer.class, mc.effectRenderer, FX_LAYER_FIELDS);
+			if(fxLayers == null) {
+				return;
+			}
+
+			for(List layer : fxLayers) {
+				if(layer == null || layer.isEmpty()) {
+					continue;
+				}
+
+				for(int i = 0; i < layer.size(); i++) {
+					Object particle = layer.get(i);
+					if(particle instanceof EntityRainFX) {
+						((EntityRainFX)particle).setRBGColorF((float)weatherColor.xCoord, (float)weatherColor.yCoord, (float)weatherColor.zCoord);
+					}
+				}
+			}
+		} catch(Exception ignored) {
 		}
 	}
 
