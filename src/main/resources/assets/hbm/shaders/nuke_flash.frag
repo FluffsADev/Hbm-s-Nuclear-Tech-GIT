@@ -6,7 +6,8 @@ uniform float nukeShockCenterX[4];
 uniform float nukeShockCenterY[4];
 uniform float nukeShockStrength[4];
 
-const float PIXEL_GRID = 16.0;
+const float FLASH_GRID = 16.0;
+const float RING_GRID = 64.0;
 const int MAX_NUKE_SHOCKS = 4;
 
 float stableHash(vec2 p) {
@@ -27,6 +28,20 @@ float getFlashMask(vec2 pixelUV, float time, vec2 center, float strength) {
 	float flashRadius = mix(0.012, 0.018, strength);
 	float flashEdge = 0.02;
 	return (1.0 - smoothstep(flashRadius, flashRadius + flashEdge, distanceFromCenter)) * flashFade;
+}
+
+float getAfterglowMask(vec2 pixelUV, float time, vec2 center, float strength) {
+	if (time < 0.0 || strength <= 0.001) {
+		return 0.0;
+	}
+
+	float warmRise = smoothstep(1.0, 4.0, time);
+	float warmFade = 1.0 - smoothstep(8.0, mix(18.0, 30.0, strength), time);
+	float distanceFromCenter = length(pixelUV - center);
+	float glowRadius = mix(0.022, 0.038, strength);
+	float glowEdge = 0.028;
+	float glowMask = 1.0 - smoothstep(glowRadius, glowRadius + glowEdge, distanceFromCenter);
+	return glowMask * warmRise * warmFade;
 }
 
 float getRingMask(vec2 pixelUV, float time, vec2 center, float strength) {
@@ -58,24 +73,37 @@ void main() {
 		return;
 	}
 
-	vec2 pixelCoord = floor(localUV * PIXEL_GRID);
-	vec2 pixelUV = (pixelCoord + 0.5) / PIXEL_GRID;
+	vec2 flashPixelCoord = floor(localUV * FLASH_GRID);
+	vec2 flashPixelUV = (flashPixelCoord + 0.5) / FLASH_GRID;
+	vec2 ringPixelCoord = floor(localUV * RING_GRID);
+	vec2 ringPixelUV = (ringPixelCoord + 0.5) / RING_GRID;
 	float flashAlpha = 0.0;
+	float afterglowAlpha = 0.0;
 	float ringAlpha = 0.0;
 
 	for (int i = 0; i < MAX_NUKE_SHOCKS; i++) {
 		if (i < nukeShockCount) {
 			float shockStrength = clamp(nukeShockStrength[i], 0.0, 1.0);
 			vec2 shockCenter = vec2(nukeShockCenterX[i], nukeShockCenterY[i]);
-			flashAlpha = max(flashAlpha, getFlashMask(pixelUV, nukeShockTime[i], shockCenter, shockStrength));
-			ringAlpha = max(ringAlpha, getRingMask(pixelUV, nukeShockTime[i], shockCenter, shockStrength));
+			float shockTime = nukeShockTime[i];
+			flashAlpha = max(flashAlpha, getFlashMask(flashPixelUV, shockTime, shockCenter, shockStrength));
+			afterglowAlpha = max(afterglowAlpha, getAfterglowMask(flashPixelUV, shockTime, shockCenter, shockStrength));
+			ringAlpha = max(ringAlpha, getRingMask(ringPixelUV, shockTime, shockCenter, shockStrength));
 		}
 	}
 
-	float finalAlpha = clamp(max(flashAlpha, ringAlpha * 0.9) * diskMask, 0.0, 1.0);
+	float finalAlpha = clamp(max(max(flashAlpha, afterglowAlpha), ringAlpha * 0.95) * diskMask, 0.0, 1.0);
 	vec3 ringColor = vec3(1.0, 0.98, 0.92);
 	vec3 flashColor = vec3(1.0);
-	vec3 finalColor = mix(ringColor, flashColor, clamp(flashAlpha, 0.0, 1.0));
+	vec3 afterglowWarm = vec3(1.0, 0.72, 0.38);
+	vec3 afterglowAsh = vec3(0.62, 0.62, 0.6);
+	float afterglowToAsh = clamp(afterglowAlpha > 0.0 ? smoothstep(0.18, 0.75, afterglowAlpha) : 0.0, 0.0, 1.0);
+	vec3 afterglowColor = mix(afterglowAsh, afterglowWarm, afterglowToAsh);
+
+	vec3 accumColor = ringColor * ringAlpha * 0.95;
+	accumColor += afterglowColor * afterglowAlpha * 0.9;
+	accumColor += flashColor * flashAlpha;
+	vec3 finalColor = finalAlpha > 0.001 ? clamp(accumColor / max(finalAlpha, 0.001), 0.0, 1.0) : vec3(0.0);
 
 	gl_FragColor = vec4(finalColor, finalAlpha);
 }
