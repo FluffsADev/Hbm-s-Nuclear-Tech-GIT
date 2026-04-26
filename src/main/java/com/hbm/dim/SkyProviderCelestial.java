@@ -1233,7 +1233,7 @@ public class SkyProviderCelestial extends IRenderHandler {
 	}
 
 	private void renderAtmosphereEmissive(Tessellator tessellator, Minecraft mc, CelestialBody body, float phase, double uvOffset, double size, int lightIntensity, int activeBlackouts, float atmosphereDensity, double patternOffset, float atmosphereTime, int atmosphereStyle) {
-		if(atmosphereDensity <= 0.001F || (atmosphereStyle != CelestialRenderUtil.ATMOSPHERE_STYLE_CLOUDS && atmosphereStyle != CelestialRenderUtil.ATMOSPHERE_STYLE_HAZE)) {
+		if(lightIntensity <= 0 || atmosphereDensity <= 0.001F || (atmosphereStyle != CelestialRenderUtil.ATMOSPHERE_STYLE_CLOUDS && atmosphereStyle != CelestialRenderUtil.ATMOSPHERE_STYLE_HAZE)) {
 			return;
 		}
 
@@ -1280,6 +1280,10 @@ public class SkyProviderCelestial extends IRenderHandler {
 	}
 
 	private void renderNightLights(Tessellator tessellator, Minecraft mc, CelestialBody body, float phase, double uvOffset, double size, int lightIntensity, int activeBlackouts, float atmosphereDensity, double patternOffset, float atmosphereTime, int atmosphereStyle) {
+		if(lightIntensity <= 0) {
+			return;
+		}
+
 		GL11.glEnable(GL11.GL_BLEND);
 		OpenGlHelper.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ONE, GL11.GL_ZERO);
 		GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);

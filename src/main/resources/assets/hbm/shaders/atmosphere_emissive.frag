@@ -97,6 +97,11 @@ void main() {
 	brightness = max(brightness, 0.05);
 
 	float nightFactor = clamp(0.8 - brightness, 0.0, 1.0);
+	if (nightFactor <= 0.001) {
+		gl_FragColor = vec4(0.0);
+		return;
+	}
+
 	vec2 texelCoord = floor(patternUV * PIXEL_GRID);
 	vec2 texelFlow = vec2(atmosphereTime * 0.18, -atmosphereTime * 0.11);
 	vec2 glowCellUV = fract((texelCoord + 0.5) / PIXEL_GRID + vec2(offset - patternOffset, 0.0));
@@ -129,15 +134,11 @@ void main() {
 		emissiveMask = cloudPresence * (0.34 + atmosphereDensity * 0.28) + cloudCore * (0.12 + atmosphereDensity * 0.14);
 	}
 
-	vec3 blurredLights = sampleCityLight(glowCellUV) * 0.28;
-	blurredLights += sampleCityLight(glowCellUV + vec2(glowStep.x, 0.0)) * 0.15;
-	blurredLights += sampleCityLight(glowCellUV - vec2(glowStep.x, 0.0)) * 0.15;
-	blurredLights += sampleCityLight(glowCellUV + vec2(0.0, glowStep.y)) * 0.15;
-	blurredLights += sampleCityLight(glowCellUV - vec2(0.0, glowStep.y)) * 0.15;
-	blurredLights += sampleCityLight(glowCellUV + glowStep) * 0.06;
-	blurredLights += sampleCityLight(glowCellUV - glowStep) * 0.06;
-	blurredLights += sampleCityLight(glowCellUV + vec2(glowStep.x, -glowStep.y)) * 0.06;
-	blurredLights += sampleCityLight(glowCellUV + vec2(-glowStep.x, glowStep.y)) * 0.06;
+	vec3 blurredLights = sampleCityLight(glowCellUV) * 0.40;
+	blurredLights += sampleCityLight(glowCellUV + vec2(glowStep.x, 0.0)) * 0.17;
+	blurredLights += sampleCityLight(glowCellUV - vec2(glowStep.x, 0.0)) * 0.17;
+	blurredLights += sampleCityLight(glowCellUV + vec2(0.0, glowStep.y)) * 0.17;
+	blurredLights += sampleCityLight(glowCellUV - vec2(0.0, glowStep.y)) * 0.17;
 
 	float glowLuma = dot(blurredLights, vec3(0.299, 0.587, 0.114));
 	float glowPresence = smoothstep(0.02, 0.24, glowLuma);

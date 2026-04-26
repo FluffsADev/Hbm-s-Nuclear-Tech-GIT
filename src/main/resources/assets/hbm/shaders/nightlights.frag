@@ -86,11 +86,20 @@ void main() {
 
 	brightness = max(brightness, 0.05);
 
+	float nightFactor = clamp(0.8 - brightness, 0.0, 1.0);
+	if (nightFactor <= 0.001) {
+		gl_FragColor = vec4(0.0);
+		return;
+	}
+
 	vec4 city = texture2D(cityMask, movingUV);
 	vec3 lightColor = texture2D(lights, movingUV).rgb * city.rgb;
 	lightColor *= city.a;
+	if (dot(lightColor, vec3(1.0)) <= 0.001) {
+		gl_FragColor = vec4(0.0);
+		return;
+	}
 
-	float nightFactor = clamp(0.8 - brightness, 0.0, 1.0);
 	float atmosphereTransmission = 1.0 - smoothstep(0.22, 0.88, atmosphereDensity);
 	float cloudOcclusion = 0.0;
 

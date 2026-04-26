@@ -880,8 +880,9 @@ public class GUIScreenSatSettings extends GuiScreen {
 
 		crescentShader.stop();
 
-		if(atmosphereDensity > 0.001F
-			&& (atmosphereStyle == CelestialRenderUtil.ATMOSPHERE_STYLE_CLOUDS || atmosphereStyle == CelestialRenderUtil.ATMOSPHERE_STYLE_HAZE)) {
+			if(lightIntensity > 0
+				&& atmosphereDensity > 0.001F
+				&& (atmosphereStyle == CelestialRenderUtil.ATMOSPHERE_STYLE_CLOUDS || atmosphereStyle == CelestialRenderUtil.ATMOSPHERE_STYLE_HAZE)) {
 			GL11.glEnable(GL11.GL_BLEND);
 			GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE);
 			GL11.glColor4f(1F, 1F, 1F, 1F);
@@ -916,38 +917,40 @@ public class GUIScreenSatSettings extends GuiScreen {
 			atmosphereEmissiveShader.stop();
 		}
 
-		GL11.glEnable(GL11.GL_BLEND);
-		GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE);
-		GL11.glColor4f(1F, 1F, 1F, 1F);
+			if(lightIntensity > 0) {
+				GL11.glEnable(GL11.GL_BLEND);
+				GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE);
+				GL11.glColor4f(1F, 1F, 1F, 1F);
 
-		nightLightsShader.use();
-		nightLightsShader.setUniform1f("phase", phase);
-		nightLightsShader.setUniform1f("offset", textureUOffset);
-		nightLightsShader.setUniform1f("atmosphereDensity", atmosphereDensity);
-		nightLightsShader.setUniform1f("patternOffset", atmospherePatternOffset);
-		nightLightsShader.setUniform1f("atmosphereTime", atmosphereTime);
-		nightLightsShader.setUniform1i("atmosphereStyle", atmosphereStyle);
-		nightLightsShader.setUniform1i("bodyTex", 0);
-		nightLightsShader.setUniform1i("lights", 1);
-		nightLightsShader.setUniform1i("cityMask", 2);
-		nightLightsShader.setUniform1i("blackouts", activeBlackouts);
-		nightLightsShader.setUniform1i("useBodyAlphaMask", 1);
+				nightLightsShader.use();
+				nightLightsShader.setUniform1f("phase", phase);
+				nightLightsShader.setUniform1f("offset", textureUOffset);
+				nightLightsShader.setUniform1f("atmosphereDensity", atmosphereDensity);
+				nightLightsShader.setUniform1f("patternOffset", atmospherePatternOffset);
+				nightLightsShader.setUniform1f("atmosphereTime", atmosphereTime);
+				nightLightsShader.setUniform1i("atmosphereStyle", atmosphereStyle);
+				nightLightsShader.setUniform1i("bodyTex", 0);
+				nightLightsShader.setUniform1i("lights", 1);
+				nightLightsShader.setUniform1i("cityMask", 2);
+				nightLightsShader.setUniform1i("blackouts", activeBlackouts);
+				nightLightsShader.setUniform1i("useBodyAlphaMask", 1);
 
-		GL13.glActiveTexture(GL13.GL_TEXTURE0);
-		mc.getTextureManager().bindTexture(body.texture);
-		GL13.glActiveTexture(GL13.GL_TEXTURE1);
-		mc.getTextureManager().bindTexture(citylights[lightIntensity]);
-		GL13.glActiveTexture(GL13.GL_TEXTURE2);
-		mc.getTextureManager().bindTexture(body.cityMask != null ? body.cityMask : defaultMask);
-		GL13.glActiveTexture(GL13.GL_TEXTURE0);
+				GL13.glActiveTexture(GL13.GL_TEXTURE0);
+				mc.getTextureManager().bindTexture(body.texture);
+				GL13.glActiveTexture(GL13.GL_TEXTURE1);
+				mc.getTextureManager().bindTexture(citylights[lightIntensity]);
+				GL13.glActiveTexture(GL13.GL_TEXTURE2);
+				mc.getTextureManager().bindTexture(body.cityMask != null ? body.cityMask : defaultMask);
+				GL13.glActiveTexture(GL13.GL_TEXTURE0);
 
-		if(rotateBody) {
-			drawTexturedQuadRotating(bodyScreenX, bodyScreenY, drawSize, bodyRotationAngle);
-		} else {
-			drawTexturedQuad(bodyScreenX, bodyScreenY, drawSize, 0F);
-		}
+				if(rotateBody) {
+					drawTexturedQuadRotating(bodyScreenX, bodyScreenY, drawSize, bodyRotationAngle);
+				} else {
+					drawTexturedQuad(bodyScreenX, bodyScreenY, drawSize, 0F);
+				}
 
-		nightLightsShader.stop();
+				nightLightsShader.stop();
+			}
 
 		if(atmosphereAlpha > 0.001F && cloudLightningStrength > 0.001F
 			&& (atmosphereStyle == CelestialRenderUtil.ATMOSPHERE_STYLE_CLOUDS || atmosphereStyle == CelestialRenderUtil.ATMOSPHERE_STYLE_HAZE)) {

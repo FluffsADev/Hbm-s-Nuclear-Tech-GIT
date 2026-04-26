@@ -91,9 +91,15 @@ void main() {
 
 	float density = clamp(atmosphereAlpha, 0.0, 1.0);
 	float tintStrength = clamp(cloudTintStrength, 0.0, 1.0);
+	float denseAtmosphereVisibility = mix(1.0, 0.5, smoothstep(0.72, 1.0, density));
 	float nightVisibility = getNightVisibility(movingUV);
 	vec4 city = texture2D(cityMask, movingUV);
 	float maskCoverage = max(max(city.r, city.g), city.b) * city.a;
+	if (maskCoverage <= 0.001) {
+		gl_FragColor = vec4(0.0);
+		return;
+	}
+
 	vec2 texelCoord = floor(patternUV * PIXEL_GRID);
 	vec2 uv = (texelCoord + 0.5) / PIXEL_GRID;
 	vec2 texelFlow = vec2(atmosphereTime * 0.18, -atmosphereTime * 0.11);
@@ -145,5 +151,5 @@ void main() {
 		lightningAlpha = flashPulse * lightningMask * nightVisibility * (0.72 + lightningStrength * 0.28 + neutralBoost * 0.38);
 	}
 
-	gl_FragColor = vec4(vec3(1.0), clamp(lightningAlpha * alphaMask * maskCoverage, 0.0, 1.0));
+	gl_FragColor = vec4(vec3(1.0), clamp(lightningAlpha * denseAtmosphereVisibility * alphaMask * maskCoverage, 0.0, 1.0));
 }
