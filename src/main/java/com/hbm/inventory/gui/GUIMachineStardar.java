@@ -81,7 +81,7 @@ public class GUIMachineStardar extends GuiInfoContainer {
 	private static final Shader atmosphereShader = new Shader(new ResourceLocation(RefStrings.MODID, "shaders/atmosphere.frag"));
 	private static final Shader atmosphereEmissiveShader = new Shader(new ResourceLocation(RefStrings.MODID, "shaders/atmosphere_emissive.frag"));
 	private static final Shader lightningShader = new Shader(new ResourceLocation(RefStrings.MODID, "shaders/lightning.frag"));
-	private static final Shader nukeEffectOverlayShader = new Shader(new ResourceLocation(RefStrings.MODID, "shaders/nuke_flash.frag"));
+	private static final Shader nukeShader = new Shader(new ResourceLocation(RefStrings.MODID, "shaders/nuke.frag"));
 	private static final Shader nightLightsShader = new Shader(new ResourceLocation(RefStrings.MODID, "shaders/nightlights.frag"));
 
 	static {
@@ -1243,15 +1243,15 @@ public class GUIMachineStardar extends GuiInfoContainer {
 		GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE);
 		GL11.glColor4f(1F, 1F, 1F, 1F);
 
-		nukeEffectOverlayShader.use();
-		AtmosphereRenderUtil.applyNukeShockUniforms(nukeEffectOverlayShader, nukeShocks, currentShockTime);
+		nukeShader.use();
+		AtmosphereRenderUtil.applyNukeShockUniforms(nukeShader, nukeShocks, currentShockTime);
 		if(rotateBody) {
 			drawTexturedQuadRotating(bodyScreenX, bodyScreenY, drawSize, bodyRotationAngle);
 		} else {
 			drawTexturedQuad(bodyScreenX, bodyScreenY, drawSize, 0F);
 		}
 
-		nukeEffectOverlayShader.stop();
+		nukeShader.stop();
 	}
 
 	// yeah no, radius checks and new trait just don't work. drop them transparency checks, planets won't have it anyway, how bad it can be!

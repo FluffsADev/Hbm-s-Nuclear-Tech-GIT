@@ -7,6 +7,7 @@ uniform float nukeShockCenterY[4];
 uniform float nukeShockStrength[4];
 
 const float FLASH_GRID = 16.0;
+const float FLASH_SUBGRID = FLASH_GRID * 4.0;
 const float RING_GRID = 64.0;
 const int MAX_NUKE_SHOCKS = 4;
 
@@ -18,30 +19,37 @@ float getFlashFade(float time, float strength) {
 	return 1.0 - smoothstep(0.0, mix(4.0, 6.0, strength), time);
 }
 
-float getFlashMask(vec2 pixelUV, float time, vec2 center, float strength) {
+float getFlashCellMask(vec2 subPixelUV, vec2 center) {
+	vec2 subDelta = abs((subPixelUV - center) * FLASH_SUBGRID);
+	float withinBlock = 1.0 - step(2.0, max(subDelta.x, subDelta.y));
+	float isCorner = step(1.0, subDelta.x) * step(1.0, subDelta.y);
+	return withinBlock * (1.0 - isCorner);
+}
+
+float getFlashMask(vec2 subPixelUV, float time, vec2 center, float strength) {
 	if (time < 0.0 || strength <= 0.001) {
 		return 0.0;
 	}
 
 	float flashFade = getFlashFade(time, strength);
-	float distanceFromCenter = length(pixelUV - center);
+	float distanceFromCenter = length(subPixelUV - center);
 	float flashRadius = mix(0.012, 0.018, strength);
 	float flashEdge = 0.02;
-	return (1.0 - smoothstep(flashRadius, flashRadius + flashEdge, distanceFromCenter)) * flashFade;
+	return (1.0 - smoothstep(flashRadius, flashRadius + flashEdge, distanceFromCenter)) * flashFade * getFlashCellMask(subPixelUV, center);
 }
 
-float getAfterglowMask(vec2 pixelUV, float time, vec2 center, float strength) {
+float getAfterglowMask(vec2 subPixelUV, float time, vec2 center, float strength) {
 	if (time < 0.0 || strength <= 0.001) {
 		return 0.0;
 	}
 
 	float warmRise = smoothstep(1.0, 4.0, time);
 	float warmFade = 1.0 - smoothstep(8.0, mix(18.0, 30.0, strength), time);
-	float distanceFromCenter = length(pixelUV - center);
+	float distanceFromCenter = length(subPixelUV - center);
 	float glowRadius = mix(0.022, 0.038, strength);
 	float glowEdge = 0.028;
 	float glowMask = 1.0 - smoothstep(glowRadius, glowRadius + glowEdge, distanceFromCenter);
-	return glowMask * warmRise * warmFade;
+	return glowMask * warmRise * warmFade * getFlashCellMask(subPixelUV, center);
 }
 
 float getRingMask(vec2 pixelUV, float time, vec2 center, float strength) {
@@ -50,31 +58,25 @@ float getRingMask(vec2 pixelUV, float time, vec2 center, float strength) {
 	}
 
 	float stableSeed = stableHash(center + vec2(strength * 0.31, strength * 0.73));
-	float coreRadius = mix(0.09, 0.16, strength) * mix(0.92, 1.28, stableSeed);
-	float ringRadius = coreRadius * 0.92 + time * mix(0.00085, 0.00135, strength) * mix(0.92, 1.15, stableSeed);
+	float startRadius = mix(0.022, 0.038, strength) * mix(0.94, 1.16, stableSeed);
+	float ringRadius = startRadius + time * mix(0.00085, 0.00135, strength) * mix(0.92, 1.15, stableSeed);
 	float ringProgress = clamp(time / mix(72.0, 120.0, strength), 0.0, 1.0);
-	float ringWidth = mix(0.07, 0.032, ringProgress) * mix(0.95, 1.12, stableSeed);
+	float ringWidth = mix(0.044, 0.017, ringProgress) * mix(0.95, 1.1, stableSeed);
 	float ringReveal = smoothstep(1.5, 4.5, time);
 	float ringFade = 1.0 - smoothstep(8.0, mix(68.0, 104.0, strength), time);
 	float flashFade = getFlashFade(time, strength);
+	float ringOpacity = mix(0.6, 1.0, smoothstep(0.0, 10.0, time));
 	float distanceFromCenter = length(pixelUV - center);
 	float outerBand = smoothstep(max(ringRadius - ringWidth, 0.0), ringRadius, distanceFromCenter);
 	float innerBand = 1.0 - smoothstep(ringRadius, ringRadius + ringWidth, distanceFromCenter);
 	float ringMask = outerBand * innerBand;
-	return ringMask * ringReveal * ringFade * (1.0 - flashFade * 0.9);
+	return ringMask * ringReveal * ringFade * ringOpacity * (1.0 - flashFade * 0.9);
 }
 
 void main() {
 	vec2 localUV = gl_TexCoord[0].xy;
-	vec2 diskUV = localUV * 2.0 - 1.0;
-	float diskMask = 1.0 - smoothstep(0.96, 1.02, length(diskUV));
-	if (diskMask <= 0.001) {
-		gl_FragColor = vec4(0.0);
-		return;
-	}
-
-	vec2 flashPixelCoord = floor(localUV * FLASH_GRID);
-	vec2 flashPixelUV = (flashPixelCoord + 0.5) / FLASH_GRID;
+	vec2 flashPixelCoord = floor(localUV * FLASH_SUBGRID);
+	vec2 flashPixelUV = (flashPixelCoord + 0.5) / FLASH_SUBGRID;
 	vec2 ringPixelCoord = floor(localUV * RING_GRID);
 	vec2 ringPixelUV = (ringPixelCoord + 0.5) / RING_GRID;
 	float flashAlpha = 0.0;
@@ -92,7 +94,7 @@ void main() {
 		}
 	}
 
-	float finalAlpha = clamp(max(max(flashAlpha, afterglowAlpha), ringAlpha * 0.95) * diskMask, 0.0, 1.0);
+	float finalAlpha = clamp(max(max(flashAlpha, afterglowAlpha), ringAlpha * 0.95), 0.0, 1.0);
 	vec3 ringColor = vec3(1.0, 0.98, 0.92);
 	vec3 flashColor = vec3(1.0);
 	vec3 afterglowWarm = vec3(1.0, 0.72, 0.38);

@@ -75,7 +75,7 @@ public class SkyProviderCelestial extends IRenderHandler {
 	protected static final Shader atmosphereShader = new Shader(new ResourceLocation(RefStrings.MODID, "shaders/atmosphere.frag"));
 	protected static final Shader atmosphereEmissiveShader = new Shader(new ResourceLocation(RefStrings.MODID, "shaders/atmosphere_emissive.frag"));
 	protected static final Shader lightningShader = new Shader(new ResourceLocation(RefStrings.MODID, "shaders/lightning.frag"));
-	protected static final Shader nukeEffectOverlayShader = new Shader(new ResourceLocation(RefStrings.MODID, "shaders/nuke_flash.frag"));
+	protected static final Shader nukeShader = new Shader(new ResourceLocation(RefStrings.MODID, "shaders/nuke.frag"));
 	protected static final Shader nightLightsShader = new Shader(new ResourceLocation(RefStrings.MODID, "shaders/nightlights.frag"));
 	protected static final Shader swarmShader = new Shader(new ResourceLocation(RefStrings.MODID, "shaders/swarm.vert"), new ResourceLocation(RefStrings.MODID, "shaders/swarm.frag"));
 
@@ -1256,10 +1256,10 @@ public class SkyProviderCelestial extends IRenderHandler {
 		OpenGlHelper.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ONE, GL11.GL_ZERO);
 		GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
 
-		nukeEffectOverlayShader.use();
-		AtmosphereRenderUtil.applyNukeShockUniforms(nukeEffectOverlayShader, nukeShocks, currentShockTime);
+		nukeShader.use();
+		AtmosphereRenderUtil.applyNukeShockUniforms(nukeShader, nukeShocks, currentShockTime);
 		drawPlanetShaderQuad(tessellator, size);
-		nukeEffectOverlayShader.stop();
+		nukeShader.stop();
 	}
 
 	private void renderAtmosphereEmissive(Tessellator tessellator, Minecraft mc, CelestialBody body, float phase, double uvOffset, double size, int lightIntensity, int activeBlackouts, float atmosphereDensity, double patternOffset, float atmosphereTime, int atmosphereStyle, float impactTime, List<CelestialNukeShockHandler.ShockStatus> nukeShocks, double currentShockTime) {
