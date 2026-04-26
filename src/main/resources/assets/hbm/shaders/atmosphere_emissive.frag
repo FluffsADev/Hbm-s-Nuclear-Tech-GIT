@@ -94,7 +94,9 @@ void main() {
 	vec2 movingUV = localUV + vec2(offset, 0.0);
 	vec2 wrappedUV = fract(movingUV);
 	vec2 patternUV = localUV + vec2(patternOffset, 0.0);
-	vec4 impactField = getImpactField(localUV, impactTime);
+	vec2 impactPixelCoord = floor(patternUV * PIXEL_GRID);
+	vec2 impactPixelUV = (impactPixelCoord + 0.5) / PIXEL_GRID;
+	vec4 impactField = getImpactField(impactPixelUV, impactTime);
 
 	float alphaMask = 1.0;
 	if (useBodyAlphaMask != 0) {
