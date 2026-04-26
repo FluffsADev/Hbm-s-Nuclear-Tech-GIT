@@ -90,26 +90,31 @@ vec4 getNukeShockField(vec2 localUV, float time, vec2 center, float strength) {
 		return vec4(0.0);
 	}
 
-	vec2 delta = localUV - center;
-	float distanceFromCenter = length(delta);
-	vec2 direction = distanceFromCenter > 0.0001 ? delta / distanceFromCenter : vec2(0.0, 1.0);
+	float distanceFromCenter = length(localUV - center);
+	float stableSeed = fract(sin(dot(center + vec2(strength * 0.31, strength * 0.73), vec2(127.1, 311.7))) * 43758.5453123);
+	float flashRadius = mix(0.08, 0.18, strength) * mix(0.9, 1.35, stableSeed);
+	float flashEdge = mix(0.06, 0.1, strength);
+	float flashFade = 1.0 - smoothstep(0.0, mix(10.0, 18.0, strength), time);
+	float flashMask = (1.0 - smoothstep(flashRadius, flashRadius + flashEdge, distanceFromCenter)) * flashFade;
 
-	float flashFade = 1.0 - smoothstep(0.0, mix(14.0, 22.0, strength), time);
-	float flashRadius = mix(0.075, 0.11, strength);
-	float flashMask = (1.0 - smoothstep(flashRadius, flashRadius + 0.09, distanceFromCenter)) * flashFade;
-
-	float shockRadius = time * mix(0.0052, 0.0072, strength);
-	float shockWidth = mix(0.045, 0.075, strength);
-	float shockFade = 1.0 - smoothstep(16.0, 110.0, time);
+	float shockRadius = time * mix(0.0044, 0.0064, strength);
+	float shockWidth = mix(0.05, 0.085, strength);
+	float shockFade = 1.0 - smoothstep(14.0, 120.0, time);
 	float outerBand = smoothstep(max(shockRadius - shockWidth, 0.0), shockRadius, distanceFromCenter);
 	float innerBand = 1.0 - smoothstep(shockRadius, shockRadius + shockWidth, distanceFromCenter);
 	float shockBand = outerBand * innerBand * shockFade;
 
-	float wakeFade = 1.0 - smoothstep(20.0, 140.0, time);
-	float wakeMask = (1.0 - smoothstep(0.0, shockRadius + shockWidth * 0.65, distanceFromCenter)) * wakeFade;
-	float cloudPush = max(shockBand, wakeMask * 0.38);
+	float wakeFade = 1.0 - smoothstep(18.0, 150.0, time);
+	float wakeInner = max(shockRadius - shockWidth * 1.6 - 0.03, 0.0);
+	float wakeOuter = shockRadius + shockWidth * 0.35;
+	float wakeMask = (1.0 - smoothstep(wakeInner, wakeOuter, distanceFromCenter)) * wakeFade;
 
-	return vec4(direction, cloudPush, flashMask);
+	float coreFade = 1.0 - smoothstep(8.0, 45.0, time);
+	float coreRadius = flashRadius * 1.18;
+	float coreMask = (1.0 - smoothstep(coreRadius, coreRadius + flashEdge * 1.6, distanceFromCenter)) * coreFade;
+	float clearMask = clamp(max(max(wakeMask, coreMask), shockBand * (0.5 + strength * 0.35)), 0.0, 1.0);
+
+	return vec4(shockBand, wakeMask, clearMask, flashMask);
 }
 
 void main() {
@@ -138,20 +143,22 @@ void main() {
 	float cloudMotionScale = mix(1.0, 1.5, step(0.999, density));
 	float motionTime = atmosphereTime * cloudMotionScale;
 	float impactClearStrength = clamp(max(impactField.w, impactField.z * mix(0.55, 0.95, density)), 0.0, 1.0);
-	vec2 nukePush = vec2(0.0);
-	float nukeFlash = 0.0;
+	float nukeClearStrength = 0.0;
+	vec2 nukePixelCoord = floor(localUV * PIXEL_GRID);
+	vec2 nukePixelUV = (nukePixelCoord + 0.5) / PIXEL_GRID;
 	for (int i = 0; i < MAX_NUKE_SHOCKS; i++) {
 		if (i < nukeShockCount) {
 			float shockStrength = clamp(nukeShockStrength[i], 0.0, 1.0);
-			vec4 nukeField = getNukeShockField(localUV, nukeShockTime[i], vec2(nukeShockCenterX[i], nukeShockCenterY[i]), shockStrength);
-			float nukeDisplacement = nukeField.z * mix(0.04, 0.11, shockStrength);
-			nukePush += nukeField.xy * nukeDisplacement;
-			nukeFlash = max(nukeFlash, clamp(nukeField.w * (0.85 + density * 0.15), 0.0, 1.0));
+			vec4 nukeField = getNukeShockField(nukePixelUV, nukeShockTime[i], vec2(nukeShockCenterX[i], nukeShockCenterY[i]), shockStrength);
+			nukeClearStrength = max(nukeClearStrength, nukeField.z);
 		}
 	}
-	nukePush = clamp(nukePush, vec2(-0.18), vec2(0.18));
-	vec2 nukePatternUV = patternUV + nukePush;
-	vec2 texelCoord = floor(nukePatternUV * PIXEL_GRID);
+	float suppressionStrength = max(impactClearStrength, nukeClearStrength);
+	if (suppressionStrength >= 0.999) {
+		gl_FragColor = vec4(0.0);
+		return;
+	}
+	vec2 texelCoord = floor(patternUV * PIXEL_GRID);
 	vec2 uv = (texelCoord + 0.5) / PIXEL_GRID;
 	vec2 texelFlow = vec2(motionTime * 0.18, -motionTime * 0.11);
 	vec2 flowDrift = texelFlow / PIXEL_GRID;
@@ -234,8 +241,7 @@ void main() {
 		overlayAlpha = atmosphereAlpha * alphaBoost;
 	}
 
-	layeredColor = mix(layeredColor, vec3(1.0), nukeFlash);
-	overlayAlpha *= 1.0 - impactClearStrength;
+	overlayAlpha *= 1.0 - suppressionStrength;
 	float finalAlpha = clamp(overlayAlpha * alphaMask, 0.0, 1.0);
 
 	gl_FragColor = vec4(layeredColor, finalAlpha);

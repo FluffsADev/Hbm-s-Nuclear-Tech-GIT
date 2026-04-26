@@ -75,6 +75,7 @@ public class SkyProviderCelestial extends IRenderHandler {
 	protected static final Shader atmosphereShader = new Shader(new ResourceLocation(RefStrings.MODID, "shaders/atmosphere.frag"));
 	protected static final Shader atmosphereEmissiveShader = new Shader(new ResourceLocation(RefStrings.MODID, "shaders/atmosphere_emissive.frag"));
 	protected static final Shader lightningShader = new Shader(new ResourceLocation(RefStrings.MODID, "shaders/lightning.frag"));
+	protected static final Shader nukeFlashShader = new Shader(new ResourceLocation(RefStrings.MODID, "shaders/nuke_flash.frag"));
 	protected static final Shader nightLightsShader = new Shader(new ResourceLocation(RefStrings.MODID, "shaders/nightlights.frag"));
 	protected static final Shader swarmShader = new Shader(new ResourceLocation(RefStrings.MODID, "shaders/swarm.vert"), new ResourceLocation(RefStrings.MODID, "shaders/swarm.frag"));
 
@@ -1124,6 +1125,7 @@ public class SkyProviderCelestial extends IRenderHandler {
 
 					// Draw the front half of the ring (unobscured)
 					if(metric.body.hasRings) {
+						GL11.glPushMatrix();
 						GL11.glColor4f(metric.body.ringColor[0], metric.body.ringColor[1], metric.body.ringColor[2], visibility);
 						mc.renderEngine.bindTexture(ringTexture);
 
@@ -1144,7 +1146,12 @@ public class SkyProviderCelestial extends IRenderHandler {
 						tessellator.draw();
 
 						GL11.glEnable(GL11.GL_CULL_FACE);
+						GL11.glPopMatrix();
 					}
+
+					List<CelestialNukeShockHandler.ShockStatus> flashShocks = CelestialNukeShockHandler.getClientShocks(metric.body);
+					double flashShockTime = world.getTotalWorldTime() + partialTicks;
+					renderNukeFlashOverlay(tessellator, uvOffset, size, flashShocks, flashShockTime);
 				}
 
 				if(renderPoint) {
@@ -1238,6 +1245,24 @@ public class SkyProviderCelestial extends IRenderHandler {
 		}
 		drawPlanetShaderQuad(tessellator, size);
 		lightningShader.stop();
+	}
+
+	private void renderNukeFlashOverlay(Tessellator tessellator, double uvOffset, double size, List<CelestialNukeShockHandler.ShockStatus> nukeShocks, double currentShockTime) {
+		if(nukeShocks.isEmpty()) {
+			return;
+		}
+
+		GL11.glEnable(GL11.GL_BLEND);
+		OpenGlHelper.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ONE, GL11.GL_ZERO);
+		GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+
+		nukeFlashShader.use();
+		nukeFlashShader.setUniform1f("offset", (float) uvOffset);
+		nukeFlashShader.setUniform1i("bodyTex", 0);
+		nukeFlashShader.setUniform1i("useBodyAlphaMask", 0);
+		AtmosphereRenderUtil.applyNukeShockUniforms(nukeFlashShader, nukeShocks, currentShockTime);
+		drawPlanetShaderQuad(tessellator, size);
+		nukeFlashShader.stop();
 	}
 
 	private void renderAtmosphereEmissive(Tessellator tessellator, Minecraft mc, CelestialBody body, float phase, double uvOffset, double size, int lightIntensity, int activeBlackouts, float atmosphereDensity, double patternOffset, float atmosphereTime, int atmosphereStyle, float impactTime, List<CelestialNukeShockHandler.ShockStatus> nukeShocks, double currentShockTime) {

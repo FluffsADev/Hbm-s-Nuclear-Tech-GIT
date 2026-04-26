@@ -73,6 +73,7 @@ public class GUIScreenSatSettings extends GuiScreen {
 	private static final Shader atmosphereShader = new Shader(new ResourceLocation(RefStrings.MODID, "shaders/atmosphere.frag"));
 	private static final Shader atmosphereEmissiveShader = new Shader(new ResourceLocation(RefStrings.MODID, "shaders/atmosphere_emissive.frag"));
 	private static final Shader lightningShader = new Shader(new ResourceLocation(RefStrings.MODID, "shaders/lightning.frag"));
+	private static final Shader nukeFlashShader = new Shader(new ResourceLocation(RefStrings.MODID, "shaders/nuke_flash.frag"));
 	private static final Shader nightLightsShader = new Shader(new ResourceLocation(RefStrings.MODID, "shaders/nightlights.frag"));
 
 	static {
@@ -1013,6 +1014,30 @@ public class GUIScreenSatSettings extends GuiScreen {
 				}
 				GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
 			}
+		}
+
+		if(!nukeShocks.isEmpty()) {
+			GL11.glEnable(GL11.GL_BLEND);
+			GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE);
+			GL11.glColor4f(1F, 1F, 1F, 1F);
+
+			nukeFlashShader.use();
+			nukeFlashShader.setUniform1f("offset", textureUOffset);
+			nukeFlashShader.setUniform1i("bodyTex", 0);
+			nukeFlashShader.setUniform1i("useBodyAlphaMask", 1);
+			AtmosphereRenderUtil.applyNukeShockUniforms(nukeFlashShader, nukeShocks, dayTicks);
+
+			GL13.glActiveTexture(GL13.GL_TEXTURE0);
+			mc.getTextureManager().bindTexture(body.texture);
+
+			if(rotateBody) {
+				drawTexturedQuadRotating(bodyScreenX, bodyScreenY, drawSize, bodyRotationAngle);
+			} else {
+				drawTexturedQuad(bodyScreenX, bodyScreenY, drawSize, 0F);
+			}
+
+			nukeFlashShader.stop();
+			GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
 		}
 
 		GL11.glColor4f(1F, 1F, 1F, 1F);
