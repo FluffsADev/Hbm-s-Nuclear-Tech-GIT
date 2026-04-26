@@ -84,7 +84,7 @@ float getRingMask(vec2 pixelUV, float time, vec2 center, float strength) {
 	float ringReveal = smoothstep(1.5, 4.5, time);
 	float ringFade = 1.0 - smoothstep(8.0, mix(68.0, 104.0, strength), time);
 	float flashFade = getFlashFade(time, strength);
-	float ringOpacity = mix(0.3, 1.0, smoothstep(0.0, 10.0, time));
+	float ringOpacity = mix(0.3, 0.78, smoothstep(0.0, 12.0, time));
 	float distanceFromCenter = length(pixelUV - center);
 	float outerBand = smoothstep(max(ringRadius - ringWidth, 0.0), ringRadius, distanceFromCenter);
 	float innerBand = 1.0 - smoothstep(ringRadius, ringRadius + ringWidth, distanceFromCenter);
@@ -113,15 +113,16 @@ void main() {
 		}
 	}
 
-	float finalAlpha = clamp(max(max(flashAlpha, afterglowAlpha), ringAlpha * 0.95), 0.0, 1.0);
-	vec3 ringColor = vec3(1.0, 0.98, 0.92);
+	float ringContribution = ringAlpha * 0.42;
+	float finalAlpha = clamp(max(max(flashAlpha, afterglowAlpha), ringContribution), 0.0, 1.0);
+	vec3 ringColor = vec3(0.72, 0.64, 0.56);
 	vec3 flashColor = vec3(1.0);
 	vec3 afterglowWarm = vec3(1.0, 0.72, 0.38);
 	vec3 afterglowAsh = vec3(0.62, 0.62, 0.6);
 	float afterglowToAsh = clamp(afterglowAlpha > 0.0 ? smoothstep(0.18, 0.75, afterglowAlpha) : 0.0, 0.0, 1.0);
 	vec3 afterglowColor = mix(afterglowAsh, afterglowWarm, afterglowToAsh);
 
-	vec3 accumColor = ringColor * ringAlpha * 0.95;
+	vec3 accumColor = ringColor * ringContribution;
 	accumColor += afterglowColor * afterglowAlpha * 0.9;
 	accumColor += flashColor * flashAlpha;
 	vec3 finalColor = finalAlpha > 0.001 ? clamp(accumColor / max(finalAlpha, 0.001), 0.0, 1.0) : vec3(0.0);
