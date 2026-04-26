@@ -66,17 +66,17 @@ vec4 getImpactField(vec2 localUV, float time) {
 	float shockFade = 1.0 - clamp(time * 0.0015, 0.0, 1.0);
 	float shockBand = 0.0;
 	if (shockFade > 0.0) {
-		float shockWidth = mix(0.065, 0.024, clamp(time / 280.0, 0.0, 1.0));
+		float shockWidth = mix(0.085, 0.032, clamp(time / 360.0, 0.0, 1.0));
 		float outerBand = smoothstep(max(shockRadius - shockWidth, 0.0), shockRadius, distanceFromImpact);
 		float innerBand = 1.0 - smoothstep(shockRadius, shockRadius + shockWidth, distanceFromImpact);
 		shockBand = outerBand * innerBand * shockFade;
 	}
 
-	float coreFade = 1.0 - smoothstep(18.0, 220.0, time);
+	float coreFade = 1.0 - smoothstep(40.0, 520.0, time);
 	float coreMask = 0.0;
 	if (coreFade > 0.0) {
-		float coreRadius = mix(0.13, 0.045, clamp(time / 220.0, 0.0, 1.0));
-		coreMask = (1.0 - smoothstep(coreRadius, coreRadius + 0.05, distanceFromImpact)) * coreFade;
+		float coreRadius = mix(0.18, 0.07, clamp(time / 360.0, 0.0, 1.0));
+		coreMask = (1.0 - smoothstep(coreRadius, coreRadius + 0.07, distanceFromImpact)) * coreFade;
 	}
 
 	return vec4(direction, shockBand, coreMask);
@@ -95,7 +95,6 @@ void main() {
 	vec2 wrappedUV = fract(movingUV);
 	vec2 patternUV = localUV + vec2(patternOffset, 0.0);
 	vec4 impactField = getImpactField(localUV, impactTime);
-	vec2 impactPatternUV = patternUV + impactField.xy * impactField.z * 0.095;
 
 	float alphaMask = 1.0;
 	if (useBodyAlphaMask != 0) {
@@ -138,6 +137,9 @@ void main() {
 
 	float cloudMotionScale = mix(1.0, 1.5, step(0.999, atmosphereDensity));
 	float motionTime = atmosphereTime * cloudMotionScale;
+	float impactDisplacement = impactField.z * mix(0.095, 0.17, atmosphereDensity);
+	float impactSuppression = max(impactField.w, impactField.z * 0.42);
+	vec2 impactPatternUV = patternUV + impactField.xy * impactDisplacement;
 	vec2 texelCoord = floor(impactPatternUV * PIXEL_GRID);
 	vec2 texelFlow = vec2(motionTime * 0.18, -motionTime * 0.11);
 	vec2 glowCellUV = fract((texelCoord + 0.5) / PIXEL_GRID + vec2(offset - patternOffset, 0.0));
@@ -169,7 +171,7 @@ void main() {
 		float cloudCore = smoothstep(0.2, 0.82, cloudPresence);
 		emissiveMask = cloudPresence * (0.34 + atmosphereDensity * 0.28) + cloudCore * (0.12 + atmosphereDensity * 0.14);
 	}
-	emissiveMask *= 1.0 - impactField.w;
+	emissiveMask *= 1.0 - impactSuppression;
 
 	vec3 blurredLights = sampleCityLight(glowCellUV) * 0.40;
 	blurredLights += sampleCityLight(glowCellUV + vec2(glowStep.x, 0.0)) * 0.17;

@@ -63,17 +63,17 @@ vec4 getImpactField(vec2 localUV, float time) {
 	float shockFade = 1.0 - clamp(time * 0.0015, 0.0, 1.0);
 	float shockBand = 0.0;
 	if (shockFade > 0.0) {
-		float shockWidth = mix(0.065, 0.024, clamp(time / 280.0, 0.0, 1.0));
+		float shockWidth = mix(0.085, 0.032, clamp(time / 360.0, 0.0, 1.0));
 		float outerBand = smoothstep(max(shockRadius - shockWidth, 0.0), shockRadius, distanceFromImpact);
 		float innerBand = 1.0 - smoothstep(shockRadius, shockRadius + shockWidth, distanceFromImpact);
 		shockBand = outerBand * innerBand * shockFade;
 	}
 
-	float coreFade = 1.0 - smoothstep(18.0, 220.0, time);
+	float coreFade = 1.0 - smoothstep(40.0, 520.0, time);
 	float coreMask = 0.0;
 	if (coreFade > 0.0) {
-		float coreRadius = mix(0.13, 0.045, clamp(time / 220.0, 0.0, 1.0));
-		coreMask = (1.0 - smoothstep(coreRadius, coreRadius + 0.05, distanceFromImpact)) * coreFade;
+		float coreRadius = mix(0.18, 0.07, clamp(time / 360.0, 0.0, 1.0));
+		coreMask = (1.0 - smoothstep(coreRadius, coreRadius + 0.07, distanceFromImpact)) * coreFade;
 	}
 
 	return vec4(direction, shockBand, coreMask);
@@ -85,7 +85,6 @@ void main() {
 	vec2 wrappedUV = fract(movingUV);
 	vec2 patternUV = localUV + vec2(patternOffset, 0.0);
 	vec4 impactField = getImpactField(localUV, impactTime);
-	vec2 impactPatternUV = patternUV + impactField.xy * impactField.z * 0.095;
 
 	float alphaMask = 1.0;
 	if (useBodyAlphaMask != 0) {
@@ -103,6 +102,9 @@ void main() {
 	float stormDarkness = clamp(cloudStormDarkness, 0.0, 1.0);
 	float cloudMotionScale = mix(1.0, 1.5, step(0.999, density));
 	float motionTime = atmosphereTime * cloudMotionScale;
+	float impactDisplacement = impactField.z * mix(0.095, 0.17, density);
+	float impactClearStrength = max(impactField.w, impactField.z * (0.18 + density * 0.3));
+	vec2 impactPatternUV = patternUV + impactField.xy * impactDisplacement;
 	vec2 texelCoord = floor(impactPatternUV * PIXEL_GRID);
 	vec2 uv = (texelCoord + 0.5) / PIXEL_GRID;
 	vec2 texelFlow = vec2(motionTime * 0.18, -motionTime * 0.11);
@@ -130,7 +132,7 @@ void main() {
 		float hazeSheet = fbm(uv * 4.0 + vec2(-motionTime * 0.012, motionTime * 0.01));
 		float turbulence = noise(uv * 10.0 + vec2(motionTime * 0.018, -motionTime * 0.014));
 		float hazeMix = smoothstep(0.28, 0.88, mix(hazeField, hazeSheet, 0.4));
-		hazeMix *= 1.0 - impactField.w;
+		hazeMix *= 1.0 - impactClearStrength;
 
 		vec3 deepHaze = baseColor * mix(0.68, 0.55, density);
 		vec3 brightHaze = min(baseColor * (1.08 + density * 0.18) + vec3(0.06), vec3(1.0));
@@ -153,7 +155,7 @@ void main() {
 		float jet = 0.5 + 0.5 * sin((texelCoord.y + largeSwirl * 1.35) * 1.05 + motionTime * 0.45);
 		float jetMask = smoothstep(mix(0.8, 0.65, cloudCover), mix(0.96, 0.92, cloudCover), jet)
 			* smoothstep(mix(0.5, 0.38, cloudCover), mix(0.84, 0.76, cloudCover), wisps);
-		float impactClear = 1.0 - impactField.w;
+		float impactClear = 1.0 - impactClearStrength;
 		cloudMask *= impactClear;
 		cloudCoverage *= impactClear;
 		jetMask *= impactClear;
@@ -186,7 +188,7 @@ void main() {
 		overlayAlpha = atmosphereAlpha * alphaBoost;
 	}
 
-	overlayAlpha *= 1.0 - impactField.w * 0.96;
+	overlayAlpha *= 1.0 - impactClearStrength * 0.995;
 	float finalAlpha = clamp(overlayAlpha * alphaMask, 0.0, 1.0);
 
 	gl_FragColor = vec4(layeredColor, finalAlpha);

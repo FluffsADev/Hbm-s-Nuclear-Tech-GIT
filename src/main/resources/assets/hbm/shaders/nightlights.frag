@@ -66,17 +66,17 @@ vec4 getImpactField(vec2 localUV, float time) {
 	float shockFade = 1.0 - clamp(time * 0.0015, 0.0, 1.0);
 	float shockBand = 0.0;
 	if (shockFade > 0.0) {
-		float shockWidth = mix(0.065, 0.024, clamp(time / 280.0, 0.0, 1.0));
+		float shockWidth = mix(0.085, 0.032, clamp(time / 360.0, 0.0, 1.0));
 		float outerBand = smoothstep(max(shockRadius - shockWidth, 0.0), shockRadius, distanceFromImpact);
 		float innerBand = 1.0 - smoothstep(shockRadius, shockRadius + shockWidth, distanceFromImpact);
 		shockBand = outerBand * innerBand * shockFade;
 	}
 
-	float coreFade = 1.0 - smoothstep(18.0, 220.0, time);
+	float coreFade = 1.0 - smoothstep(40.0, 520.0, time);
 	float coreMask = 0.0;
 	if (coreFade > 0.0) {
-		float coreRadius = mix(0.13, 0.045, clamp(time / 220.0, 0.0, 1.0));
-		coreMask = (1.0 - smoothstep(coreRadius, coreRadius + 0.05, distanceFromImpact)) * coreFade;
+		float coreRadius = mix(0.18, 0.07, clamp(time / 360.0, 0.0, 1.0));
+		coreMask = (1.0 - smoothstep(coreRadius, coreRadius + 0.07, distanceFromImpact)) * coreFade;
 	}
 
 	return vec4(direction, shockBand, coreMask);
@@ -88,7 +88,6 @@ void main() {
 	vec2 wrappedUV = fract(movingUV);
 	vec2 patternUV = localUV + vec2(patternOffset, 0.0);
 	vec4 impactField = getImpactField(localUV, impactTime);
-	vec2 impactPatternUV = patternUV + impactField.xy * impactField.z * 0.095;
 
 	float alphaMask = 1.0;
 	if (useBodyAlphaMask != 0) {
@@ -138,6 +137,9 @@ void main() {
 	float cloudOcclusion = 0.0;
 	float cloudMotionScale = mix(1.0, 1.5, step(0.999, atmosphereDensity));
 	float motionTime = atmosphereTime * cloudMotionScale;
+	float impactDisplacement = impactField.z * mix(0.095, 0.17, atmosphereDensity);
+	float impactSuppression = max(impactField.w, impactField.z * 0.42);
+	vec2 impactPatternUV = patternUV + impactField.xy * impactDisplacement;
 
 	if (atmosphereStyle == 2) {
 		vec2 texelCoord = floor(impactPatternUV * PIXEL_GRID);
@@ -167,7 +169,7 @@ void main() {
 		float cloudPresence = max(max(cloudMask, cloudCoverage * (0.58 + cloudCover * 0.18)), jetMask * (0.46 + cloudCover * 0.18));
 		cloudOcclusion = cloudPresence * (0.58 + atmosphereDensity * 0.22);
 	}
-	cloudOcclusion *= 1.0 - impactField.w;
+	cloudOcclusion *= 1.0 - impactSuppression;
 
 	float directTransmission = clamp(1.0 - cloudOcclusion * (0.72 + atmosphereDensity * 0.18), 0.08, 1.0);
 	float directVisibility = 1.0 - smoothstep(0.24, 0.95, atmosphereDensity);

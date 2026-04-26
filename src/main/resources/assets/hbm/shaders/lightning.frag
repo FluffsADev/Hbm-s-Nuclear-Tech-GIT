@@ -61,17 +61,17 @@ vec4 getImpactField(vec2 localUV, float time) {
 	float shockFade = 1.0 - clamp(time * 0.0015, 0.0, 1.0);
 	float shockBand = 0.0;
 	if (shockFade > 0.0) {
-		float shockWidth = mix(0.065, 0.024, clamp(time / 280.0, 0.0, 1.0));
+		float shockWidth = mix(0.085, 0.032, clamp(time / 360.0, 0.0, 1.0));
 		float outerBand = smoothstep(max(shockRadius - shockWidth, 0.0), shockRadius, distanceFromImpact);
 		float innerBand = 1.0 - smoothstep(shockRadius, shockRadius + shockWidth, distanceFromImpact);
 		shockBand = outerBand * innerBand * shockFade;
 	}
 
-	float coreFade = 1.0 - smoothstep(18.0, 220.0, time);
+	float coreFade = 1.0 - smoothstep(40.0, 520.0, time);
 	float coreMask = 0.0;
 	if (coreFade > 0.0) {
-		float coreRadius = mix(0.13, 0.045, clamp(time / 220.0, 0.0, 1.0));
-		coreMask = (1.0 - smoothstep(coreRadius, coreRadius + 0.05, distanceFromImpact)) * coreFade;
+		float coreRadius = mix(0.18, 0.07, clamp(time / 360.0, 0.0, 1.0));
+		coreMask = (1.0 - smoothstep(coreRadius, coreRadius + 0.07, distanceFromImpact)) * coreFade;
 	}
 
 	return vec4(direction, shockBand, coreMask);
@@ -106,7 +106,6 @@ void main() {
 	vec2 wrappedUV = fract(movingUV);
 	vec2 patternUV = localUV + vec2(patternOffset, 0.0);
 	vec4 impactField = getImpactField(localUV, impactTime);
-	vec2 impactPatternUV = patternUV + impactField.xy * impactField.z * 0.095;
 
 	float alphaMask = 1.0;
 	if (useBodyAlphaMask != 0) {
@@ -129,6 +128,9 @@ void main() {
 	float nightVisibility = getNightVisibility(movingUV);
 	float cloudMotionScale = mix(1.0, 1.5, step(0.999, density));
 	float motionTime = atmosphereTime * cloudMotionScale;
+	float impactDisplacement = impactField.z * mix(0.095, 0.17, density);
+	float impactSuppression = max(impactField.w, impactField.z * 0.42);
+	vec2 impactPatternUV = patternUV + impactField.xy * impactDisplacement;
 	vec4 city = texture2D(cityMask, movingUV);
 	float maskCoverage = max(max(city.r, city.g), city.b) * city.a;
 	if (maskCoverage <= 0.001) {
@@ -186,7 +188,7 @@ void main() {
 		float lightningMask = smoothstep(0.42, 0.82, cloudPresence) * smoothstep(0.7, 0.92, lightningPatch + cloudPattern * 0.4);
 		lightningAlpha = flashPulse * lightningMask * nightVisibility * (0.72 + lightningStrength * 0.28 + neutralBoost * 0.38);
 	}
-	lightningAlpha *= 1.0 - impactField.w;
+	lightningAlpha *= 1.0 - impactSuppression;
 
 	gl_FragColor = vec4(vec3(1.0), clamp(lightningAlpha * denseAtmosphereVisibility * alphaMask * maskCoverage, 0.0, 1.0));
 }
