@@ -63,23 +63,23 @@ vec4 getImpactField(vec2 localUV, float time) {
 	vec2 direction = distanceFromImpact > 0.0001 ? delta / distanceFromImpact : vec2(0.0, 1.0);
 
 	float shockRadius = time * 0.00175;
-	float shockFade = 1.0 - clamp(time * 0.0015, 0.0, 1.0);
-	float shockBand = 0.0;
-	if (shockFade > 0.0) {
-		float shockWidth = mix(0.085, 0.032, clamp(time / 360.0, 0.0, 1.0));
-		float outerBand = smoothstep(max(shockRadius - shockWidth, 0.0), shockRadius, distanceFromImpact);
-		float innerBand = 1.0 - smoothstep(shockRadius, shockRadius + shockWidth, distanceFromImpact);
-		shockBand = outerBand * innerBand * shockFade;
-	}
+	float shockProgress = clamp(time / 480.0, 0.0, 1.0);
+	float shockWidth = mix(0.11, 0.045, shockProgress);
+	float shockFade = 1.0 - smoothstep(80.0, 760.0, time);
+	float outerBand = smoothstep(max(shockRadius - shockWidth, 0.0), shockRadius, distanceFromImpact);
+	float innerBand = 1.0 - smoothstep(shockRadius, shockRadius + shockWidth, distanceFromImpact);
+	float shockBand = outerBand * innerBand * shockFade;
 
-	float coreFade = 1.0 - smoothstep(40.0, 520.0, time);
-	float coreMask = 0.0;
-	if (coreFade > 0.0) {
-		float coreRadius = mix(0.18, 0.07, clamp(time / 360.0, 0.0, 1.0));
-		coreMask = (1.0 - smoothstep(coreRadius, coreRadius + 0.07, distanceFromImpact)) * coreFade;
-	}
+	float wakeFade = 1.0 - smoothstep(60.0, 700.0, time);
+	float wakeInner = max(shockRadius - shockWidth * 1.8 - 0.035, 0.0);
+	float wakeOuter = shockRadius + shockWidth * 0.35;
+	float wakeMask = (1.0 - smoothstep(wakeInner, wakeOuter, distanceFromImpact)) * wakeFade;
 
-	return vec4(direction, shockBand, coreMask);
+	float coreFade = 1.0 - smoothstep(120.0, 760.0, time);
+	float coreRadius = mix(0.22, 0.1, shockProgress);
+	float coreMask = (1.0 - smoothstep(coreRadius, coreRadius + 0.08, distanceFromImpact)) * coreFade;
+
+	return vec4(direction, shockBand, max(wakeMask, coreMask));
 }
 
 void main() {
@@ -137,8 +137,8 @@ void main() {
 	float cloudOcclusion = 0.0;
 	float cloudMotionScale = mix(1.0, 1.5, step(0.999, atmosphereDensity));
 	float motionTime = atmosphereTime * cloudMotionScale;
-	float impactDisplacement = impactField.z * mix(0.095, 0.17, atmosphereDensity);
-	float impactSuppression = max(impactField.w, impactField.z * 0.42);
+	float impactDisplacement = impactField.z * mix(0.18, 0.3, atmosphereDensity) + impactField.w * mix(0.04, 0.08, atmosphereDensity);
+	float impactSuppression = clamp(max(impactField.w, impactField.z * mix(0.55, 0.95, atmosphereDensity)), 0.0, 1.0);
 	vec2 impactPatternUV = patternUV + impactField.xy * impactDisplacement;
 
 	if (atmosphereStyle == 2) {
@@ -174,7 +174,7 @@ void main() {
 	float directTransmission = clamp(1.0 - cloudOcclusion * (0.72 + atmosphereDensity * 0.18), 0.08, 1.0);
 	float directVisibility = 1.0 - smoothstep(0.24, 0.95, atmosphereDensity);
 
-	gl_FragColor = vec4(lightColor, nightFactor * atmosphereTransmission * directTransmission * directVisibility * alphaMask);
+	gl_FragColor = vec4(lightColor, nightFactor * atmosphereTransmission * directTransmission * directVisibility * (1.0 - impactSuppression) * alphaMask);
 
 	for (int i = 0; i < blackouts; i++) {
 		float bx = hash(i * 100.0 + 1.0);
