@@ -742,7 +742,6 @@ public class MainRegistry {
 		event.registerServerCommand(new CommandReloadServer());
 		event.registerServerCommand(new CommandLocate());
 		event.registerServerCommand(new CommandTotalTime());
-		event.registerServerCommand(new CommandAtmosphere());
 		event.registerServerCommand(new CommandCustomize());
 		event.registerServerCommand(new CommandReapNetworks());
 		ArcFurnaceRecipes.registerFurnaceSmeltables(); // because we have to wait for other mods to take their merry ass time to register recipes
