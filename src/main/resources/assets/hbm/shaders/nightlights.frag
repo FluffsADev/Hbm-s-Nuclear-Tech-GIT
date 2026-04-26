@@ -91,7 +91,7 @@ void main() {
 	lightColor *= city.a;
 
 	float nightFactor = clamp(0.8 - brightness, 0.0, 1.0);
-	float atmosphereTransmission = 1.0 - smoothstep(0.1, 0.85, atmosphereDensity);
+	float atmosphereTransmission = 1.0 - smoothstep(0.22, 0.88, atmosphereDensity);
 	float cloudOcclusion = 0.0;
 
 	if (atmosphereStyle == 2) {
@@ -124,8 +124,7 @@ void main() {
 	}
 
 	float directTransmission = clamp(1.0 - cloudOcclusion * (0.72 + atmosphereDensity * 0.18), 0.08, 1.0);
-	float directVisibility = mix(0.14, 0.0, smoothstep(0.12, 0.95, atmosphereDensity));
-	directVisibility *= 1.0 - cloudOcclusion * 0.65;
+	float directVisibility = 1.0 - smoothstep(0.24, 0.95, atmosphereDensity);
 
 	gl_FragColor = vec4(lightColor, nightFactor * atmosphereTransmission * directTransmission * directVisibility * alphaMask);
 

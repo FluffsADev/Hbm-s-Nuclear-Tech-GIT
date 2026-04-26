@@ -141,8 +141,12 @@ void main() {
 
 	float glowLuma = dot(blurredLights, vec3(0.299, 0.587, 0.114));
 	float glowPresence = smoothstep(0.02, 0.24, glowLuma);
+	float denseAtmosphereMute = smoothstep(0.72, 1.0, atmosphereDensity);
 	vec3 warmGlow = vec3(glowLuma * 1.32, glowLuma * 1.04, glowLuma * 0.48);
-	vec3 glowColor = mix(blurredLights * vec3(0.75, 0.68, 0.4), warmGlow, 0.82);
+	vec3 mutedGlow = vec3(glowLuma * 1.14, glowLuma * 0.98, glowLuma * 0.58);
+	vec3 glowTint = mix(vec3(0.75, 0.68, 0.4), vec3(0.69, 0.66, 0.5), denseAtmosphereMute);
+	vec3 glowCore = mix(warmGlow, mutedGlow, denseAtmosphereMute);
+	vec3 glowColor = mix(blurredLights * glowTint, glowCore, mix(0.82, 0.76, denseAtmosphereMute));
 	float glowAlpha = clamp(
 		nightFactor
 		* emissiveMask
