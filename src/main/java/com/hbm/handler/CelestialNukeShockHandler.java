@@ -23,7 +23,7 @@ public class CelestialNukeShockHandler {
 
 	private static final long MAX_AGE = 120L;
 	public static final int MAX_ACTIVE_SHOCKS = 4;
-	private static final float FLASH_GRID = 6.0F;
+	private static final float FLASH_GRID = 16.0F;
 
 	public static final class ShockStatus {
 		public long time;

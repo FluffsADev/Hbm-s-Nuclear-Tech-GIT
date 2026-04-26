@@ -97,7 +97,8 @@ vec4 getNukeShockField(vec2 localUV, float time, vec2 center, float strength) {
 	float distanceFromCenter = length(delta);
 	vec2 direction = distanceFromCenter > 0.0001 ? delta / distanceFromCenter : vec2(0.0, 1.0);
 	float stableSeed = fract(sin(dot(center + vec2(strength * 0.31, strength * 0.73), vec2(127.1, 311.7))) * 43758.5453123);
-	float shockRadius = time * mix(0.00085, 0.00135, strength) * mix(0.92, 1.15, stableSeed);
+	float coreRadius = mix(0.09, 0.16, strength) * mix(0.92, 1.28, stableSeed);
+	float shockRadius = coreRadius * 0.92 + time * mix(0.00085, 0.00135, strength) * mix(0.92, 1.15, stableSeed);
 	float shockProgress = clamp(time / mix(72.0, 120.0, strength), 0.0, 1.0);
 	float shockWidth = mix(0.07, 0.032, shockProgress) * mix(0.95, 1.12, stableSeed);
 	float shockFade = 1.0 - smoothstep(10.0, mix(82.0, 118.0, strength), time);
@@ -111,7 +112,6 @@ vec4 getNukeShockField(vec2 localUV, float time, vec2 center, float strength) {
 	float wakeMask = (1.0 - smoothstep(wakeInner, wakeOuter, distanceFromCenter)) * wakeFade;
 
 	float coreFade = 1.0 - smoothstep(0.0, mix(18.0, 32.0, strength), time);
-	float coreRadius = mix(0.09, 0.16, strength) * mix(0.92, 1.28, stableSeed);
 	float coreMask = (1.0 - smoothstep(coreRadius, coreRadius + 0.06, distanceFromCenter)) * coreFade;
 
 	return vec4(direction, shockBand, max(wakeMask, coreMask));

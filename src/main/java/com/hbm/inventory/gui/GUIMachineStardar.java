@@ -61,8 +61,6 @@ public class GUIMachineStardar extends GuiInfoContainer {
 	private static final ResourceLocation starmapTexture = new ResourceLocation(RefStrings.MODID + ":textures/gui/starmap3.png");
 	private static final ResourceLocation ringTexture = new ResourceLocation(RefStrings.MODID + ":textures/misc/space/rings.png");
 	private static final ResourceLocation impactTexture = new ResourceLocation(RefStrings.MODID + ":textures/misc/space/impact.png");
-	private static final ResourceLocation shockwaveTexture = new ResourceLocation(RefStrings.MODID + ":textures/particle/shockwave.png");
-	private static final ResourceLocation shockFlareTexture = new ResourceLocation(RefStrings.MODID + ":textures/particle/flare.png");
 	private static final ResourceLocation defaultMask = new ResourceLocation(RefStrings.MODID, "textures/misc/space/default_mask.png");
 	private static final ResourceLocation satelliteTextureDefault = new ResourceLocation(RefStrings.MODID, "textures/items/sat_base.png");
 	private static final ResourceLocation satelliteTextureFoeq = new ResourceLocation(RefStrings.MODID, "textures/items/sat_foeq.png");
@@ -1233,39 +1231,20 @@ public class GUIMachineStardar extends GuiInfoContainer {
 		}
 
 		if(!nukeShocks.isEmpty()) {
-			for(CelestialNukeShockHandler.ShockStatus shock : nukeShocks) {
-				float shockwaveAlpha = AtmosphereRenderUtil.getNukeShockwaveAlpha(shock, dayTicks);
-				float shockwaveRadius = AtmosphereRenderUtil.getNukeShockwaveRadius(shock, dayTicks);
-				renderMaskedNukeEffectOverlay(bodyScreenX, bodyScreenY, drawSize, rotateBody, bodyRotationAngle, shock.centerX, shock.centerY, shockwaveRadius, shockwaveAlpha, shockwaveTexture);
-
-				float flareAlpha = AtmosphereRenderUtil.getNukeFlareAlpha(shock, dayTicks);
-				float flareRadius = AtmosphereRenderUtil.getNukeFlareRadius(shock);
-				renderMaskedNukeEffectOverlay(bodyScreenX, bodyScreenY, drawSize, rotateBody, bodyRotationAngle, shock.centerX, shock.centerY, flareRadius, flareAlpha, shockFlareTexture);
-			}
+			renderNukeImpactOverlay(bodyScreenX, bodyScreenY, drawSize, rotateBody, bodyRotationAngle, nukeShocks, dayTicks);
 			GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
 		}
 
 		GL11.glColor4f(1F, 1F, 1F, 1F);
 	}
 
-	private void renderMaskedNukeEffectOverlay(float bodyScreenX, float bodyScreenY, float drawSize, boolean rotateBody, float bodyRotationAngle, float centerX, float centerY, float radius, float alpha, ResourceLocation effectTexture) {
-		if(alpha <= 0.001F || radius <= 0.0001F) {
-			return;
-		}
-
+	private void renderNukeImpactOverlay(float bodyScreenX, float bodyScreenY, float drawSize, boolean rotateBody, float bodyRotationAngle, List<CelestialNukeShockHandler.ShockStatus> nukeShocks, double currentShockTime) {
 		GL11.glEnable(GL11.GL_BLEND);
 		GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE);
 		GL11.glColor4f(1F, 1F, 1F, 1F);
 
 		nukeEffectOverlayShader.use();
-		nukeEffectOverlayShader.setUniform1i("effectTex", 0);
-		nukeEffectOverlayShader.setUniform1f("effectCenterX", centerX);
-		nukeEffectOverlayShader.setUniform1f("effectCenterY", centerY);
-		nukeEffectOverlayShader.setUniform1f("effectRadius", radius);
-		nukeEffectOverlayShader.setUniform1f("effectAlpha", alpha);
-
-		GL13.glActiveTexture(GL13.GL_TEXTURE0);
-		mc.getTextureManager().bindTexture(effectTexture);
+		AtmosphereRenderUtil.applyNukeShockUniforms(nukeEffectOverlayShader, nukeShocks, currentShockTime);
 		if(rotateBody) {
 			drawTexturedQuadRotating(bodyScreenX, bodyScreenY, drawSize, bodyRotationAngle);
 		} else {
