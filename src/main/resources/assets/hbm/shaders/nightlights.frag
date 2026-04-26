@@ -124,8 +124,10 @@ void main() {
 	}
 
 	float directTransmission = clamp(1.0 - cloudOcclusion * (0.72 + atmosphereDensity * 0.18), 0.08, 1.0);
+	float directVisibility = mix(0.14, 0.0, smoothstep(0.12, 0.95, atmosphereDensity));
+	directVisibility *= 1.0 - cloudOcclusion * 0.65;
 
-	gl_FragColor = vec4(lightColor, nightFactor * atmosphereTransmission * directTransmission * alphaMask);
+	gl_FragColor = vec4(lightColor, nightFactor * atmosphereTransmission * directTransmission * directVisibility * alphaMask);
 
 	for (int i = 0; i < blackouts; i++) {
 		float bx = hash(i * 100.0 + 1.0);

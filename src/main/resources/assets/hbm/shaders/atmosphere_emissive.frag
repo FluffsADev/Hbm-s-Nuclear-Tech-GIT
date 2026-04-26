@@ -51,6 +51,13 @@ float fbm(vec2 p) {
 	return value;
 }
 
+vec3 sampleCityLight(vec2 sampleUV) {
+	vec2 wrappedUV = fract(sampleUV);
+	vec4 city = texture2D(cityMask, wrappedUV);
+	vec3 lightColor = texture2D(lights, wrappedUV).rgb * city.rgb;
+	return lightColor * city.a;
+}
+
 void main() {
 	vec2 movingUV = gl_TexCoord[0].xy + vec2(offset, 0.0);
 	vec2 wrappedUV = fract(movingUV);
@@ -89,13 +96,11 @@ void main() {
 
 	brightness = max(brightness, 0.05);
 
-	vec4 city = texture2D(cityMask, movingUV);
-	vec3 lightColor = texture2D(lights, movingUV).rgb * city.rgb;
-	lightColor *= city.a;
-
 	float nightFactor = clamp(0.8 - brightness, 0.0, 1.0);
 	vec2 texelCoord = floor(patternUV * PIXEL_GRID);
 	vec2 texelFlow = vec2(atmosphereTime * 0.18, -atmosphereTime * 0.11);
+	vec2 glowCellUV = fract((texelCoord + 0.5) / PIXEL_GRID + vec2(offset - patternOffset, 0.0));
+	vec2 glowStep = vec2(1.0 / (PIXEL_GRID * 3.0), 1.0 / (PIXEL_GRID * 3.0));
 	float emissiveMask = 0.0;
 
 	if (atmosphereStyle == 2) {
@@ -104,7 +109,7 @@ void main() {
 		float hazeField = fbm(uvp * 2.4 + flowDrift * 0.55);
 		float hazeSheet = fbm(uvp * 4.0 + vec2(-atmosphereTime * 0.012, atmosphereTime * 0.01));
 		float hazeMix = smoothstep(0.28, 0.88, mix(hazeField, hazeSheet, 0.4));
-		emissiveMask = hazeMix * (0.24 + atmosphereDensity * 0.22);
+		emissiveMask = hazeMix * (0.38 + atmosphereDensity * 0.34);
 	} else {
 		vec2 cloudBase = (texelCoord + texelFlow) / vec2(7.5, 6.0);
 		float largeSwirl = fbm(cloudBase * 0.75);
@@ -120,10 +125,34 @@ void main() {
 		float jetMask = smoothstep(mix(0.8, 0.65, cloudCover), mix(0.96, 0.92, cloudCover), jet)
 			* smoothstep(mix(0.5, 0.38, cloudCover), mix(0.84, 0.76, cloudCover), wisps);
 		float cloudPresence = max(max(cloudMask, cloudCoverage * (0.58 + cloudCover * 0.18)), jetMask * (0.46 + cloudCover * 0.18));
-		emissiveMask = cloudPresence * (0.28 + atmosphereDensity * 0.24);
+		float cloudCore = smoothstep(0.2, 0.82, cloudPresence);
+		emissiveMask = cloudPresence * (0.34 + atmosphereDensity * 0.28) + cloudCore * (0.12 + atmosphereDensity * 0.14);
 	}
 
-	gl_FragColor = vec4(lightColor, clamp(nightFactor * emissiveMask * alphaMask, 0.0, 1.0));
+	vec3 blurredLights = sampleCityLight(glowCellUV) * 0.28;
+	blurredLights += sampleCityLight(glowCellUV + vec2(glowStep.x, 0.0)) * 0.15;
+	blurredLights += sampleCityLight(glowCellUV - vec2(glowStep.x, 0.0)) * 0.15;
+	blurredLights += sampleCityLight(glowCellUV + vec2(0.0, glowStep.y)) * 0.15;
+	blurredLights += sampleCityLight(glowCellUV - vec2(0.0, glowStep.y)) * 0.15;
+	blurredLights += sampleCityLight(glowCellUV + glowStep) * 0.06;
+	blurredLights += sampleCityLight(glowCellUV - glowStep) * 0.06;
+	blurredLights += sampleCityLight(glowCellUV + vec2(glowStep.x, -glowStep.y)) * 0.06;
+	blurredLights += sampleCityLight(glowCellUV + vec2(-glowStep.x, glowStep.y)) * 0.06;
+
+	float glowLuma = dot(blurredLights, vec3(0.299, 0.587, 0.114));
+	float glowPresence = smoothstep(0.02, 0.24, glowLuma);
+	vec3 warmGlow = vec3(glowLuma * 1.32, glowLuma * 1.04, glowLuma * 0.48);
+	vec3 glowColor = mix(blurredLights * vec3(0.75, 0.68, 0.4), warmGlow, 0.82);
+	float glowAlpha = clamp(
+		nightFactor
+		* emissiveMask
+		* glowPresence
+		* (0.8 + atmosphereDensity * 0.45),
+		0.0,
+		1.0
+	);
+
+	gl_FragColor = vec4(glowColor, glowAlpha * alphaMask);
 
 	for (int i = 0; i < blackouts; i++) {
 		float bx = hash(i * 100.0 + 1.0);
