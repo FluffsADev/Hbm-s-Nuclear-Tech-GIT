@@ -119,19 +119,15 @@ void main() {
 		float cloudPresence = max(max(cloudMask, cloudCoverage * 0.82), jetMask * 0.72);
 		float stormMask = smoothstep(0.24, 0.78, cloudPresence);
 		float stormShade = mix(1.0, 0.22, stormDarkness);
-		float tintedClouds = smoothstep(0.02, 0.18, tintStrength);
 
 		vec3 shadowColor = baseColor * mix(0.72, 0.55, density);
 		vec3 cloudColor = min(cloudTint * (1.18 + density * 0.18) + vec3(0.04 + density * 0.04), vec3(1.0));
-		cloudColor *= mix(1.0, 0.8, tintStrength);
-		cloudColor *= mix(1.0, 0.8, tintedClouds);
 		cloudColor *= mix(1.0, stormShade, 0.85);
 		vec3 stormCloudColor = mix(cloudColor, vec3(0.22, 0.22, 0.24), 0.52 + stormDarkness * 0.28);
 		vec3 airColor = mix(shadowColor, baseColor, 0.35 + turbulence * 0.3);
 		layeredColor = mix(airColor, cloudColor, cloudMask * (0.96 + density * 0.3));
 		layeredColor = mix(layeredColor, cloudColor, cloudCoverage * (0.48 + density * 0.2));
 		layeredColor = mix(layeredColor, cloudColor, jetMask * (0.5 + density * 0.24));
-		layeredColor = mix(layeredColor, layeredColor * mix(1.0, 0.9, tintedClouds), cloudPresence * 0.4);
 		layeredColor = mix(layeredColor, stormCloudColor, stormMask * (0.84 + stormDarkness * 0.16));
 
 		if (lightningStrength > 0.001) {
