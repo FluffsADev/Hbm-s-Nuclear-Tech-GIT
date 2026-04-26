@@ -93,6 +93,8 @@ void main() {
 	float tintStrength = clamp(cloudTintStrength, 0.0, 1.0);
 	float denseAtmosphereVisibility = mix(1.0, 0.5, smoothstep(0.72, 1.0, density));
 	float nightVisibility = getNightVisibility(movingUV);
+	float cloudMotionScale = mix(1.0, 1.5, step(0.999, density));
+	float motionTime = atmosphereTime * cloudMotionScale;
 	vec4 city = texture2D(cityMask, movingUV);
 	float maskCoverage = max(max(city.r, city.g), city.b) * city.a;
 	if (maskCoverage <= 0.001) {
@@ -102,14 +104,14 @@ void main() {
 
 	vec2 texelCoord = floor(patternUV * PIXEL_GRID);
 	vec2 uv = (texelCoord + 0.5) / PIXEL_GRID;
-	vec2 texelFlow = vec2(atmosphereTime * 0.18, -atmosphereTime * 0.11);
+	vec2 texelFlow = vec2(motionTime * 0.18, -motionTime * 0.11);
 	vec2 flowDrift = texelFlow / PIXEL_GRID;
 	float lightningAlpha = 0.0;
 
 	if (atmosphereStyle == 2) {
 		float hazeField = fbm(uv * 2.4 + flowDrift * 0.55);
-		float hazeSheet = fbm(uv * 4.0 + vec2(-atmosphereTime * 0.012, atmosphereTime * 0.01));
-		float turbulence = noise(uv * 10.0 + vec2(atmosphereTime * 0.018, -atmosphereTime * 0.014));
+		float hazeSheet = fbm(uv * 4.0 + vec2(-motionTime * 0.012, motionTime * 0.01));
+		float turbulence = noise(uv * 10.0 + vec2(motionTime * 0.018, -motionTime * 0.014));
 		float hazeMix = smoothstep(0.28, 0.88, mix(hazeField, hazeSheet, 0.4));
 		float burstWindow = floor(atmosphereTime * 0.72 + patternOffset * 5.0);
 		float burstSeed = hash(vec2(burstWindow, 57.91));
@@ -125,15 +127,15 @@ void main() {
 	} else {
 		vec2 cloudBase = (texelCoord + texelFlow) / vec2(7.5, 6.0);
 		float largeSwirl = fbm(cloudBase * 0.75);
-		float shear = fbm((texelCoord.yx + vec2(-atmosphereTime * 0.12, atmosphereTime * 0.09)) / vec2(8.5, 10.0));
+		float shear = fbm((texelCoord.yx + vec2(-motionTime * 0.12, motionTime * 0.09)) / vec2(8.5, 10.0));
 		vec2 cloudUv = cloudBase + vec2(largeSwirl * 0.48, shear * 0.18);
 		float cloudCover = clamp(0.22 + density * 0.95, 0.0, 1.0);
 		float cloudField = fbm(cloudUv);
-		float wisps = fbm(cloudUv * 1.3 + vec2(-atmosphereTime * 0.01, atmosphereTime * 0.007) + vec2(cloudField, largeSwirl));
+		float wisps = fbm(cloudUv * 1.3 + vec2(-motionTime * 0.01, motionTime * 0.007) + vec2(cloudField, largeSwirl));
 		float cloudPattern = mix(cloudField, wisps, 0.32);
 		float cloudMask = smoothstep(mix(0.54, 0.4, cloudCover), mix(0.76, 0.67, cloudCover), cloudPattern);
 		float cloudCoverage = smoothstep(mix(0.46, 0.31, cloudCover), mix(0.68, 0.59, cloudCover), cloudPattern + 0.06);
-		float jet = 0.5 + 0.5 * sin((texelCoord.y + largeSwirl * 1.35) * 1.05 + atmosphereTime * 0.45);
+		float jet = 0.5 + 0.5 * sin((texelCoord.y + largeSwirl * 1.35) * 1.05 + motionTime * 0.45);
 		float jetMask = smoothstep(mix(0.8, 0.65, cloudCover), mix(0.96, 0.92, cloudCover), jet)
 			* smoothstep(mix(0.5, 0.38, cloudCover), mix(0.84, 0.76, cloudCover), wisps);
 		float cloudPresence = max(max(cloudMask, cloudCoverage * (0.58 + cloudCover * 0.18)), jetMask * (0.46 + cloudCover * 0.18));

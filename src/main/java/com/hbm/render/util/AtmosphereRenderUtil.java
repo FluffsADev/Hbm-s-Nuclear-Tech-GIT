@@ -17,7 +17,7 @@ import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.util.MathHelper;
 import net.minecraft.util.Vec3;
 
-public class CelestialRenderUtil {
+public class AtmosphereRenderUtil {
 
 	private static final float OPAQUE_ATMOSPHERE_PRESSURE = 5.0F;
 	private static final float CLOUDY_ATMOSPHERE_PRESSURE = 0.5F;
@@ -42,7 +42,7 @@ public class CelestialRenderUtil {
 		}
 	}
 
-	private CelestialRenderUtil() { }
+	private AtmosphereRenderUtil() { }
 
 	private static float smoothCloudStormDarkness(CelestialBody body, float targetDarkness) {
 		if(body == null) {

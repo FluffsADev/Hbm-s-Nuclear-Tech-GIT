@@ -17,7 +17,7 @@ import com.hbm.extprop.HbmLivingProps;
 import com.hbm.lib.RefStrings;
 import com.hbm.main.ResourceManager;
 import com.hbm.render.shader.Shader;
-import com.hbm.render.util.CelestialRenderUtil;
+import com.hbm.render.util.AtmosphereRenderUtil;
 import com.hbm.saveddata.SatelliteSavedData;
 import com.hbm.saveddata.satellites.Satellite;
 import com.hbm.util.BobMathUtil;
@@ -1028,14 +1028,14 @@ public class SkyProviderCelestial extends IRenderHandler {
 
 						int activeBlackouts = Math.min((int) (impactTime / blackoutInterval), maxBlackouts);
 
-						Vec3 atmosphereColor = CelestialRenderUtil.getBodyAtmosphereColor(metric.body);
-						Vec3 cloudColor = CelestialRenderUtil.getBodyCloudColor(metric.body);
-						float cloudTintStrength = CelestialRenderUtil.getBodyCloudTintStrength(metric.body);
-						float cloudStormDarkness = CelestialRenderUtil.getBodyCloudStormDarkness(metric.body, partialTicks);
-						float cloudLightningStrength = CelestialRenderUtil.getBodyCloudLightningStrength(metric.body, partialTicks);
-						float atmosphereOverlayAlpha = CelestialRenderUtil.getAtmosphereSurfaceAlpha(metric.body) * visibility;
-						float atmosphereDensity = CelestialRenderUtil.getAtmosphereDensity(metric.body);
-						int atmosphereStyle = CelestialRenderUtil.getAtmosphereStyle(metric.body);
+						Vec3 atmosphereColor = AtmosphereRenderUtil.getBodyAtmosphereColor(metric.body);
+						Vec3 cloudColor = AtmosphereRenderUtil.getBodyCloudColor(metric.body);
+						float cloudTintStrength = AtmosphereRenderUtil.getBodyCloudTintStrength(metric.body);
+						float cloudStormDarkness = AtmosphereRenderUtil.getBodyCloudStormDarkness(metric.body, partialTicks);
+						float cloudLightningStrength = AtmosphereRenderUtil.getBodyCloudLightningStrength(metric.body, partialTicks);
+						float atmosphereOverlayAlpha = AtmosphereRenderUtil.getAtmosphereSurfaceAlpha(metric.body) * visibility;
+						float atmosphereDensity = AtmosphereRenderUtil.getAtmosphereDensity(metric.body);
+						int atmosphereStyle = AtmosphereRenderUtil.getAtmosphereStyle(metric.body);
 
 						float atmosphereTime = ((float) world.getTotalWorldTime() + partialTicks) / 20.0F;
 						renderAtmosphereSurface(tessellator, atmosphereColor, cloudColor, cloudTintStrength, cloudStormDarkness, atmosphereOverlayAlpha, uvOffset, atmospherePatternOffset, size, atmosphereTime, atmosphereStyle);
@@ -1201,7 +1201,7 @@ public class SkyProviderCelestial extends IRenderHandler {
 	}
 
 	private void renderLightningOverlay(Tessellator tessellator, Minecraft mc, CelestialBody body, float phase, float cloudTintStrength, float cloudLightningStrength, float atmosphereAlpha, double uvOffset, double patternOffset, double size, float atmosphereTime, int atmosphereStyle) {
-		if(atmosphereAlpha <= 0.001F || cloudLightningStrength <= 0.001F || (atmosphereStyle != CelestialRenderUtil.ATMOSPHERE_STYLE_CLOUDS && atmosphereStyle != CelestialRenderUtil.ATMOSPHERE_STYLE_HAZE)) {
+		if(atmosphereAlpha <= 0.001F || cloudLightningStrength <= 0.001F || (atmosphereStyle != AtmosphereRenderUtil.ATMOSPHERE_STYLE_CLOUDS && atmosphereStyle != AtmosphereRenderUtil.ATMOSPHERE_STYLE_HAZE)) {
 			return;
 		}
 
@@ -1233,7 +1233,7 @@ public class SkyProviderCelestial extends IRenderHandler {
 	}
 
 	private void renderAtmosphereEmissive(Tessellator tessellator, Minecraft mc, CelestialBody body, float phase, double uvOffset, double size, int lightIntensity, int activeBlackouts, float atmosphereDensity, double patternOffset, float atmosphereTime, int atmosphereStyle) {
-		if(lightIntensity <= 0 || atmosphereDensity <= 0.001F || (atmosphereStyle != CelestialRenderUtil.ATMOSPHERE_STYLE_CLOUDS && atmosphereStyle != CelestialRenderUtil.ATMOSPHERE_STYLE_HAZE)) {
+		if(lightIntensity <= 0 || atmosphereDensity <= 0.001F || (atmosphereStyle != AtmosphereRenderUtil.ATMOSPHERE_STYLE_CLOUDS && atmosphereStyle != AtmosphereRenderUtil.ATMOSPHERE_STYLE_HAZE)) {
 			return;
 		}
 
@@ -1313,7 +1313,7 @@ public class SkyProviderCelestial extends IRenderHandler {
 	}
 
 	private void renderAtmosphereGlow(Tessellator tessellator, Minecraft mc, CelestialBody body, double size, float visibility, double phase) {
-		float glowAlpha = CelestialRenderUtil.getAtmosphereGlowAlpha(body) * visibility;
+		float glowAlpha = AtmosphereRenderUtil.getAtmosphereGlowAlpha(body) * visibility;
 		if(glowAlpha <= 0.001F) {
 			return;
 		}
@@ -1322,7 +1322,7 @@ public class SkyProviderCelestial extends IRenderHandler {
 		float leadingGlow = glowAlpha;// * MathHelper.clamp_float((float)Math.abs(0.5 - phase) * 2, 0, 1);
 		float trailingGlow = glowAlpha;// * MathHelper.clamp_float((float)Math.abs(-0.5 - phase) * 2, 0, 1);
 
-		Vec3 atmo = CelestialRenderUtil.getBodyAtmosphereColor(body);
+		Vec3 atmo = AtmosphereRenderUtil.getBodyAtmosphereColor(body);
 		float r = MathHelper.clamp_float((float) atmo.xCoord * 1.15F, 0.0F, 1.0F);
 		float g = MathHelper.clamp_float((float) atmo.yCoord * 1.15F, 0.0F, 1.0F);
 		float b = MathHelper.clamp_float((float) atmo.zCoord * 1.15F, 0.0F, 1.0F);

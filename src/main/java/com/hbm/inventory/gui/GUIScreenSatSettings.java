@@ -18,7 +18,7 @@ import com.hbm.main.NTMSounds;
 import com.hbm.packet.PacketDispatcher;
 import com.hbm.packet.toserver.NBTItemControlPacket;
 import com.hbm.render.shader.Shader;
-import com.hbm.render.util.CelestialRenderUtil;
+import com.hbm.render.util.AtmosphereRenderUtil;
 import com.hbm.saveddata.SatelliteSavedData;
 import com.hbm.saveddata.satellites.Satellite;
 import com.hbm.saveddata.satellites.SatelliteFoeq;
@@ -751,7 +751,7 @@ public class GUIScreenSatSettings extends GuiScreen {
 			if(body.parent == null) {
 				drawTexturedQuad(centerX, centerY, size, 0F);
 			} else {
-				CelestialRenderUtil.renderAtmosphereGlow2D(Tessellator.instance, body, centerX, centerY, size, 1.0F);
+				AtmosphereRenderUtil.renderAtmosphereGlow2D(Tessellator.instance, body, centerX, centerY, size, 1.0F);
 
 				float phase = getBodyRotationPhase(body, dayTicks);
 				float bodyRotationAngle = phase * 360F;
@@ -807,15 +807,15 @@ public class GUIScreenSatSettings extends GuiScreen {
 		double impactTime = impact != null ? dayTicks - impact.time : 0.0D;
 		int lightIntensity = light != null && impactTime < 40.0D ? MathHelper.clamp_int(light.getIntensity(), 0, citylights.length - 1) : 0;
 		int activeBlackouts = Math.max(0, Math.min((int) (impactTime / 8.0D), 5));
-		float atmosphereAlpha = CelestialRenderUtil.getAtmosphereSurfaceAlpha(body);
-		float atmosphereDensity = CelestialRenderUtil.getAtmosphereDensity(body);
-		net.minecraft.util.Vec3 atmosphereColor = CelestialRenderUtil.getBodyAtmosphereColor(body);
-		net.minecraft.util.Vec3 cloudColor = CelestialRenderUtil.getBodyCloudColor(body);
-		float cloudTintStrength = CelestialRenderUtil.getBodyCloudTintStrength(body);
+		float atmosphereAlpha = AtmosphereRenderUtil.getAtmosphereSurfaceAlpha(body);
+		float atmosphereDensity = AtmosphereRenderUtil.getAtmosphereDensity(body);
+		net.minecraft.util.Vec3 atmosphereColor = AtmosphereRenderUtil.getBodyAtmosphereColor(body);
+		net.minecraft.util.Vec3 cloudColor = AtmosphereRenderUtil.getBodyCloudColor(body);
+		float cloudTintStrength = AtmosphereRenderUtil.getBodyCloudTintStrength(body);
 		float weatherPartialTicks = (float) (dayTicks - Math.floor(dayTicks));
-		float cloudStormDarkness = CelestialRenderUtil.getBodyCloudStormDarkness(body, weatherPartialTicks);
-		float cloudLightningStrength = CelestialRenderUtil.getBodyCloudLightningStrength(body, weatherPartialTicks);
-		int atmosphereStyle = CelestialRenderUtil.getAtmosphereStyle(body);
+		float cloudStormDarkness = AtmosphereRenderUtil.getBodyCloudStormDarkness(body, weatherPartialTicks);
+		float cloudLightningStrength = AtmosphereRenderUtil.getBodyCloudLightningStrength(body, weatherPartialTicks);
+		int atmosphereStyle = AtmosphereRenderUtil.getAtmosphereStyle(body);
 		float atmosphereTime = (float) (dayTicks / 20.0D);
 		float atmospherePatternOffset = textureUOffset;
 		if(!rotateBody && body != null) {
@@ -882,7 +882,7 @@ public class GUIScreenSatSettings extends GuiScreen {
 
 			if(lightIntensity > 0
 				&& atmosphereDensity > 0.001F
-				&& (atmosphereStyle == CelestialRenderUtil.ATMOSPHERE_STYLE_CLOUDS || atmosphereStyle == CelestialRenderUtil.ATMOSPHERE_STYLE_HAZE)) {
+				&& (atmosphereStyle == AtmosphereRenderUtil.ATMOSPHERE_STYLE_CLOUDS || atmosphereStyle == AtmosphereRenderUtil.ATMOSPHERE_STYLE_HAZE)) {
 			GL11.glEnable(GL11.GL_BLEND);
 			GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE);
 			GL11.glColor4f(1F, 1F, 1F, 1F);
@@ -953,7 +953,7 @@ public class GUIScreenSatSettings extends GuiScreen {
 			}
 
 		if(atmosphereAlpha > 0.001F && cloudLightningStrength > 0.001F
-			&& (atmosphereStyle == CelestialRenderUtil.ATMOSPHERE_STYLE_CLOUDS || atmosphereStyle == CelestialRenderUtil.ATMOSPHERE_STYLE_HAZE)) {
+			&& (atmosphereStyle == AtmosphereRenderUtil.ATMOSPHERE_STYLE_CLOUDS || atmosphereStyle == AtmosphereRenderUtil.ATMOSPHERE_STYLE_HAZE)) {
 			GL11.glEnable(GL11.GL_BLEND);
 			GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE);
 			GL11.glColor4f(1F, 1F, 1F, 1F);
