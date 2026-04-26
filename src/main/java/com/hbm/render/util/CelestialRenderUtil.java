@@ -230,7 +230,7 @@ public class CelestialRenderUtil {
 
 	public static float getBodyCloudLightningStrength(CelestialBody body, float partialTicks) {
 		CBT_Weather weather = body != null ? body.getTrait(CBT_Weather.class) : null;
-		if(weather == null || !bodyHasWeatherCycle(body)) {
+		if(weather == null || !bodyHasWeatherCycle(body) || !weather.canSpawnLightning) {
 			return 0.0F;
 		}
 

@@ -4,6 +4,7 @@ uniform float phase;
 uniform float offset;
 
 uniform sampler2D bodyTex;
+uniform sampler2D cityMask;
 uniform int useBodyAlphaMask;
 uniform float cloudTintStrength;
 uniform float cloudLightningStrength;
@@ -91,6 +92,8 @@ void main() {
 	float density = clamp(atmosphereAlpha, 0.0, 1.0);
 	float tintStrength = clamp(cloudTintStrength, 0.0, 1.0);
 	float nightVisibility = getNightVisibility(movingUV);
+	vec4 city = texture2D(cityMask, movingUV);
+	float maskCoverage = max(max(city.r, city.g), city.b) * city.a;
 	vec2 texelCoord = floor(patternUV * PIXEL_GRID);
 	vec2 uv = (texelCoord + 0.5) / PIXEL_GRID;
 	vec2 texelFlow = vec2(atmosphereTime * 0.18, -atmosphereTime * 0.11);
@@ -142,5 +145,5 @@ void main() {
 		lightningAlpha = flashPulse * lightningMask * nightVisibility * (0.72 + lightningStrength * 0.28 + neutralBoost * 0.38);
 	}
 
-	gl_FragColor = vec4(vec3(1.0), clamp(lightningAlpha * alphaMask, 0.0, 1.0));
+	gl_FragColor = vec4(vec3(1.0), clamp(lightningAlpha * alphaMask * maskCoverage, 0.0, 1.0));
 }

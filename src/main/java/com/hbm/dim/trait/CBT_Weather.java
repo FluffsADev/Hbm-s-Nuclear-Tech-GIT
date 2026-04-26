@@ -17,9 +17,17 @@ public class CBT_Weather extends CelestialBodyTrait {
 
 	private static final Random WEATHER_RANDOM = new Random();
 	private static final int SAVE_INTERVAL = 200;
+	private static final int[][] LIGHTNING_BIOME_SAMPLES = new int[][] {
+		{0, 0},
+		{512, 0},
+		{-512, 0},
+		{0, 512},
+		{0, -512}
+	};
 
 	public boolean raining;
 	public boolean thundering;
+	public boolean canSpawnLightning = true;
 	public int rainTime;
 	public int thunderTime;
 	public float prevRainStrength;
@@ -117,6 +125,20 @@ public class CBT_Weather extends CelestialBodyTrait {
 		thunderTime = Math.max(1, duration);
 	}
 
+	private static boolean sampleCanSpawnLightning(WorldServer world) {
+		if(world == null) {
+			return true;
+		}
+
+		for(int[] sample : LIGHTNING_BIOME_SAMPLES) {
+			if(world.getBiomeGenForCoords(sample[0], sample[1]).canSpawnLightningBolt()) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	public boolean updateForTick(long tick, Random rand, CelestialBody body) {
 		if(lastUpdateTick == tick) {
 			return false;
@@ -127,6 +149,7 @@ public class CBT_Weather extends CelestialBodyTrait {
 		if(!supportsWeather(body)) {
 			boolean hadWeather = rainTime != 0
 				|| thunderTime != 0
+				|| canSpawnLightning
 				|| raining
 				|| thundering
 				|| prevRainStrength > 0.0F
@@ -136,6 +159,7 @@ public class CBT_Weather extends CelestialBodyTrait {
 
 			rainTime = 0;
 			thunderTime = 0;
+			canSpawnLightning = false;
 			raining = false;
 			thundering = false;
 			prevRainStrength = 0.0F;
@@ -146,6 +170,18 @@ public class CBT_Weather extends CelestialBodyTrait {
 		}
 
 		boolean stateChanged = false;
+		WorldServer world = DimensionManager.getWorld(body.dimensionId);
+		boolean lightningAllowed = sampleCanSpawnLightning(world);
+		if(canSpawnLightning != lightningAllowed) {
+			canSpawnLightning = lightningAllowed;
+			stateChanged = true;
+		}
+
+		if(!canSpawnLightning && thundering) {
+			thundering = false;
+			thunderTime = getClearDuration(rand);
+			stateChanged = true;
+		}
 
 		if(thunderTime <= 0) {
 			thunderTime = thundering ? getStormDuration(rand) : getClearDuration(rand);
@@ -153,7 +189,7 @@ public class CBT_Weather extends CelestialBodyTrait {
 		} else {
 			thunderTime--;
 			if(thunderTime <= 0) {
-				thundering = !thundering;
+				thundering = canSpawnLightning && !thundering;
 				thunderTime = thundering ? getStormDuration(rand) : getClearDuration(rand);
 				stateChanged = true;
 			}
@@ -208,6 +244,7 @@ public class CBT_Weather extends CelestialBodyTrait {
 	public void writeToNBT(net.minecraft.nbt.NBTTagCompound nbt) {
 		nbt.setBoolean("raining", raining);
 		nbt.setBoolean("thundering", thundering);
+		nbt.setBoolean("canSpawnLightning", canSpawnLightning);
 		nbt.setInteger("rainTime", rainTime);
 		nbt.setInteger("thunderTime", thunderTime);
 		nbt.setFloat("prevRainStrength", prevRainStrength);
@@ -220,6 +257,7 @@ public class CBT_Weather extends CelestialBodyTrait {
 	public void readFromNBT(net.minecraft.nbt.NBTTagCompound nbt) {
 		raining = nbt.getBoolean("raining");
 		thundering = nbt.getBoolean("thundering");
+		canSpawnLightning = nbt.hasKey("canSpawnLightning") ? nbt.getBoolean("canSpawnLightning") : true;
 		rainTime = nbt.getInteger("rainTime");
 		thunderTime = nbt.getInteger("thunderTime");
 		prevRainStrength = nbt.getFloat("prevRainStrength");
@@ -232,6 +270,7 @@ public class CBT_Weather extends CelestialBodyTrait {
 	public void writeToBytes(ByteBuf buf) {
 		buf.writeBoolean(raining);
 		buf.writeBoolean(thundering);
+		buf.writeBoolean(canSpawnLightning);
 		buf.writeInt(rainTime);
 		buf.writeInt(thunderTime);
 		buf.writeFloat(prevRainStrength);
@@ -244,6 +283,7 @@ public class CBT_Weather extends CelestialBodyTrait {
 	public void readFromBytes(ByteBuf buf) {
 		raining = buf.readBoolean();
 		thundering = buf.readBoolean();
+		canSpawnLightning = buf.readBoolean();
 		rainTime = buf.readInt();
 		thunderTime = buf.readInt();
 		prevRainStrength = buf.readFloat();

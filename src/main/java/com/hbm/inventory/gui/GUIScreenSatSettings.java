@@ -960,6 +960,7 @@ public class GUIScreenSatSettings extends GuiScreen {
 			lightningShader.setUniform1f("offset", textureUOffset);
 			lightningShader.setUniform1f("patternOffset", atmospherePatternOffset);
 			lightningShader.setUniform1i("bodyTex", 0);
+			lightningShader.setUniform1i("cityMask", 1);
 			lightningShader.setUniform1i("useBodyAlphaMask", 1);
 			lightningShader.setUniform1f("cloudTintStrength", cloudTintStrength);
 			lightningShader.setUniform1f("cloudLightningStrength", cloudLightningStrength);
@@ -969,6 +970,9 @@ public class GUIScreenSatSettings extends GuiScreen {
 
 			GL13.glActiveTexture(GL13.GL_TEXTURE0);
 			mc.getTextureManager().bindTexture(body.texture);
+			GL13.glActiveTexture(GL13.GL_TEXTURE1);
+			mc.getTextureManager().bindTexture(body.cityMask != null ? body.cityMask : defaultMask);
+			GL13.glActiveTexture(GL13.GL_TEXTURE0);
 
 			if(rotateBody) {
 				drawTexturedQuadRotating(bodyScreenX, bodyScreenY, drawSize, bodyRotationAngle);

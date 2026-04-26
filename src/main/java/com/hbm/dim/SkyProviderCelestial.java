@@ -1042,7 +1042,7 @@ public class SkyProviderCelestial extends IRenderHandler {
 						renderCrescentShadow(tessellator, (float) -metric.phase, uvOffset, size);
 						renderAtmosphereEmissive(tessellator, mc, metric.body, (float) -metric.phase, uvOffset, size, lightIntensity, activeBlackouts, atmosphereDensity, atmospherePatternOffset, atmosphereTime, atmosphereStyle);
 						renderNightLights(tessellator, mc, metric.body, (float) -metric.phase, uvOffset, size, lightIntensity, activeBlackouts, atmosphereDensity, atmospherePatternOffset, atmosphereTime, atmosphereStyle);
-						renderLightningOverlay(tessellator, (float) -metric.phase, cloudTintStrength, cloudLightningStrength, atmosphereOverlayAlpha, uvOffset, atmospherePatternOffset, size, atmosphereTime, atmosphereStyle);
+						renderLightningOverlay(tessellator, mc, metric.body, (float) -metric.phase, cloudTintStrength, cloudLightningStrength, atmosphereOverlayAlpha, uvOffset, atmospherePatternOffset, size, atmosphereTime, atmosphereStyle);
 
 						OpenGlHelper.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ONE, GL11.GL_ZERO);
 
@@ -1200,7 +1200,7 @@ public class SkyProviderCelestial extends IRenderHandler {
 		atmosphereShader.stop();
 	}
 
-	private void renderLightningOverlay(Tessellator tessellator, float phase, float cloudTintStrength, float cloudLightningStrength, float atmosphereAlpha, double uvOffset, double patternOffset, double size, float atmosphereTime, int atmosphereStyle) {
+	private void renderLightningOverlay(Tessellator tessellator, Minecraft mc, CelestialBody body, float phase, float cloudTintStrength, float cloudLightningStrength, float atmosphereAlpha, double uvOffset, double patternOffset, double size, float atmosphereTime, int atmosphereStyle) {
 		if(atmosphereAlpha <= 0.001F || cloudLightningStrength <= 0.001F || (atmosphereStyle != CelestialRenderUtil.ATMOSPHERE_STYLE_CLOUDS && atmosphereStyle != CelestialRenderUtil.ATMOSPHERE_STYLE_HAZE)) {
 			return;
 		}
@@ -1214,12 +1214,20 @@ public class SkyProviderCelestial extends IRenderHandler {
 		lightningShader.setUniform1f("offset", (float) uvOffset);
 		lightningShader.setUniform1f("patternOffset", (float) patternOffset);
 		lightningShader.setUniform1i("bodyTex", 0);
+		lightningShader.setUniform1i("cityMask", 1);
 		lightningShader.setUniform1i("useBodyAlphaMask", 0);
 		lightningShader.setUniform1f("cloudTintStrength", cloudTintStrength);
 		lightningShader.setUniform1f("cloudLightningStrength", cloudLightningStrength);
 		lightningShader.setUniform1f("atmosphereAlpha", atmosphereAlpha);
 		lightningShader.setUniform1f("atmosphereTime", atmosphereTime);
 		lightningShader.setUniform1i("atmosphereStyle", atmosphereStyle);
+
+		mc.renderEngine.bindTexture(body.texture);
+		if(gl13) {
+			GL13.glActiveTexture(GL13.GL_TEXTURE1);
+			mc.renderEngine.bindTexture(body.cityMask != null ? body.cityMask : defaultMask);
+			GL13.glActiveTexture(GL13.GL_TEXTURE0);
+		}
 		drawPlanetShaderQuad(tessellator, size);
 		lightningShader.stop();
 	}
