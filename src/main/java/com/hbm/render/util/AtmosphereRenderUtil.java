@@ -268,6 +268,60 @@ public class AtmosphereRenderUtil {
 		}
 	}
 
+	public static float getNukeShockElapsedTicks(ShockStatus shock, double currentTime) {
+		if(shock == null) {
+			return -1.0F;
+		}
+
+		return Math.max(0.0F, (float) (currentTime - shock.time));
+	}
+
+	public static float getNukeShockwaveRadius(ShockStatus shock, double currentTime) {
+		if(shock == null) {
+			return 0.0F;
+		}
+
+		float elapsed = getNukeShockElapsedTicks(shock, currentTime);
+		float stableSeed = getNukeShockStableSeed(shock);
+		float baseSpeed = 0.00085F + shock.strength * 0.0005F;
+		return elapsed * baseSpeed * MathHelper.clamp_float(0.92F + stableSeed * 0.23F, 0.85F, 1.2F);
+	}
+
+	public static float getNukeShockwaveAlpha(ShockStatus shock, double currentTime) {
+		if(shock == null) {
+			return 0.0F;
+		}
+
+		float elapsed = getNukeShockElapsedTicks(shock, currentTime);
+		float fadeRate = 0.014F - shock.strength * 0.004F;
+		return MathHelper.clamp_float(1.0F - elapsed * fadeRate, 0.0F, 1.0F);
+	}
+
+	public static float getNukeFlareRadius(ShockStatus shock) {
+		if(shock == null) {
+			return 0.0F;
+		}
+
+		float stableSeed = getNukeShockStableSeed(shock);
+		float radius = (0.08F + shock.strength * 0.08F) * (0.92F + stableSeed * 0.36F);
+		return MathHelper.clamp_float(radius, 0.05F, 0.22F);
+	}
+
+	public static float getNukeFlareAlpha(ShockStatus shock, double currentTime) {
+		if(shock == null) {
+			return 0.0F;
+		}
+
+		float elapsed = getNukeShockElapsedTicks(shock, currentTime);
+		float fadeRate = 0.055F - shock.strength * 0.02F;
+		return MathHelper.clamp_float(1.0F - elapsed * fadeRate, 0.0F, 1.0F);
+	}
+
+	private static float getNukeShockStableSeed(ShockStatus shock) {
+		double seed = Math.sin(shock.centerX * 127.1D + shock.centerY * 311.7D + shock.strength * 173.3D) * 43758.5453123D;
+		return (float) (seed - Math.floor(seed));
+	}
+
 	public static void renderAtmosphereGlow2D(Tessellator tessellator, CelestialBody body, double centerX, double centerY, double size, float visibility) {
 		float glowAlpha = getAtmosphereGlowAlpha(body) * visibility;
 		if(glowAlpha <= 0.001F) {

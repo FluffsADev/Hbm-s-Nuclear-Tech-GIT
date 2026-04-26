@@ -88,31 +88,28 @@ vec4 getNukeShockField(vec2 localUV, float time, vec2 center, float strength) {
 		return vec4(0.0);
 	}
 
-	float distanceFromCenter = length(localUV - center);
+	vec2 delta = localUV - center;
+	float distanceFromCenter = length(delta);
+	vec2 direction = distanceFromCenter > 0.0001 ? delta / distanceFromCenter : vec2(0.0, 1.0);
 	float stableSeed = fract(sin(dot(center + vec2(strength * 0.31, strength * 0.73), vec2(127.1, 311.7))) * 43758.5453123);
-	float flashRadius = mix(0.08, 0.18, strength) * mix(0.9, 1.35, stableSeed);
-	float flashEdge = mix(0.06, 0.1, strength);
-	float flashFade = 1.0 - smoothstep(0.0, mix(10.0, 18.0, strength), time);
-	float flashMask = (1.0 - smoothstep(flashRadius, flashRadius + flashEdge, distanceFromCenter)) * flashFade;
-
-	float shockRadius = time * mix(0.0044, 0.0064, strength);
-	float shockWidth = mix(0.05, 0.085, strength);
-	float shockFade = 1.0 - smoothstep(14.0, 120.0, time);
+	float shockRadius = time * mix(0.00085, 0.00135, strength) * mix(0.92, 1.15, stableSeed);
+	float shockProgress = clamp(time / mix(72.0, 120.0, strength), 0.0, 1.0);
+	float shockWidth = mix(0.07, 0.032, shockProgress) * mix(0.95, 1.12, stableSeed);
+	float shockFade = 1.0 - smoothstep(10.0, mix(82.0, 118.0, strength), time);
 	float outerBand = smoothstep(max(shockRadius - shockWidth, 0.0), shockRadius, distanceFromCenter);
 	float innerBand = 1.0 - smoothstep(shockRadius, shockRadius + shockWidth, distanceFromCenter);
 	float shockBand = outerBand * innerBand * shockFade;
 
-	float wakeFade = 1.0 - smoothstep(18.0, 150.0, time);
-	float wakeInner = max(shockRadius - shockWidth * 1.6 - 0.03, 0.0);
-	float wakeOuter = shockRadius + shockWidth * 0.35;
+	float wakeFade = 1.0 - smoothstep(8.0, mix(90.0, 135.0, strength), time);
+	float wakeInner = max(shockRadius - shockWidth * 1.8 - 0.018, 0.0);
+	float wakeOuter = shockRadius + shockWidth * 0.28;
 	float wakeMask = (1.0 - smoothstep(wakeInner, wakeOuter, distanceFromCenter)) * wakeFade;
 
-	float coreFade = 1.0 - smoothstep(8.0, 45.0, time);
-	float coreRadius = flashRadius * 1.18;
-	float coreMask = (1.0 - smoothstep(coreRadius, coreRadius + flashEdge * 1.6, distanceFromCenter)) * coreFade;
-	float clearMask = clamp(max(max(wakeMask, coreMask), shockBand * (0.5 + strength * 0.35)), 0.0, 1.0);
+	float coreFade = 1.0 - smoothstep(0.0, mix(18.0, 32.0, strength), time);
+	float coreRadius = mix(0.09, 0.16, strength) * mix(0.92, 1.28, stableSeed);
+	float coreMask = (1.0 - smoothstep(coreRadius, coreRadius + 0.06, distanceFromCenter)) * coreFade;
 
-	return vec4(shockBand, wakeMask, clearMask, flashMask);
+	return vec4(direction, shockBand, max(wakeMask, coreMask));
 }
 
 float getNightVisibility(vec2 movingUV) {
@@ -176,7 +173,7 @@ void main() {
 		if (i < nukeShockCount) {
 			float shockStrength = clamp(nukeShockStrength[i], 0.0, 1.0);
 			vec4 nukeField = getNukeShockField(nukePixelUV, nukeShockTime[i], vec2(nukeShockCenterX[i], nukeShockCenterY[i]), shockStrength);
-			nukeClearStrength = max(nukeClearStrength, nukeField.z);
+			nukeClearStrength = max(nukeClearStrength, clamp(max(nukeField.w, nukeField.z * mix(0.55, 0.95, density)), 0.0, 1.0));
 		}
 	}
 	float nukeSuppression = max(impactSuppression, nukeClearStrength);

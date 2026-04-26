@@ -61,6 +61,8 @@ public class GUIMachineStardar extends GuiInfoContainer {
 	private static final ResourceLocation starmapTexture = new ResourceLocation(RefStrings.MODID + ":textures/gui/starmap3.png");
 	private static final ResourceLocation ringTexture = new ResourceLocation(RefStrings.MODID + ":textures/misc/space/rings.png");
 	private static final ResourceLocation impactTexture = new ResourceLocation(RefStrings.MODID + ":textures/misc/space/impact.png");
+	private static final ResourceLocation shockwaveTexture = new ResourceLocation(RefStrings.MODID + ":textures/particle/shockwave.png");
+	private static final ResourceLocation shockFlareTexture = new ResourceLocation(RefStrings.MODID + ":textures/particle/flare.png");
 	private static final ResourceLocation defaultMask = new ResourceLocation(RefStrings.MODID, "textures/misc/space/default_mask.png");
 	private static final ResourceLocation satelliteTextureDefault = new ResourceLocation(RefStrings.MODID, "textures/items/sat_base.png");
 	private static final ResourceLocation satelliteTextureFoeq = new ResourceLocation(RefStrings.MODID, "textures/items/sat_foeq.png");
@@ -81,7 +83,7 @@ public class GUIMachineStardar extends GuiInfoContainer {
 	private static final Shader atmosphereShader = new Shader(new ResourceLocation(RefStrings.MODID, "shaders/atmosphere.frag"));
 	private static final Shader atmosphereEmissiveShader = new Shader(new ResourceLocation(RefStrings.MODID, "shaders/atmosphere_emissive.frag"));
 	private static final Shader lightningShader = new Shader(new ResourceLocation(RefStrings.MODID, "shaders/lightning.frag"));
-	private static final Shader nukeFlashShader = new Shader(new ResourceLocation(RefStrings.MODID, "shaders/nuke_flash.frag"));
+	private static final Shader nukeEffectOverlayShader = new Shader(new ResourceLocation(RefStrings.MODID, "shaders/nuke_flash.frag"));
 	private static final Shader nightLightsShader = new Shader(new ResourceLocation(RefStrings.MODID, "shaders/nightlights.frag"));
 
 	static {
@@ -1231,29 +1233,46 @@ public class GUIMachineStardar extends GuiInfoContainer {
 		}
 
 		if(!nukeShocks.isEmpty()) {
-			GL11.glEnable(GL11.GL_BLEND);
-			GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE);
-			GL11.glColor4f(1F, 1F, 1F, 1F);
+			for(CelestialNukeShockHandler.ShockStatus shock : nukeShocks) {
+				float shockwaveAlpha = AtmosphereRenderUtil.getNukeShockwaveAlpha(shock, dayTicks);
+				float shockwaveRadius = AtmosphereRenderUtil.getNukeShockwaveRadius(shock, dayTicks);
+				renderMaskedNukeEffectOverlay(bodyScreenX, bodyScreenY, drawSize, rotateBody, bodyRotationAngle, shock.centerX, shock.centerY, shockwaveRadius, shockwaveAlpha, shockwaveTexture);
 
-			nukeFlashShader.use();
-			nukeFlashShader.setUniform1f("offset", textureUOffset);
-			nukeFlashShader.setUniform1i("bodyTex", 0);
-			nukeFlashShader.setUniform1i("useBodyAlphaMask", 1);
-			AtmosphereRenderUtil.applyNukeShockUniforms(nukeFlashShader, nukeShocks, dayTicks);
-
-			GL13.glActiveTexture(GL13.GL_TEXTURE0);
-			mc.getTextureManager().bindTexture(body.texture);
-			if(rotateBody) {
-				drawTexturedQuadRotating(bodyScreenX, bodyScreenY, drawSize, bodyRotationAngle);
-			} else {
-				drawTexturedQuad(bodyScreenX, bodyScreenY, drawSize, 0F);
+				float flareAlpha = AtmosphereRenderUtil.getNukeFlareAlpha(shock, dayTicks);
+				float flareRadius = AtmosphereRenderUtil.getNukeFlareRadius(shock);
+				renderMaskedNukeEffectOverlay(bodyScreenX, bodyScreenY, drawSize, rotateBody, bodyRotationAngle, shock.centerX, shock.centerY, flareRadius, flareAlpha, shockFlareTexture);
 			}
-
-			nukeFlashShader.stop();
 			GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
 		}
 
 		GL11.glColor4f(1F, 1F, 1F, 1F);
+	}
+
+	private void renderMaskedNukeEffectOverlay(float bodyScreenX, float bodyScreenY, float drawSize, boolean rotateBody, float bodyRotationAngle, float centerX, float centerY, float radius, float alpha, ResourceLocation effectTexture) {
+		if(alpha <= 0.001F || radius <= 0.0001F) {
+			return;
+		}
+
+		GL11.glEnable(GL11.GL_BLEND);
+		GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE);
+		GL11.glColor4f(1F, 1F, 1F, 1F);
+
+		nukeEffectOverlayShader.use();
+		nukeEffectOverlayShader.setUniform1i("effectTex", 0);
+		nukeEffectOverlayShader.setUniform1f("effectCenterX", centerX);
+		nukeEffectOverlayShader.setUniform1f("effectCenterY", centerY);
+		nukeEffectOverlayShader.setUniform1f("effectRadius", radius);
+		nukeEffectOverlayShader.setUniform1f("effectAlpha", alpha);
+
+		GL13.glActiveTexture(GL13.GL_TEXTURE0);
+		mc.getTextureManager().bindTexture(effectTexture);
+		if(rotateBody) {
+			drawTexturedQuadRotating(bodyScreenX, bodyScreenY, drawSize, bodyRotationAngle);
+		} else {
+			drawTexturedQuad(bodyScreenX, bodyScreenY, drawSize, 0F);
+		}
+
+		nukeEffectOverlayShader.stop();
 	}
 
 	// yeah no, radius checks and new trait just don't work. drop them transparency checks, planets won't have it anyway, how bad it can be!
