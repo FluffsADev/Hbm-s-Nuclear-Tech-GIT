@@ -5,6 +5,7 @@ uniform float offset;
 uniform float atmosphereDensity;
 uniform float atmosphereTime;
 uniform float patternOffset;
+uniform float impactTime;
 uniform int atmosphereStyle;
 
 uniform sampler2D bodyTex;
@@ -15,6 +16,7 @@ uniform int useBodyAlphaMask;
 
 #define PI 3.1415926538
 const float PIXEL_GRID = 16.0;
+const vec2 IMPACT_CENTER = vec2(0.25, 0.7);
 
 vec2 quantize(vec2 inp, vec2 period) {
 	return floor(inp / period) * period;
@@ -51,6 +53,35 @@ float fbm(vec2 p) {
 	return value;
 }
 
+vec4 getImpactField(vec2 localUV, float time) {
+	if (time < 0.0) {
+		return vec4(0.0);
+	}
+
+	vec2 delta = localUV - IMPACT_CENTER;
+	float distanceFromImpact = length(delta);
+	vec2 direction = distanceFromImpact > 0.0001 ? delta / distanceFromImpact : vec2(0.0, 1.0);
+
+	float shockRadius = time * 0.00175;
+	float shockFade = 1.0 - clamp(time * 0.0015, 0.0, 1.0);
+	float shockBand = 0.0;
+	if (shockFade > 0.0) {
+		float shockWidth = mix(0.065, 0.024, clamp(time / 280.0, 0.0, 1.0));
+		float outerBand = smoothstep(max(shockRadius - shockWidth, 0.0), shockRadius, distanceFromImpact);
+		float innerBand = 1.0 - smoothstep(shockRadius, shockRadius + shockWidth, distanceFromImpact);
+		shockBand = outerBand * innerBand * shockFade;
+	}
+
+	float coreFade = 1.0 - smoothstep(18.0, 220.0, time);
+	float coreMask = 0.0;
+	if (coreFade > 0.0) {
+		float coreRadius = mix(0.13, 0.045, clamp(time / 220.0, 0.0, 1.0));
+		coreMask = (1.0 - smoothstep(coreRadius, coreRadius + 0.05, distanceFromImpact)) * coreFade;
+	}
+
+	return vec4(direction, shockBand, coreMask);
+}
+
 vec3 sampleCityLight(vec2 sampleUV) {
 	vec2 wrappedUV = fract(sampleUV);
 	vec4 city = texture2D(cityMask, wrappedUV);
@@ -59,9 +90,12 @@ vec3 sampleCityLight(vec2 sampleUV) {
 }
 
 void main() {
-	vec2 movingUV = gl_TexCoord[0].xy + vec2(offset, 0.0);
+	vec2 localUV = gl_TexCoord[0].xy;
+	vec2 movingUV = localUV + vec2(offset, 0.0);
 	vec2 wrappedUV = fract(movingUV);
-	vec2 patternUV = gl_TexCoord[0].xy + vec2(patternOffset, 0.0);
+	vec2 patternUV = localUV + vec2(patternOffset, 0.0);
+	vec4 impactField = getImpactField(localUV, impactTime);
+	vec2 impactPatternUV = patternUV + impactField.xy * impactField.z * 0.095;
 
 	float alphaMask = 1.0;
 	if (useBodyAlphaMask != 0) {
@@ -104,7 +138,7 @@ void main() {
 
 	float cloudMotionScale = mix(1.0, 1.5, step(0.999, atmosphereDensity));
 	float motionTime = atmosphereTime * cloudMotionScale;
-	vec2 texelCoord = floor(patternUV * PIXEL_GRID);
+	vec2 texelCoord = floor(impactPatternUV * PIXEL_GRID);
 	vec2 texelFlow = vec2(motionTime * 0.18, -motionTime * 0.11);
 	vec2 glowCellUV = fract((texelCoord + 0.5) / PIXEL_GRID + vec2(offset - patternOffset, 0.0));
 	vec2 glowStep = vec2(1.0 / (PIXEL_GRID * 3.0), 1.0 / (PIXEL_GRID * 3.0));
@@ -135,6 +169,7 @@ void main() {
 		float cloudCore = smoothstep(0.2, 0.82, cloudPresence);
 		emissiveMask = cloudPresence * (0.34 + atmosphereDensity * 0.28) + cloudCore * (0.12 + atmosphereDensity * 0.14);
 	}
+	emissiveMask *= 1.0 - impactField.w;
 
 	vec3 blurredLights = sampleCityLight(glowCellUV) * 0.40;
 	blurredLights += sampleCityLight(glowCellUV + vec2(glowStep.x, 0.0)) * 0.17;
