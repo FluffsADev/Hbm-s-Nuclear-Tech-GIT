@@ -1005,7 +1005,7 @@ public class SkyProviderCelestial extends IRenderHandler {
 
 					} else {
 
-						renderAtmosphereGlow(tessellator, mc, metric.body, size, visibility, metric.phase);
+						renderAtmosphereGlow(tessellator, mc, metric.body, size, 1.0F, metric.phase);
 
 						GL11.glDisable(GL11.GL_BLEND);
 						GL11.glColor4f(1.0F, 1.0F, 1.0F, visibility);
@@ -1037,7 +1037,7 @@ public class SkyProviderCelestial extends IRenderHandler {
 						float cloudTintStrength = AtmosphereRenderUtil.getBodyCloudTintStrength(metric.body);
 						float cloudStormDarkness = AtmosphereRenderUtil.getBodyCloudStormDarkness(metric.body, partialTicks);
 						float cloudLightningStrength = AtmosphereRenderUtil.getBodyCloudLightningStrength(metric.body, partialTicks);
-						float atmosphereOverlayAlpha = AtmosphereRenderUtil.getAtmosphereSurfaceAlpha(metric.body) * visibility;
+						float atmosphereOverlayAlpha = AtmosphereRenderUtil.getAtmosphereSurfaceAlpha(metric.body);
 						float atmosphereDensity = AtmosphereRenderUtil.getAtmosphereDensity(metric.body);
 						int atmosphereStyle = AtmosphereRenderUtil.getAtmosphereStyle(metric.body);
 
