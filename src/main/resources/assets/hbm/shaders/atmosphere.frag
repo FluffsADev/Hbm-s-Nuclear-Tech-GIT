@@ -12,7 +12,6 @@ uniform float cloudColorG;
 uniform float cloudColorB;
 uniform float cloudTintStrength;
 uniform float cloudStormDarkness;
-uniform float cloudLightningStrength;
 uniform float atmosphereAlpha;
 uniform float atmosphereTime;
 uniform float patternOffset;
@@ -68,7 +67,6 @@ void main() {
 	vec3 cloudTint = vec3(cloudColorR, cloudColorG, cloudColorB);
 	float tintStrength = clamp(cloudTintStrength, 0.0, 1.0);
 	float stormDarkness = clamp(cloudStormDarkness, 0.0, 1.0);
-	float lightningStrength = clamp(cloudLightningStrength, 0.0, 1.0);
 	vec2 texelCoord = floor(patternUV * PIXEL_GRID);
 	vec2 uv = (texelCoord + 0.5) / PIXEL_GRID;
 	vec2 texelFlow = vec2(atmosphereTime * 0.18, -atmosphereTime * 0.11);
@@ -100,6 +98,7 @@ void main() {
 		vec3 deepHaze = baseColor * mix(0.68, 0.55, density);
 		vec3 brightHaze = min(baseColor * (1.08 + density * 0.18) + vec3(0.06), vec3(1.0));
 		layeredColor = mix(deepHaze, brightHaze, hazeMix * 0.42 + turbulence * 0.16);
+
 		alphaBoost = 0.94 + hazeMix * 0.06;
 		overlayAlpha = atmosphereAlpha * alphaBoost;
 	} else if (atmosphereStyle == 1) {
@@ -107,45 +106,36 @@ void main() {
 		float largeSwirl = fbm(cloudBase * 0.75);
 		float shear = fbm((texelCoord.yx + vec2(-atmosphereTime * 0.12, atmosphereTime * 0.09)) / vec2(8.5, 10.0));
 		vec2 cloudUv = cloudBase + vec2(largeSwirl * 0.48, shear * 0.18);
+		float cloudCover = clamp(0.22 + density * 0.95, 0.0, 1.0);
 
 		float cloudField = fbm(cloudUv);
 		float wisps = fbm(cloudUv * 1.3 + vec2(-atmosphereTime * 0.01, atmosphereTime * 0.007) + vec2(cloudField, largeSwirl));
 		float cloudPattern = mix(cloudField, wisps, 0.32);
-		float cloudMask = smoothstep(0.4, 0.67, cloudPattern);
-		float cloudCoverage = smoothstep(0.31, 0.59, cloudPattern + 0.06);
+		float cloudMask = smoothstep(mix(0.54, 0.4, cloudCover), mix(0.76, 0.67, cloudCover), cloudPattern);
+		float cloudCoverage = smoothstep(mix(0.46, 0.31, cloudCover), mix(0.68, 0.59, cloudCover), cloudPattern + 0.06);
 		float jet = 0.5 + 0.5 * sin((texelCoord.y + largeSwirl * 1.35) * 1.05 + atmosphereTime * 0.45);
-		float jetMask = smoothstep(0.65, 0.92, jet) * smoothstep(0.38, 0.76, wisps);
+		float jetMask = smoothstep(mix(0.8, 0.65, cloudCover), mix(0.96, 0.92, cloudCover), jet)
+			* smoothstep(mix(0.5, 0.38, cloudCover), mix(0.84, 0.76, cloudCover), wisps);
 		float turbulence = noise((texelCoord + vec2(atmosphereTime * 0.16, -atmosphereTime * 0.12)) / 2.75);
-		float cloudPresence = max(max(cloudMask, cloudCoverage * 0.82), jetMask * 0.72);
+		float cloudPresence = max(max(cloudMask, cloudCoverage * (0.58 + cloudCover * 0.18)), jetMask * (0.46 + cloudCover * 0.18));
+		float neutralClouds = 1.0 - smoothstep(0.02, 0.18, tintStrength);
+		float neutralBoost = neutralClouds * (1.0 - density * 0.45);
 		float stormMask = smoothstep(0.24, 0.78, cloudPresence);
 		float stormShade = mix(1.0, 0.22, stormDarkness);
 
 		vec3 shadowColor = baseColor * mix(0.72, 0.55, density);
 		vec3 cloudColor = min(cloudTint * (1.18 + density * 0.18) + vec3(0.04 + density * 0.04), vec3(1.0));
+		cloudColor = mix(cloudColor, vec3(1.0), neutralClouds * 0.38);
 		cloudColor *= mix(1.0, stormShade, 0.85);
 		vec3 stormCloudColor = mix(cloudColor, vec3(0.22, 0.22, 0.24), 0.52 + stormDarkness * 0.28);
 		vec3 airColor = mix(shadowColor, baseColor, 0.35 + turbulence * 0.3);
-		layeredColor = mix(airColor, cloudColor, cloudMask * (0.96 + density * 0.3));
-		layeredColor = mix(layeredColor, cloudColor, cloudCoverage * (0.48 + density * 0.2));
-		layeredColor = mix(layeredColor, cloudColor, jetMask * (0.5 + density * 0.24));
-		layeredColor = mix(layeredColor, stormCloudColor, stormMask * (0.84 + stormDarkness * 0.16));
-
-		if (lightningStrength > 0.001) {
-			float burstWindow = floor(atmosphereTime * 0.85 + patternOffset * 7.0);
-			float burstSeed = hash(vec2(burstWindow, 23.17));
-			float burstPhase = fract(atmosphereTime * 0.85 + burstSeed * 0.37);
-			float burstGate = step(0.84, burstSeed) * smoothstep(0.28, 0.82, lightningStrength);
-			float primaryFlash = smoothstep(0.0, 0.02, burstPhase) * (1.0 - smoothstep(0.02, 0.09, burstPhase));
-			float secondaryFlash = smoothstep(0.11, 0.14, burstPhase) * (1.0 - smoothstep(0.14, 0.22, burstPhase));
-			float flashPulse = burstGate * (primaryFlash + secondaryFlash * 0.65);
-			float lightningPatch = hash(floor(texelCoord / 3.0) + vec2(burstWindow * 1.9, 41.3));
-			float lightningMask = smoothstep(0.42, 0.82, cloudPresence) * smoothstep(0.7, 0.92, lightningPatch + cloudPattern * 0.4);
-			float lightningMix = flashPulse * lightningMask * (0.72 + lightningStrength * 0.28);
-			layeredColor = mix(layeredColor, vec3(1.0), lightningMix);
-		}
+		layeredColor = mix(airColor, cloudColor, clamp(cloudMask * (0.96 + density * 0.3 + neutralBoost * 0.42), 0.0, 1.0));
+		layeredColor = mix(layeredColor, cloudColor, clamp(cloudCoverage * (0.48 + density * 0.2 + neutralBoost * 0.3), 0.0, 1.0));
+		layeredColor = mix(layeredColor, cloudColor, clamp(jetMask * (0.5 + density * 0.24 + neutralBoost * 0.16), 0.0, 1.0));
+		layeredColor = mix(layeredColor, stormCloudColor, stormMask * stormDarkness * (0.84 + stormDarkness * 0.16));
 
 		alphaBoost = 0.98 + cloudPresence * 0.64;
-		overlayAlpha = max(atmosphereAlpha * alphaBoost, cloudPresence * (0.56 + density * 1.0 + stormDarkness * 0.22));
+		overlayAlpha = max(atmosphereAlpha * alphaBoost, cloudPresence * (0.28 + density * 1.1 + stormDarkness * 0.22 + neutralBoost * 0.34));
 	} else {
 		float shimmer = noise(uv * 8.0 + vec2(atmosphereTime * 0.015, -atmosphereTime * 0.011));
 		vec3 tintLow = baseColor * 0.82;

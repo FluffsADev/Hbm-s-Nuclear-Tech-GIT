@@ -69,6 +69,8 @@ public class GUIScreenSatSettings extends GuiScreen {
 	};
 	private static final Shader crescentShader = new Shader(new ResourceLocation(RefStrings.MODID, "shaders/crescent.frag"));
 	private static final Shader atmosphereShader = new Shader(new ResourceLocation(RefStrings.MODID, "shaders/atmosphere.frag"));
+	private static final Shader atmosphereEmissiveShader = new Shader(new ResourceLocation(RefStrings.MODID, "shaders/atmosphere_emissive.frag"));
+	private static final Shader lightningShader = new Shader(new ResourceLocation(RefStrings.MODID, "shaders/lightning.frag"));
 	private static final Shader nightLightsShader = new Shader(new ResourceLocation(RefStrings.MODID, "shaders/nightlights.frag"));
 
 	static {
@@ -841,7 +843,6 @@ public class GUIScreenSatSettings extends GuiScreen {
 			atmosphereShader.setUniform1f("cloudColorB", (float) cloudColor.zCoord);
 			atmosphereShader.setUniform1f("cloudTintStrength", cloudTintStrength);
 			atmosphereShader.setUniform1f("cloudStormDarkness", cloudStormDarkness);
-			atmosphereShader.setUniform1f("cloudLightningStrength", cloudLightningStrength);
 			atmosphereShader.setUniform1f("atmosphereAlpha", atmosphereAlpha);
 			atmosphereShader.setUniform1f("atmosphereTime", atmosphereTime);
 			atmosphereShader.setUniform1i("atmosphereStyle", atmosphereStyle);
@@ -879,6 +880,42 @@ public class GUIScreenSatSettings extends GuiScreen {
 
 		crescentShader.stop();
 
+		if(atmosphereDensity > 0.001F
+			&& (atmosphereStyle == CelestialRenderUtil.ATMOSPHERE_STYLE_CLOUDS || atmosphereStyle == CelestialRenderUtil.ATMOSPHERE_STYLE_HAZE)) {
+			GL11.glEnable(GL11.GL_BLEND);
+			GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE);
+			GL11.glColor4f(1F, 1F, 1F, 1F);
+
+			atmosphereEmissiveShader.use();
+			atmosphereEmissiveShader.setUniform1f("phase", phase);
+			atmosphereEmissiveShader.setUniform1f("offset", textureUOffset);
+			atmosphereEmissiveShader.setUniform1f("atmosphereDensity", atmosphereDensity);
+			atmosphereEmissiveShader.setUniform1f("patternOffset", atmospherePatternOffset);
+			atmosphereEmissiveShader.setUniform1f("atmosphereTime", atmosphereTime);
+			atmosphereEmissiveShader.setUniform1i("atmosphereStyle", atmosphereStyle);
+			atmosphereEmissiveShader.setUniform1i("bodyTex", 0);
+			atmosphereEmissiveShader.setUniform1i("lights", 1);
+			atmosphereEmissiveShader.setUniform1i("cityMask", 2);
+			atmosphereEmissiveShader.setUniform1i("blackouts", activeBlackouts);
+			atmosphereEmissiveShader.setUniform1i("useBodyAlphaMask", 1);
+
+			GL13.glActiveTexture(GL13.GL_TEXTURE0);
+			mc.getTextureManager().bindTexture(body.texture);
+			GL13.glActiveTexture(GL13.GL_TEXTURE1);
+			mc.getTextureManager().bindTexture(citylights[lightIntensity]);
+			GL13.glActiveTexture(GL13.GL_TEXTURE2);
+			mc.getTextureManager().bindTexture(body.cityMask != null ? body.cityMask : defaultMask);
+			GL13.glActiveTexture(GL13.GL_TEXTURE0);
+
+			if(rotateBody) {
+				drawTexturedQuadRotating(bodyScreenX, bodyScreenY, drawSize, bodyRotationAngle);
+			} else {
+				drawTexturedQuad(bodyScreenX, bodyScreenY, drawSize, 0F);
+			}
+
+			atmosphereEmissiveShader.stop();
+		}
+
 		GL11.glEnable(GL11.GL_BLEND);
 		GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE);
 		GL11.glColor4f(1F, 1F, 1F, 1F);
@@ -887,6 +924,9 @@ public class GUIScreenSatSettings extends GuiScreen {
 		nightLightsShader.setUniform1f("phase", phase);
 		nightLightsShader.setUniform1f("offset", textureUOffset);
 		nightLightsShader.setUniform1f("atmosphereDensity", atmosphereDensity);
+		nightLightsShader.setUniform1f("patternOffset", atmospherePatternOffset);
+		nightLightsShader.setUniform1f("atmosphereTime", atmosphereTime);
+		nightLightsShader.setUniform1i("atmosphereStyle", atmosphereStyle);
 		nightLightsShader.setUniform1i("bodyTex", 0);
 		nightLightsShader.setUniform1i("lights", 1);
 		nightLightsShader.setUniform1i("cityMask", 2);
@@ -908,6 +948,37 @@ public class GUIScreenSatSettings extends GuiScreen {
 		}
 
 		nightLightsShader.stop();
+
+		if(atmosphereAlpha > 0.001F && cloudLightningStrength > 0.001F
+			&& (atmosphereStyle == CelestialRenderUtil.ATMOSPHERE_STYLE_CLOUDS || atmosphereStyle == CelestialRenderUtil.ATMOSPHERE_STYLE_HAZE)) {
+			GL11.glEnable(GL11.GL_BLEND);
+			GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE);
+			GL11.glColor4f(1F, 1F, 1F, 1F);
+
+			lightningShader.use();
+			lightningShader.setUniform1f("phase", phase);
+			lightningShader.setUniform1f("offset", textureUOffset);
+			lightningShader.setUniform1f("patternOffset", atmospherePatternOffset);
+			lightningShader.setUniform1i("bodyTex", 0);
+			lightningShader.setUniform1i("useBodyAlphaMask", 1);
+			lightningShader.setUniform1f("cloudTintStrength", cloudTintStrength);
+			lightningShader.setUniform1f("cloudLightningStrength", cloudLightningStrength);
+			lightningShader.setUniform1f("atmosphereAlpha", atmosphereAlpha);
+			lightningShader.setUniform1f("atmosphereTime", atmosphereTime);
+			lightningShader.setUniform1i("atmosphereStyle", atmosphereStyle);
+
+			GL13.glActiveTexture(GL13.GL_TEXTURE0);
+			mc.getTextureManager().bindTexture(body.texture);
+
+			if(rotateBody) {
+				drawTexturedQuadRotating(bodyScreenX, bodyScreenY, drawSize, bodyRotationAngle);
+			} else {
+				drawTexturedQuad(bodyScreenX, bodyScreenY, drawSize, 0F);
+			}
+
+			lightningShader.stop();
+		}
+
 		GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
 
 		if(impact != null) {

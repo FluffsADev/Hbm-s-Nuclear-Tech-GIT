@@ -72,6 +72,8 @@ public class SkyProviderCelestial extends IRenderHandler {
 
 	protected static final Shader crescentShader = new Shader(new ResourceLocation(RefStrings.MODID, "shaders/crescent.frag"));
 	protected static final Shader atmosphereShader = new Shader(new ResourceLocation(RefStrings.MODID, "shaders/atmosphere.frag"));
+	protected static final Shader atmosphereEmissiveShader = new Shader(new ResourceLocation(RefStrings.MODID, "shaders/atmosphere_emissive.frag"));
+	protected static final Shader lightningShader = new Shader(new ResourceLocation(RefStrings.MODID, "shaders/lightning.frag"));
 	protected static final Shader nightLightsShader = new Shader(new ResourceLocation(RefStrings.MODID, "shaders/nightlights.frag"));
 	protected static final Shader swarmShader = new Shader(new ResourceLocation(RefStrings.MODID, "shaders/swarm.vert"), new ResourceLocation(RefStrings.MODID, "shaders/swarm.frag"));
 
@@ -1036,9 +1038,11 @@ public class SkyProviderCelestial extends IRenderHandler {
 						int atmosphereStyle = CelestialRenderUtil.getAtmosphereStyle(metric.body);
 
 						float atmosphereTime = ((float) world.getTotalWorldTime() + partialTicks) / 20.0F;
-						renderAtmosphereSurface(tessellator, atmosphereColor, cloudColor, cloudTintStrength, cloudStormDarkness, cloudLightningStrength, atmosphereOverlayAlpha, uvOffset, atmospherePatternOffset, size, atmosphereTime, atmosphereStyle);
+						renderAtmosphereSurface(tessellator, atmosphereColor, cloudColor, cloudTintStrength, cloudStormDarkness, atmosphereOverlayAlpha, uvOffset, atmospherePatternOffset, size, atmosphereTime, atmosphereStyle);
 						renderCrescentShadow(tessellator, (float) -metric.phase, uvOffset, size);
-						renderNightLights(tessellator, mc, metric.body, (float) -metric.phase, uvOffset, size, lightIntensity, activeBlackouts, atmosphereDensity);
+						renderAtmosphereEmissive(tessellator, mc, metric.body, (float) -metric.phase, uvOffset, size, lightIntensity, activeBlackouts, atmosphereDensity, atmospherePatternOffset, atmosphereTime, atmosphereStyle);
+						renderNightLights(tessellator, mc, metric.body, (float) -metric.phase, uvOffset, size, lightIntensity, activeBlackouts, atmosphereDensity, atmospherePatternOffset, atmosphereTime, atmosphereStyle);
+						renderLightningOverlay(tessellator, (float) -metric.phase, cloudTintStrength, cloudLightningStrength, atmosphereOverlayAlpha, uvOffset, atmospherePatternOffset, size, atmosphereTime, atmosphereStyle);
 
 						OpenGlHelper.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ONE, GL11.GL_ZERO);
 
@@ -1167,7 +1171,7 @@ public class SkyProviderCelestial extends IRenderHandler {
 		tessellator.draw();
 	}
 
-	private void renderAtmosphereSurface(Tessellator tessellator, Vec3 atmosphereColor, Vec3 cloudColor, float cloudTintStrength, float cloudStormDarkness, float cloudLightningStrength, float atmosphereAlpha, double uvOffset, double patternOffset, double size, float atmosphereTime, int atmosphereStyle) {
+	private void renderAtmosphereSurface(Tessellator tessellator, Vec3 atmosphereColor, Vec3 cloudColor, float cloudTintStrength, float cloudStormDarkness, float atmosphereAlpha, double uvOffset, double patternOffset, double size, float atmosphereTime, int atmosphereStyle) {
 		if(atmosphereAlpha <= 0.001F) {
 			return;
 		}
@@ -1189,12 +1193,68 @@ public class SkyProviderCelestial extends IRenderHandler {
 		atmosphereShader.setUniform1f("cloudColorB", (float) cloudColor.zCoord);
 		atmosphereShader.setUniform1f("cloudTintStrength", cloudTintStrength);
 		atmosphereShader.setUniform1f("cloudStormDarkness", cloudStormDarkness);
-		atmosphereShader.setUniform1f("cloudLightningStrength", cloudLightningStrength);
 		atmosphereShader.setUniform1f("atmosphereAlpha", atmosphereAlpha);
 		atmosphereShader.setUniform1f("atmosphereTime", atmosphereTime);
 		atmosphereShader.setUniform1i("atmosphereStyle", atmosphereStyle);
 		drawPlanetShaderQuad(tessellator, size);
 		atmosphereShader.stop();
+	}
+
+	private void renderLightningOverlay(Tessellator tessellator, float phase, float cloudTintStrength, float cloudLightningStrength, float atmosphereAlpha, double uvOffset, double patternOffset, double size, float atmosphereTime, int atmosphereStyle) {
+		if(atmosphereAlpha <= 0.001F || cloudLightningStrength <= 0.001F || (atmosphereStyle != CelestialRenderUtil.ATMOSPHERE_STYLE_CLOUDS && atmosphereStyle != CelestialRenderUtil.ATMOSPHERE_STYLE_HAZE)) {
+			return;
+		}
+
+		GL11.glEnable(GL11.GL_BLEND);
+		OpenGlHelper.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ONE, GL11.GL_ZERO);
+		GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+
+		lightningShader.use();
+		lightningShader.setUniform1f("phase", phase);
+		lightningShader.setUniform1f("offset", (float) uvOffset);
+		lightningShader.setUniform1f("patternOffset", (float) patternOffset);
+		lightningShader.setUniform1i("bodyTex", 0);
+		lightningShader.setUniform1i("useBodyAlphaMask", 0);
+		lightningShader.setUniform1f("cloudTintStrength", cloudTintStrength);
+		lightningShader.setUniform1f("cloudLightningStrength", cloudLightningStrength);
+		lightningShader.setUniform1f("atmosphereAlpha", atmosphereAlpha);
+		lightningShader.setUniform1f("atmosphereTime", atmosphereTime);
+		lightningShader.setUniform1i("atmosphereStyle", atmosphereStyle);
+		drawPlanetShaderQuad(tessellator, size);
+		lightningShader.stop();
+	}
+
+	private void renderAtmosphereEmissive(Tessellator tessellator, Minecraft mc, CelestialBody body, float phase, double uvOffset, double size, int lightIntensity, int activeBlackouts, float atmosphereDensity, double patternOffset, float atmosphereTime, int atmosphereStyle) {
+		if(atmosphereDensity <= 0.001F || (atmosphereStyle != CelestialRenderUtil.ATMOSPHERE_STYLE_CLOUDS && atmosphereStyle != CelestialRenderUtil.ATMOSPHERE_STYLE_HAZE)) {
+			return;
+		}
+
+		GL11.glEnable(GL11.GL_BLEND);
+		OpenGlHelper.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ONE, GL11.GL_ZERO);
+		GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+
+		atmosphereEmissiveShader.use();
+		atmosphereEmissiveShader.setUniform1f("phase", phase);
+		atmosphereEmissiveShader.setUniform1f("offset", (float) uvOffset);
+		atmosphereEmissiveShader.setUniform1f("atmosphereDensity", atmosphereDensity);
+		atmosphereEmissiveShader.setUniform1f("patternOffset", (float) patternOffset);
+		atmosphereEmissiveShader.setUniform1f("atmosphereTime", atmosphereTime);
+		atmosphereEmissiveShader.setUniform1i("atmosphereStyle", atmosphereStyle);
+		atmosphereEmissiveShader.setUniform1i("bodyTex", 0);
+		atmosphereEmissiveShader.setUniform1i("lights", 0);
+		atmosphereEmissiveShader.setUniform1i("cityMask", 1);
+		atmosphereEmissiveShader.setUniform1i("blackouts", activeBlackouts);
+		atmosphereEmissiveShader.setUniform1i("useBodyAlphaMask", 0);
+
+		mc.renderEngine.bindTexture(citylights[lightIntensity]);
+		if(gl13) {
+			GL13.glActiveTexture(GL13.GL_TEXTURE1);
+			mc.renderEngine.bindTexture(body.cityMask != null ? body.cityMask : defaultMask);
+			GL13.glActiveTexture(GL13.GL_TEXTURE0);
+		}
+
+		drawPlanetShaderQuad(tessellator, size);
+		atmosphereEmissiveShader.stop();
 	}
 
 	private void renderCrescentShadow(Tessellator tessellator, float phase, double uvOffset, double size) {
@@ -1211,7 +1271,7 @@ public class SkyProviderCelestial extends IRenderHandler {
 		crescentShader.stop();
 	}
 
-	private void renderNightLights(Tessellator tessellator, Minecraft mc, CelestialBody body, float phase, double uvOffset, double size, int lightIntensity, int activeBlackouts, float atmosphereDensity) {
+	private void renderNightLights(Tessellator tessellator, Minecraft mc, CelestialBody body, float phase, double uvOffset, double size, int lightIntensity, int activeBlackouts, float atmosphereDensity, double patternOffset, float atmosphereTime, int atmosphereStyle) {
 		GL11.glEnable(GL11.GL_BLEND);
 		OpenGlHelper.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ONE, GL11.GL_ZERO);
 		GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
@@ -1220,6 +1280,9 @@ public class SkyProviderCelestial extends IRenderHandler {
 		nightLightsShader.setUniform1f("phase", phase);
 		nightLightsShader.setUniform1f("offset", (float) uvOffset);
 		nightLightsShader.setUniform1f("atmosphereDensity", atmosphereDensity);
+		nightLightsShader.setUniform1f("patternOffset", (float) patternOffset);
+		nightLightsShader.setUniform1f("atmosphereTime", atmosphereTime);
+		nightLightsShader.setUniform1i("atmosphereStyle", atmosphereStyle);
 		nightLightsShader.setUniform1i("bodyTex", 0);
 		nightLightsShader.setUniform1i("lights", 0);
 		nightLightsShader.setUniform1i("cityMask", 1);

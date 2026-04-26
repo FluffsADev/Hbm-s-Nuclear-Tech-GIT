@@ -20,7 +20,7 @@ vec2 quantize(vec2 inp, vec2 period) {
 	return floor(inp / period) * period;
 }
 
-float hash(float x){ return fract(cos(x * 124.123) * 412.0); }
+float hash(float x) { return fract(cos(x * 124.123) * 412.0); }
 
 float hash2(vec2 p) {
 	return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
@@ -52,7 +52,7 @@ float fbm(vec2 p) {
 }
 
 void main() {
-	vec2 movingUV = gl_TexCoord[0].xy + vec2(offset, 0);
+	vec2 movingUV = gl_TexCoord[0].xy + vec2(offset, 0.0);
 	vec2 wrappedUV = fract(movingUV);
 	vec2 patternUV = gl_TexCoord[0].xy + vec2(patternOffset, 0.0);
 
@@ -65,12 +65,15 @@ void main() {
 		}
 	}
 
-	vec2 fragCoord = quantize(movingUV, vec2(0.0625, 0.0625)) - vec2(offset, 0);
+	if (atmosphereStyle != 1 && atmosphereStyle != 2) {
+		gl_FragColor = vec4(0.0);
+		return;
+	}
+
+	vec2 fragCoord = quantize(movingUV, vec2(0.0625, 0.0625)) - vec2(offset, 0.0);
 	vec2 uv = (2.25 * fragCoord - 1.1);
 	vec2 suv = (2.0 * fragCoord - 1.0);
-
 	vec3 light = vec3(sin(phase * PI), 0.0, cos(phase * PI));
-
 	vec3 n = vec3(uv, sqrt(1.0 - clamp(dot(uv, uv), 0.0, 1.0)));
 	float brightness = dot(n, light);
 
@@ -91,21 +94,18 @@ void main() {
 	lightColor *= city.a;
 
 	float nightFactor = clamp(0.8 - brightness, 0.0, 1.0);
-	float atmosphereTransmission = 1.0 - smoothstep(0.1, 0.85, atmosphereDensity);
-	float cloudOcclusion = 0.0;
+	vec2 texelCoord = floor(patternUV * PIXEL_GRID);
+	vec2 texelFlow = vec2(atmosphereTime * 0.18, -atmosphereTime * 0.11);
+	float emissiveMask = 0.0;
 
 	if (atmosphereStyle == 2) {
-		vec2 texelCoord = floor(patternUV * PIXEL_GRID);
 		vec2 uvp = (texelCoord + 0.5) / PIXEL_GRID;
-		vec2 texelFlow = vec2(atmosphereTime * 0.18, -atmosphereTime * 0.11);
 		vec2 flowDrift = texelFlow / PIXEL_GRID;
 		float hazeField = fbm(uvp * 2.4 + flowDrift * 0.55);
 		float hazeSheet = fbm(uvp * 4.0 + vec2(-atmosphereTime * 0.012, atmosphereTime * 0.01));
 		float hazeMix = smoothstep(0.28, 0.88, mix(hazeField, hazeSheet, 0.4));
-		cloudOcclusion = hazeMix * (0.45 + atmosphereDensity * 0.35);
-	} else if (atmosphereStyle == 1) {
-		vec2 texelCoord = floor(patternUV * PIXEL_GRID);
-		vec2 texelFlow = vec2(atmosphereTime * 0.18, -atmosphereTime * 0.11);
+		emissiveMask = hazeMix * (0.24 + atmosphereDensity * 0.22);
+	} else {
 		vec2 cloudBase = (texelCoord + texelFlow) / vec2(7.5, 6.0);
 		float largeSwirl = fbm(cloudBase * 0.75);
 		float shear = fbm((texelCoord.yx + vec2(-atmosphereTime * 0.12, atmosphereTime * 0.09)) / vec2(8.5, 10.0));
@@ -120,12 +120,10 @@ void main() {
 		float jetMask = smoothstep(mix(0.8, 0.65, cloudCover), mix(0.96, 0.92, cloudCover), jet)
 			* smoothstep(mix(0.5, 0.38, cloudCover), mix(0.84, 0.76, cloudCover), wisps);
 		float cloudPresence = max(max(cloudMask, cloudCoverage * (0.58 + cloudCover * 0.18)), jetMask * (0.46 + cloudCover * 0.18));
-		cloudOcclusion = cloudPresence * (0.58 + atmosphereDensity * 0.22);
+		emissiveMask = cloudPresence * (0.28 + atmosphereDensity * 0.24);
 	}
 
-	float directTransmission = clamp(1.0 - cloudOcclusion * (0.72 + atmosphereDensity * 0.18), 0.08, 1.0);
-
-	gl_FragColor = vec4(lightColor, nightFactor * atmosphereTransmission * directTransmission * alphaMask);
+	gl_FragColor = vec4(lightColor, clamp(nightFactor * emissiveMask * alphaMask, 0.0, 1.0));
 
 	for (int i = 0; i < blackouts; i++) {
 		float bx = hash(i * 100.0 + 1.0);
