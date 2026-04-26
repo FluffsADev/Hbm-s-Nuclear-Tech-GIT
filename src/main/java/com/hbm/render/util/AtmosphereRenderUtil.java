@@ -1,6 +1,7 @@
 package com.hbm.render.util;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.hbm.dim.CelestialBody;
@@ -8,6 +9,9 @@ import com.hbm.dim.WorldProviderCelestial;
 import com.hbm.dim.trait.CBT_Atmosphere;
 import com.hbm.dim.trait.CBT_Atmosphere.FluidEntry;
 import com.hbm.dim.trait.CBT_Weather;
+import com.hbm.handler.CelestialNukeShockHandler;
+import com.hbm.handler.CelestialNukeShockHandler.ShockStatus;
+import com.hbm.render.shader.Shader;
 
 import org.lwjgl.opengl.GL11;
 
@@ -30,6 +34,7 @@ public class AtmosphereRenderUtil {
 	public static final int ATMOSPHERE_STYLE_CLOUDS = 1;
 	public static final int ATMOSPHERE_STYLE_HAZE = 2;
 	public static final int ATMOSPHERE_STYLE_GAS_BANDS = 3;
+	private static final float DEFAULT_NUKE_SHOCK_CENTER = 0.5F;
 
 	private static final class CloudStormFadeState {
 
@@ -236,6 +241,31 @@ public class AtmosphereRenderUtil {
 
 		float lightningActivity = CBT_Weather.getLightningActivityFactor(body);
 		return MathHelper.clamp_float(weather.getThunderStrength(partialTicks) * lightningActivity, 0.0F, 1.0F);
+	}
+
+	public static void applyNukeShockUniforms(Shader shader, List<ShockStatus> shocks, double currentTime) {
+		int shockCount = Math.min(shocks != null ? shocks.size() : 0, CelestialNukeShockHandler.MAX_ACTIVE_SHOCKS);
+		shader.setUniform1i("nukeShockCount", shockCount);
+
+		for(int i = 0; i < CelestialNukeShockHandler.MAX_ACTIVE_SHOCKS; i++) {
+			float shockTime = -1.0F;
+			float shockCenterX = DEFAULT_NUKE_SHOCK_CENTER;
+			float shockCenterY = DEFAULT_NUKE_SHOCK_CENTER;
+			float shockStrength = 0.0F;
+
+			if(i < shockCount) {
+				ShockStatus shock = shocks.get(i);
+				shockTime = (float) (currentTime - shock.time);
+				shockCenterX = shock.centerX;
+				shockCenterY = shock.centerY;
+				shockStrength = shock.strength;
+			}
+
+			shader.setUniform1f("nukeShockTime[" + i + "]", shockTime);
+			shader.setUniform1f("nukeShockCenterX[" + i + "]", shockCenterX);
+			shader.setUniform1f("nukeShockCenterY[" + i + "]", shockCenterY);
+			shader.setUniform1f("nukeShockStrength[" + i + "]", shockStrength);
+		}
 	}
 
 	public static void renderAtmosphereGlow2D(Tessellator tessellator, CelestialBody body, double centerX, double centerY, double size, float visibility) {

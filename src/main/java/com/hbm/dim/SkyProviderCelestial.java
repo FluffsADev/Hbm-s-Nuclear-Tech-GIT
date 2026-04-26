@@ -40,6 +40,7 @@ import org.lwjgl.opengl.GLContext;
 
 import com.hbm.dim.trait.CBT_Impact;
 import com.hbm.dim.trait.CBT_Lights;
+import com.hbm.handler.CelestialNukeShockHandler;
 import com.hbm.items.ISatChip;
 import com.hbm.main.ModEventHandlerClient;
 import com.hbm.main.ModEventHandlerRenderer;
@@ -1019,6 +1020,7 @@ public class SkyProviderCelestial extends IRenderHandler {
 
 						CBT_Impact impact = metric.body.getTrait(CBT_Impact.class);
 						CBT_Lights light = metric.body.getTrait(CBT_Lights.class);
+						List<CelestialNukeShockHandler.ShockStatus> nukeShocks = CelestialNukeShockHandler.getClientShocks(metric.body);
 
 						double impactTime = impact != null ? (world.getTotalWorldTime() - impact.time) + partialTicks : 0;
 						float impactAnimationTime = impact != null ? (float) impactTime : -1.0F;
@@ -1039,11 +1041,12 @@ public class SkyProviderCelestial extends IRenderHandler {
 						int atmosphereStyle = AtmosphereRenderUtil.getAtmosphereStyle(metric.body);
 
 						float atmosphereTime = ((float) world.getTotalWorldTime() + partialTicks) / 20.0F;
-						renderAtmosphereSurface(tessellator, atmosphereColor, cloudColor, cloudTintStrength, cloudStormDarkness, atmosphereOverlayAlpha, uvOffset, atmospherePatternOffset, size, atmosphereTime, atmosphereStyle, impactAnimationTime);
+						double currentShockTime = world.getTotalWorldTime() + partialTicks;
+						renderAtmosphereSurface(tessellator, atmosphereColor, cloudColor, cloudTintStrength, cloudStormDarkness, atmosphereOverlayAlpha, uvOffset, atmospherePatternOffset, size, atmosphereTime, atmosphereStyle, impactAnimationTime, nukeShocks, currentShockTime);
 						renderCrescentShadow(tessellator, (float) -metric.phase, uvOffset, size);
-						renderAtmosphereEmissive(tessellator, mc, metric.body, (float) -metric.phase, uvOffset, size, lightIntensity, activeBlackouts, atmosphereDensity, atmospherePatternOffset, atmosphereTime, atmosphereStyle, impactAnimationTime);
-						renderNightLights(tessellator, mc, metric.body, (float) -metric.phase, uvOffset, size, lightIntensity, activeBlackouts, atmosphereDensity, atmospherePatternOffset, atmosphereTime, atmosphereStyle, impactAnimationTime);
-						renderLightningOverlay(tessellator, mc, metric.body, (float) -metric.phase, cloudTintStrength, cloudLightningStrength, atmosphereOverlayAlpha, uvOffset, atmospherePatternOffset, size, atmosphereTime, atmosphereStyle, impactAnimationTime);
+						renderAtmosphereEmissive(tessellator, mc, metric.body, (float) -metric.phase, uvOffset, size, lightIntensity, activeBlackouts, atmosphereDensity, atmospherePatternOffset, atmosphereTime, atmosphereStyle, impactAnimationTime, nukeShocks, currentShockTime);
+						renderNightLights(tessellator, mc, metric.body, (float) -metric.phase, uvOffset, size, lightIntensity, activeBlackouts, atmosphereDensity, atmospherePatternOffset, atmosphereTime, atmosphereStyle, impactAnimationTime, nukeShocks, currentShockTime);
+						renderLightningOverlay(tessellator, mc, metric.body, (float) -metric.phase, cloudTintStrength, cloudLightningStrength, atmosphereOverlayAlpha, uvOffset, atmospherePatternOffset, size, atmosphereTime, atmosphereStyle, impactAnimationTime, nukeShocks, currentShockTime);
 
 						OpenGlHelper.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ONE, GL11.GL_ZERO);
 
@@ -1172,7 +1175,7 @@ public class SkyProviderCelestial extends IRenderHandler {
 		tessellator.draw();
 	}
 
-	private void renderAtmosphereSurface(Tessellator tessellator, Vec3 atmosphereColor, Vec3 cloudColor, float cloudTintStrength, float cloudStormDarkness, float atmosphereAlpha, double uvOffset, double patternOffset, double size, float atmosphereTime, int atmosphereStyle, float impactTime) {
+	private void renderAtmosphereSurface(Tessellator tessellator, Vec3 atmosphereColor, Vec3 cloudColor, float cloudTintStrength, float cloudStormDarkness, float atmosphereAlpha, double uvOffset, double patternOffset, double size, float atmosphereTime, int atmosphereStyle, float impactTime, List<CelestialNukeShockHandler.ShockStatus> nukeShocks, double currentShockTime) {
 		if(atmosphereAlpha <= 0.001F) {
 			return;
 		}
@@ -1198,11 +1201,12 @@ public class SkyProviderCelestial extends IRenderHandler {
 		atmosphereShader.setUniform1f("atmosphereTime", atmosphereTime);
 		atmosphereShader.setUniform1i("atmosphereStyle", atmosphereStyle);
 		atmosphereShader.setUniform1f("impactTime", impactTime);
+		AtmosphereRenderUtil.applyNukeShockUniforms(atmosphereShader, nukeShocks, currentShockTime);
 		drawPlanetShaderQuad(tessellator, size);
 		atmosphereShader.stop();
 	}
 
-	private void renderLightningOverlay(Tessellator tessellator, Minecraft mc, CelestialBody body, float phase, float cloudTintStrength, float cloudLightningStrength, float atmosphereAlpha, double uvOffset, double patternOffset, double size, float atmosphereTime, int atmosphereStyle, float impactTime) {
+	private void renderLightningOverlay(Tessellator tessellator, Minecraft mc, CelestialBody body, float phase, float cloudTintStrength, float cloudLightningStrength, float atmosphereAlpha, double uvOffset, double patternOffset, double size, float atmosphereTime, int atmosphereStyle, float impactTime, List<CelestialNukeShockHandler.ShockStatus> nukeShocks, double currentShockTime) {
 		if(atmosphereAlpha <= 0.001F || cloudLightningStrength <= 0.001F || (atmosphereStyle != AtmosphereRenderUtil.ATMOSPHERE_STYLE_CLOUDS && atmosphereStyle != AtmosphereRenderUtil.ATMOSPHERE_STYLE_HAZE)) {
 			return;
 		}
@@ -1224,6 +1228,7 @@ public class SkyProviderCelestial extends IRenderHandler {
 		lightningShader.setUniform1f("atmosphereTime", atmosphereTime);
 		lightningShader.setUniform1i("atmosphereStyle", atmosphereStyle);
 		lightningShader.setUniform1f("impactTime", impactTime);
+		AtmosphereRenderUtil.applyNukeShockUniforms(lightningShader, nukeShocks, currentShockTime);
 
 		mc.renderEngine.bindTexture(body.texture);
 		if(gl13) {
@@ -1235,7 +1240,7 @@ public class SkyProviderCelestial extends IRenderHandler {
 		lightningShader.stop();
 	}
 
-	private void renderAtmosphereEmissive(Tessellator tessellator, Minecraft mc, CelestialBody body, float phase, double uvOffset, double size, int lightIntensity, int activeBlackouts, float atmosphereDensity, double patternOffset, float atmosphereTime, int atmosphereStyle, float impactTime) {
+	private void renderAtmosphereEmissive(Tessellator tessellator, Minecraft mc, CelestialBody body, float phase, double uvOffset, double size, int lightIntensity, int activeBlackouts, float atmosphereDensity, double patternOffset, float atmosphereTime, int atmosphereStyle, float impactTime, List<CelestialNukeShockHandler.ShockStatus> nukeShocks, double currentShockTime) {
 		if(lightIntensity <= 0 || atmosphereDensity <= 0.001F || (atmosphereStyle != AtmosphereRenderUtil.ATMOSPHERE_STYLE_CLOUDS && atmosphereStyle != AtmosphereRenderUtil.ATMOSPHERE_STYLE_HAZE)) {
 			return;
 		}
@@ -1252,6 +1257,7 @@ public class SkyProviderCelestial extends IRenderHandler {
 		atmosphereEmissiveShader.setUniform1f("atmosphereTime", atmosphereTime);
 		atmosphereEmissiveShader.setUniform1i("atmosphereStyle", atmosphereStyle);
 		atmosphereEmissiveShader.setUniform1f("impactTime", impactTime);
+		AtmosphereRenderUtil.applyNukeShockUniforms(atmosphereEmissiveShader, nukeShocks, currentShockTime);
 		atmosphereEmissiveShader.setUniform1i("bodyTex", 0);
 		atmosphereEmissiveShader.setUniform1i("lights", 0);
 		atmosphereEmissiveShader.setUniform1i("cityMask", 1);
@@ -1283,7 +1289,7 @@ public class SkyProviderCelestial extends IRenderHandler {
 		crescentShader.stop();
 	}
 
-	private void renderNightLights(Tessellator tessellator, Minecraft mc, CelestialBody body, float phase, double uvOffset, double size, int lightIntensity, int activeBlackouts, float atmosphereDensity, double patternOffset, float atmosphereTime, int atmosphereStyle, float impactTime) {
+	private void renderNightLights(Tessellator tessellator, Minecraft mc, CelestialBody body, float phase, double uvOffset, double size, int lightIntensity, int activeBlackouts, float atmosphereDensity, double patternOffset, float atmosphereTime, int atmosphereStyle, float impactTime, List<CelestialNukeShockHandler.ShockStatus> nukeShocks, double currentShockTime) {
 		if(lightIntensity <= 0) {
 			return;
 		}
@@ -1300,6 +1306,7 @@ public class SkyProviderCelestial extends IRenderHandler {
 		nightLightsShader.setUniform1f("atmosphereTime", atmosphereTime);
 		nightLightsShader.setUniform1i("atmosphereStyle", atmosphereStyle);
 		nightLightsShader.setUniform1f("impactTime", impactTime);
+		AtmosphereRenderUtil.applyNukeShockUniforms(nightLightsShader, nukeShocks, currentShockTime);
 		nightLightsShader.setUniform1i("bodyTex", 0);
 		nightLightsShader.setUniform1i("lights", 0);
 		nightLightsShader.setUniform1i("cityMask", 1);

@@ -20,6 +20,7 @@ import com.hbm.dim.CelestialBody;
 import com.hbm.dim.SolarSystem;
 import com.hbm.dim.trait.CBT_Impact;
 import com.hbm.dim.trait.CBT_Lights;
+import com.hbm.handler.CelestialNukeShockHandler;
 import com.hbm.items.ItemVOTVdrive;
 import com.hbm.inventory.container.ContainerStardar;
 import com.hbm.items.ModItems;
@@ -1024,6 +1025,7 @@ public class GUIMachineStardar extends GuiInfoContainer {
 		float phase = calculateHorizontalCrescentPhase(body, bodyMapU, bodyMapV, parentMapU, parentMapV);
 		CBT_Impact impact = body.getTrait(CBT_Impact.class);
 		CBT_Lights light = body.getTrait(CBT_Lights.class);
+		List<CelestialNukeShockHandler.ShockStatus> nukeShocks = CelestialNukeShockHandler.getClientShocks(body);
 		double impactTime = impact != null ? dayTicks - impact.time : 0.0D;
 		float impactAnimationTime = impact != null ? (float) impactTime : -1.0F;
 		int lightIntensity = light != null && impactTime < 40.0D ? MathHelper.clamp_int(light.getIntensity(), 0, citylights.length - 1) : 0;
@@ -1068,6 +1070,7 @@ public class GUIMachineStardar extends GuiInfoContainer {
 			atmosphereShader.setUniform1f("atmosphereTime", atmosphereTime);
 			atmosphereShader.setUniform1i("atmosphereStyle", atmosphereStyle);
 			atmosphereShader.setUniform1f("impactTime", impactAnimationTime);
+			AtmosphereRenderUtil.applyNukeShockUniforms(atmosphereShader, nukeShocks, dayTicks);
 
 			GL13.glActiveTexture(GL13.GL_TEXTURE0);
 			mc.getTextureManager().bindTexture(body.texture);
@@ -1115,6 +1118,7 @@ public class GUIMachineStardar extends GuiInfoContainer {
 			atmosphereEmissiveShader.setUniform1f("atmosphereTime", atmosphereTime);
 			atmosphereEmissiveShader.setUniform1i("atmosphereStyle", atmosphereStyle);
 			atmosphereEmissiveShader.setUniform1f("impactTime", impactAnimationTime);
+			AtmosphereRenderUtil.applyNukeShockUniforms(atmosphereEmissiveShader, nukeShocks, dayTicks);
 			atmosphereEmissiveShader.setUniform1i("bodyTex", 0);
 			atmosphereEmissiveShader.setUniform1i("lights", 1);
 			atmosphereEmissiveShader.setUniform1i("cityMask", 2);
@@ -1150,6 +1154,7 @@ public class GUIMachineStardar extends GuiInfoContainer {
 				nightLightsShader.setUniform1f("atmosphereTime", atmosphereTime);
 				nightLightsShader.setUniform1i("atmosphereStyle", atmosphereStyle);
 				nightLightsShader.setUniform1f("impactTime", impactAnimationTime);
+				AtmosphereRenderUtil.applyNukeShockUniforms(nightLightsShader, nukeShocks, dayTicks);
 				nightLightsShader.setUniform1i("bodyTex", 0);
 				nightLightsShader.setUniform1i("lights", 1);
 				nightLightsShader.setUniform1i("cityMask", 2);
@@ -1191,6 +1196,7 @@ public class GUIMachineStardar extends GuiInfoContainer {
 			lightningShader.setUniform1f("atmosphereTime", atmosphereTime);
 			lightningShader.setUniform1i("atmosphereStyle", atmosphereStyle);
 			lightningShader.setUniform1f("impactTime", impactAnimationTime);
+			AtmosphereRenderUtil.applyNukeShockUniforms(lightningShader, nukeShocks, dayTicks);
 
 			GL13.glActiveTexture(GL13.GL_TEXTURE0);
 			mc.getTextureManager().bindTexture(body.texture);

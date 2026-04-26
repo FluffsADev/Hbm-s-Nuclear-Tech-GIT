@@ -6,6 +6,11 @@ uniform float atmosphereDensity;
 uniform float atmosphereTime;
 uniform float patternOffset;
 uniform float impactTime;
+uniform int nukeShockCount;
+uniform float nukeShockTime[4];
+uniform float nukeShockCenterX[4];
+uniform float nukeShockCenterY[4];
+uniform float nukeShockStrength[4];
 uniform int atmosphereStyle;
 
 uniform sampler2D bodyTex;
@@ -16,6 +21,7 @@ uniform int useBodyAlphaMask;
 
 #define PI 3.1415926538
 const float PIXEL_GRID = 16.0;
+const int MAX_NUKE_SHOCKS = 4;
 const vec2 IMPACT_CENTER = vec2(0.25, 0.7);
 
 vec2 quantize(vec2 inp, vec2 period) {
@@ -82,6 +88,29 @@ vec4 getImpactField(vec2 localUV, float time) {
 	return vec4(direction, shockBand, max(wakeMask, coreMask));
 }
 
+vec4 getNukeShockField(vec2 localUV, float time, vec2 center, float strength) {
+	if (time < 0.0 || strength <= 0.001) {
+		return vec4(0.0);
+	}
+
+	vec2 delta = localUV - center;
+	float distanceFromCenter = length(delta);
+	vec2 direction = distanceFromCenter > 0.0001 ? delta / distanceFromCenter : vec2(0.0, 1.0);
+
+	float shockRadius = time * mix(0.0052, 0.0072, strength);
+	float shockWidth = mix(0.045, 0.075, strength);
+	float shockFade = 1.0 - smoothstep(16.0, 110.0, time);
+	float outerBand = smoothstep(max(shockRadius - shockWidth, 0.0), shockRadius, distanceFromCenter);
+	float innerBand = 1.0 - smoothstep(shockRadius, shockRadius + shockWidth, distanceFromCenter);
+	float shockBand = outerBand * innerBand * shockFade;
+
+	float wakeFade = 1.0 - smoothstep(20.0, 140.0, time);
+	float wakeMask = (1.0 - smoothstep(0.0, shockRadius + shockWidth * 0.65, distanceFromCenter)) * wakeFade;
+	float cloudPush = max(shockBand, wakeMask * 0.38);
+
+	return vec4(direction, cloudPush, 0.0);
+}
+
 void main() {
 	vec2 localUV = gl_TexCoord[0].xy;
 	vec2 movingUV = localUV + vec2(offset, 0);
@@ -139,12 +168,21 @@ void main() {
 	float cloudOcclusion = 0.0;
 	float cloudMotionScale = mix(1.0, 1.5, step(0.999, atmosphereDensity));
 	float motionTime = atmosphereTime * cloudMotionScale;
-	float impactDisplacement = impactField.z * mix(0.18, 0.3, atmosphereDensity) + impactField.w * mix(0.04, 0.08, atmosphereDensity);
 	float impactSuppression = clamp(max(impactField.w, impactField.z * mix(0.55, 0.95, atmosphereDensity)), 0.0, 1.0);
-	vec2 impactPatternUV = patternUV + impactField.xy * impactDisplacement;
+	vec2 nukePush = vec2(0.0);
+	for (int i = 0; i < MAX_NUKE_SHOCKS; i++) {
+		if (i < nukeShockCount) {
+			float shockStrength = clamp(nukeShockStrength[i], 0.0, 1.0);
+			vec4 nukeField = getNukeShockField(localUV, nukeShockTime[i], vec2(nukeShockCenterX[i], nukeShockCenterY[i]), shockStrength);
+			float nukeDisplacement = nukeField.z * mix(0.04, 0.11, shockStrength);
+			nukePush += nukeField.xy * nukeDisplacement;
+		}
+	}
+	nukePush = clamp(nukePush, vec2(-0.18), vec2(0.18));
+	vec2 nukePatternUV = patternUV + nukePush;
 
 	if (atmosphereStyle == 2) {
-		vec2 texelCoord = floor(impactPatternUV * PIXEL_GRID);
+		vec2 texelCoord = floor(nukePatternUV * PIXEL_GRID);
 		vec2 uvp = (texelCoord + 0.5) / PIXEL_GRID;
 		vec2 texelFlow = vec2(motionTime * 0.18, -motionTime * 0.11);
 		vec2 flowDrift = texelFlow / PIXEL_GRID;
@@ -153,7 +191,7 @@ void main() {
 		float hazeMix = smoothstep(0.28, 0.88, mix(hazeField, hazeSheet, 0.4));
 		cloudOcclusion = hazeMix * (0.45 + atmosphereDensity * 0.35);
 	} else if (atmosphereStyle == 1) {
-		vec2 texelCoord = floor(impactPatternUV * PIXEL_GRID);
+		vec2 texelCoord = floor(nukePatternUV * PIXEL_GRID);
 		vec2 texelFlow = vec2(motionTime * 0.18, -motionTime * 0.11);
 		vec2 cloudBase = (texelCoord + texelFlow) / vec2(7.5, 6.0);
 		float largeSwirl = fbm(cloudBase * 0.75);
