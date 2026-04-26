@@ -9,6 +9,7 @@ import java.util.Map;
 
 import com.hbm.dim.CelestialBody;
 import com.hbm.entity.logic.EntityNukeExplosionMK5;
+import com.hbm.items.ItemVOTVdrive.Target;
 
 import cpw.mods.fml.common.gameevent.TickEvent;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
@@ -90,7 +91,8 @@ public class CelestialNukeShockHandler {
 			return;
 		}
 
-		CelestialBody body = CelestialBody.getBodyOrNull(world.provider.dimensionId);
+		Target target = CelestialBody.getTarget(world, (int) Math.floor(x), (int) Math.floor(z));
+		CelestialBody body = target != null ? target.body : null;
 		if(body == null) {
 			return;
 		}
