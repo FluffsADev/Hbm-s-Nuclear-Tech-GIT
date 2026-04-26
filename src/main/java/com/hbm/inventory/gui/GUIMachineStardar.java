@@ -1032,6 +1032,7 @@ public class GUIMachineStardar extends GuiInfoContainer {
 		float cloudTintStrength = CelestialRenderUtil.getBodyCloudTintStrength(body);
 		float weatherPartialTicks = (float) (dayTicks - Math.floor(dayTicks));
 		float cloudStormDarkness = CelestialRenderUtil.getBodyCloudStormDarkness(body, weatherPartialTicks);
+		float cloudLightningStrength = CelestialRenderUtil.getBodyCloudLightningStrength(body, weatherPartialTicks);
 		int atmosphereStyle = CelestialRenderUtil.getAtmosphereStyle(body);
 		float atmosphereTime = (float) (dayTicks / 20.0D);
 		float atmospherePatternOffset = textureUOffset;
@@ -1060,6 +1061,7 @@ public class GUIMachineStardar extends GuiInfoContainer {
 			atmosphereShader.setUniform1f("cloudColorB", (float) cloudColor.zCoord);
 			atmosphereShader.setUniform1f("cloudTintStrength", cloudTintStrength);
 			atmosphereShader.setUniform1f("cloudStormDarkness", cloudStormDarkness);
+			atmosphereShader.setUniform1f("cloudLightningStrength", cloudLightningStrength);
 			atmosphereShader.setUniform1f("atmosphereAlpha", atmosphereAlpha);
 			atmosphereShader.setUniform1f("atmosphereTime", atmosphereTime);
 			atmosphereShader.setUniform1i("atmosphereStyle", atmosphereStyle);

@@ -20,7 +20,6 @@ import com.hbm.handler.pollution.PollutionHandler.PollutionData;
 import com.hbm.handler.pollution.PollutionHandler.PollutionType;
 import com.hbm.main.MainRegistry;
 import com.hbm.potion.HbmPotion;
-import com.hbm.render.util.CelestialRenderUtil;
 import com.hbm.saveddata.SatelliteSavedData;
 import com.hbm.saveddata.TomSaveData;
 import com.hbm.saveddata.satellites.Satellite;
@@ -41,32 +40,6 @@ public class PermaSyncHandler {
 
 	public static HashSet<Integer> boykissers = new HashSet<Integer>();
 	public static float[] pollution = new float[PollutionType.values().length];
-
-	private static float getWeatherSyncRainStrength(World world) {
-		if(world == null) {
-			return 0.0F;
-		}
-
-		float rainStrength = world.getRainStrength(1.0F);
-		if(world.getWorldInfo() != null && world.getWorldInfo().isRaining()) {
-			rainStrength = Math.max(rainStrength, 1.0F);
-		}
-
-		return Math.max(0.0F, rainStrength);
-	}
-
-	private static float getWeatherSyncThunderStrength(World world) {
-		if(world == null) {
-			return 0.0F;
-		}
-
-		float thunderStrength = Math.max(world.prevThunderingStrength, world.thunderingStrength);
-		if(world.getWorldInfo() != null && world.getWorldInfo().isThundering()) {
-			thunderStrength = Math.max(thunderStrength, 1.0F);
-		}
-
-		return Math.max(0.0F, thunderStrength);
-	}
 
 	public static void writePacket(ByteBuf buf, World world, EntityPlayerMP player) {
 
@@ -165,20 +138,6 @@ public class PermaSyncHandler {
 			}
 		}
 		/// SATELLITES ///
-
-		/// WEATHER ///
-		World overworld = DimensionManager.getWorld(0);
-		float rainStrength = getWeatherSyncRainStrength(world);
-		float thunderStrength = getWeatherSyncThunderStrength(world);
-
-		if(overworld != null && overworld != world) {
-			rainStrength = Math.max(rainStrength, getWeatherSyncRainStrength(overworld));
-			thunderStrength = Math.max(thunderStrength, getWeatherSyncThunderStrength(overworld));
-		}
-
-		buf.writeFloat(rainStrength);
-		buf.writeFloat(thunderStrength);
-		/// WEATHER ///
 
 		/// TIME OF DAY ///
 		if(world.provider instanceof WorldProviderCelestial && world.provider.dimensionId != 0) {
@@ -310,10 +269,6 @@ public class PermaSyncHandler {
 		HashMap<Integer, Satellite> currentSats = satsByDimension.get(currentSatelliteDimensionId);
 		SatelliteSavedData.setClientSats(currentSats != null ? currentSats : new HashMap<Integer, Satellite>());
 		/// SATELLITES ///
-
-		/// WEATHER ///
-		CelestialRenderUtil.setClientGlobalWeather(buf.readFloat(), buf.readFloat());
-		/// WEATHER ///
 
 		/// TIME OF DAY ///
 		if(buf.readBoolean() && world.provider instanceof WorldProviderCelestial) {

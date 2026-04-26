@@ -1,10 +1,13 @@
 package com.hbm.render.util;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import com.hbm.dim.CelestialBody;
 import com.hbm.dim.WorldProviderCelestial;
 import com.hbm.dim.trait.CBT_Atmosphere;
 import com.hbm.dim.trait.CBT_Atmosphere.FluidEntry;
-import com.hbm.dim.trait.CBT_Water;
+import com.hbm.dim.trait.CBT_Weather;
 
 import org.lwjgl.opengl.GL11;
 
@@ -13,27 +16,52 @@ import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.util.MathHelper;
 import net.minecraft.util.Vec3;
-import net.minecraft.world.World;
 
 public class CelestialRenderUtil {
 
 	private static final float OPAQUE_ATMOSPHERE_PRESSURE = 5.0F;
 	private static final float CLOUDY_ATMOSPHERE_PRESSURE = 0.5F;
 	private static final float DENSE_HAZE_PRESSURE = 3.0F;
+	private static final float CLOUD_STORM_SMOOTHING_RATE = 6.0F;
+
+	private static final Map<Integer, CloudStormFadeState> CLOUD_STORM_FADE_STATES = new HashMap<Integer, CloudStormFadeState>();
 
 	public static final int ATMOSPHERE_STYLE_CLEAR = 0;
 	public static final int ATMOSPHERE_STYLE_CLOUDS = 1;
 	public static final int ATMOSPHERE_STYLE_HAZE = 2;
 	public static final int ATMOSPHERE_STYLE_GAS_BANDS = 3;
 
-	private static float clientGlobalRainStrength;
-	private static float clientGlobalThunderStrength;
+	private static final class CloudStormFadeState {
+
+		private float darkness;
+		private long lastSampleTime;
+
+		private CloudStormFadeState(float darkness, long lastSampleTime) {
+			this.darkness = darkness;
+			this.lastSampleTime = lastSampleTime;
+		}
+	}
 
 	private CelestialRenderUtil() { }
 
-	public static void setClientGlobalWeather(float rainStrength, float thunderStrength) {
-		clientGlobalRainStrength = MathHelper.clamp_float(rainStrength, 0.0F, 1.0F);
-		clientGlobalThunderStrength = MathHelper.clamp_float(thunderStrength, 0.0F, 1.0F);
+	private static float smoothCloudStormDarkness(CelestialBody body, float targetDarkness) {
+		if(body == null) {
+			return targetDarkness;
+		}
+
+		long now = Minecraft.getSystemTime();
+		CloudStormFadeState state = CLOUD_STORM_FADE_STATES.get(body.dimensionId);
+		if(state == null) {
+			CLOUD_STORM_FADE_STATES.put(body.dimensionId, new CloudStormFadeState(targetDarkness, now));
+			return targetDarkness;
+		}
+
+		float deltaSeconds = MathHelper.clamp_float((now - state.lastSampleTime) / 1000.0F, 0.0F, 0.5F);
+		float blend = MathHelper.clamp_float(deltaSeconds * CLOUD_STORM_SMOOTHING_RATE, 0.0F, 1.0F);
+		state.darkness += (targetDarkness - state.darkness) * blend;
+		state.lastSampleTime = now;
+
+		return state.darkness;
 	}
 
 	public static float getAtmosphereGlowAlpha(CelestialBody body) {
@@ -181,50 +209,29 @@ public class CelestialRenderUtil {
 	}
 
 	public static boolean bodyHasWeatherCycle(CelestialBody body) {
-		if(body == null || body.gas != null) {
-			return false;
-		}
-
-		CBT_Atmosphere atmosphere = body.getTrait(CBT_Atmosphere.class);
-		CBT_Water water = body.getTrait(CBT_Water.class);
-		return atmosphere != null && atmosphere.getPressure() > 0.5D && water != null && water.fluid != null;
+		return CBT_Weather.supportsWeather(body);
 	}
 
 	public static float getBodyCloudStormDarkness(CelestialBody body, float partialTicks) {
-		if(!bodyHasWeatherCycle(body)) {
+		CBT_Weather weather = body != null ? body.getTrait(CBT_Weather.class) : null;
+		float targetDarkness = 0.0F;
+
+		if(weather != null && bodyHasWeatherCycle(body)) {
+			float rainStrength = weather.getRainStrength(partialTicks);
+			float thunderStrength = weather.getWeightedThunderStrength(partialTicks);
+			targetDarkness = MathHelper.clamp_float(rainStrength * 0.22F + thunderStrength * 0.28F, 0.0F, 0.5F);
+		}
+
+		return smoothCloudStormDarkness(body, targetDarkness);
+	}
+
+	public static float getBodyCloudLightningStrength(CelestialBody body, float partialTicks) {
+		CBT_Weather weather = body != null ? body.getTrait(CBT_Weather.class) : null;
+		if(weather == null || !bodyHasWeatherCycle(body)) {
 			return 0.0F;
 		}
 
-		Minecraft mc = Minecraft.getMinecraft();
-		World world = mc != null ? mc.theWorld : null;
-		if(world == null) {
-			return 0.0F;
-		}
-
-		float rainStrength = 0.0F;
-		float thunderStrength = 0.0F;
-
-		if(world.provider instanceof WorldProviderCelestial && ((WorldProviderCelestial) world.provider).hasWeatherCycle()) {
-			rainStrength = world.getRainStrength(partialTicks);
-			thunderStrength = world.prevThunderingStrength + (world.thunderingStrength - world.prevThunderingStrength) * partialTicks;
-		}
-
-		if(world.getWorldInfo() != null) {
-			if(world.getWorldInfo().isRaining()) {
-				rainStrength = Math.max(rainStrength, 1.0F);
-			}
-			if(world.getWorldInfo().isThundering()) {
-				thunderStrength = Math.max(thunderStrength, 1.0F);
-			}
-		}
-
-		rainStrength = Math.max(rainStrength, clientGlobalRainStrength);
-		thunderStrength = Math.max(thunderStrength, clientGlobalThunderStrength);
-
-		rainStrength = MathHelper.clamp_float(rainStrength, 0.0F, 1.0F);
-		thunderStrength = MathHelper.clamp_float(thunderStrength, 0.0F, 1.0F);
-
-		return MathHelper.clamp_float(rainStrength * 0.22F + thunderStrength * 0.28F, 0.0F, 0.5F);
+		return MathHelper.clamp_float(weather.getThunderStrength(partialTicks), 0.0F, 1.0F);
 	}
 
 	public static void renderAtmosphereGlow2D(Tessellator tessellator, CelestialBody body, double centerX, double centerY, double size, float visibility) {

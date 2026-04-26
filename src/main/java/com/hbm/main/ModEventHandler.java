@@ -26,6 +26,7 @@ import com.hbm.config.ServerConfig;
 import com.hbm.config.SpaceConfig;
 import com.hbm.dim.CelestialBody;
 import com.hbm.dim.CelestialTeleporter;
+import com.hbm.dim.SolarSystemWorldSavedData;
 import com.hbm.dim.WorldGeneratorCelestial;
 import com.hbm.dim.WorldProviderCelestial;
 import com.hbm.dim.WorldProviderEarth;
@@ -35,6 +36,7 @@ import com.hbm.dim.orbit.WorldProviderOrbit;
 import com.hbm.dim.trait.CBT_Atmosphere;
 import com.hbm.dim.trait.CBT_Invasion;
 import com.hbm.dim.trait.CBT_Lights;
+import com.hbm.dim.trait.CBT_Weather;
 import com.hbm.dim.trait.CelestialBodyTrait;
 import com.hbm.entity.missile.EntityRideableRocket;
 import com.hbm.entity.missile.EntityRideableRocket.RocketState;
@@ -123,8 +125,12 @@ import net.minecraft.block.BlockBed;
 import net.minecraft.block.BlockFire;
 import net.minecraft.block.IGrowable;
 import net.minecraft.command.CommandGameRule;
+import net.minecraft.command.CommandBase;
+import net.minecraft.command.CommandException;
+import net.minecraft.command.CommandWeather;
 import net.minecraft.command.ICommand;
 import net.minecraft.command.ICommandSender;
+import net.minecraft.command.WrongUsageException;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityFlying;
 import net.minecraft.entity.EntityLiving;
@@ -1523,6 +1529,7 @@ public class ModEventHandler {
 	public void onServerTick(TickEvent.ServerTickEvent event) {
 
 		if(event.phase == Phase.START) {
+				CBT_Weather.updateGlobalWeather();
 				for(CelestialBody body : CelestialBody.getAllBodies()) {
 					List<CelestialBodyTrait> traits = new ArrayList<>(body.getTraits().values());
 					for (CelestialBodyTrait trait : traits) {
@@ -1566,13 +1573,57 @@ public class ModEventHandler {
 	public void commandEvent(CommandEvent event) {
 		ICommand command = event.command;
 		ICommandSender sender = event.sender;
-		if(command instanceof CommandGameRule) {
+		if(command instanceof CommandWeather) {
+			World world = sender.getEntityWorld();
+			if(world != null && (world.provider instanceof WorldProviderCelestial || world.provider instanceof WorldProviderOrbit)) {
+				handlePlanetaryWeatherCommand(sender, event.parameters, command);
+				event.setCanceled(true);
+			}
+		} else if(command instanceof CommandGameRule) {
 			if(command.canCommandSenderUseCommand(sender)) {
 				command.processCommand(sender,event.parameters);
 				RBMKDials.refresh(sender.getEntityWorld()); // Refresh RBMK gamerules.
 				event.setCanceled(true);
 			}
 		}
+	}
+
+	private void handlePlanetaryWeatherCommand(ICommandSender sender, String[] parameters, ICommand command) {
+		if(!command.canCommandSenderUseCommand(sender)) {
+			return;
+		}
+
+		if(parameters.length < 1 || parameters.length > 2) {
+			throw new WrongUsageException("commands.weather.usage", new Object[0]);
+		}
+
+		int duration = (300 + new Random().nextInt(600)) * 20;
+		if(parameters.length >= 2) {
+			duration = CommandBase.parseIntBounded(sender, parameters[1], 1, 1000000) * 20;
+		}
+
+		World world = sender.getEntityWorld();
+		ChunkCoordinates pos = sender.getPlayerCoordinates();
+		CelestialBody body = CelestialBody.getTarget(world, pos.posX, pos.posZ).body;
+		CBT_Weather weather = CBT_Weather.ensureTrait(body);
+		if(weather == null || !CBT_Weather.supportsWeather(body)) {
+			throw new CommandException("This celestial body has no weather cycle.");
+		}
+
+		if("clear".equalsIgnoreCase(parameters[0])) {
+			weather.forceClear(world.rand, duration);
+			CommandBase.func_152373_a(sender, command, "commands.weather.clear", new Object[0]);
+		} else if("rain".equalsIgnoreCase(parameters[0])) {
+			weather.forceRain(world.rand, duration);
+			CommandBase.func_152373_a(sender, command, "commands.weather.rain", new Object[0]);
+		} else if("thunder".equalsIgnoreCase(parameters[0])) {
+			weather.forceThunder(duration);
+			CommandBase.func_152373_a(sender, command, "commands.weather.thunder", new Object[0]);
+		} else {
+			throw new WrongUsageException("commands.weather.usage", new Object[0]);
+		}
+
+		SolarSystemWorldSavedData.get(world).markDirty();
 	}
 
 	@SubscribeEvent

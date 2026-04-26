@@ -12,6 +12,7 @@ uniform float cloudColorG;
 uniform float cloudColorB;
 uniform float cloudTintStrength;
 uniform float cloudStormDarkness;
+uniform float cloudLightningStrength;
 uniform float atmosphereAlpha;
 uniform float atmosphereTime;
 uniform float patternOffset;
@@ -67,6 +68,7 @@ void main() {
 	vec3 cloudTint = vec3(cloudColorR, cloudColorG, cloudColorB);
 	float tintStrength = clamp(cloudTintStrength, 0.0, 1.0);
 	float stormDarkness = clamp(cloudStormDarkness, 0.0, 1.0);
+	float lightningStrength = clamp(cloudLightningStrength, 0.0, 1.0);
 	vec2 texelCoord = floor(patternUV * PIXEL_GRID);
 	vec2 uv = (texelCoord + 0.5) / PIXEL_GRID;
 	vec2 texelFlow = vec2(atmosphereTime * 0.18, -atmosphereTime * 0.11);
@@ -124,6 +126,21 @@ void main() {
 		layeredColor = mix(airColor, cloudColor, cloudMask * (0.96 + density * 0.3));
 		layeredColor = mix(layeredColor, cloudColor, cloudCoverage * (0.48 + density * 0.2));
 		layeredColor = mix(layeredColor, cloudColor, jetMask * (0.5 + density * 0.24));
+
+		if (lightningStrength > 0.001) {
+			float burstWindow = floor(atmosphereTime * 0.85 + patternOffset * 7.0);
+			float burstSeed = hash(vec2(burstWindow, 23.17));
+			float burstPhase = fract(atmosphereTime * 0.85 + burstSeed * 0.37);
+			float burstGate = step(0.84, burstSeed) * smoothstep(0.28, 0.82, lightningStrength);
+			float primaryFlash = smoothstep(0.0, 0.02, burstPhase) * (1.0 - smoothstep(0.02, 0.09, burstPhase));
+			float secondaryFlash = smoothstep(0.11, 0.14, burstPhase) * (1.0 - smoothstep(0.14, 0.22, burstPhase));
+			float flashPulse = burstGate * (primaryFlash + secondaryFlash * 0.65);
+			float lightningPatch = hash(floor(texelCoord / 3.0) + vec2(burstWindow * 1.9, 41.3));
+			float lightningMask = smoothstep(0.42, 0.82, cloudPresence) * smoothstep(0.7, 0.92, lightningPatch + cloudPattern * 0.4);
+			float lightningMix = flashPulse * lightningMask * (0.72 + lightningStrength * 0.28);
+			layeredColor = mix(layeredColor, vec3(1.0), lightningMix);
+		}
+
 		alphaBoost = 0.98 + cloudPresence * 0.64;
 		overlayAlpha = max(atmosphereAlpha * alphaBoost, cloudPresence * (0.56 + density * 1.0));
 	} else {

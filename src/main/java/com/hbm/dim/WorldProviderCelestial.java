@@ -14,6 +14,7 @@ import com.hbm.dim.orbit.WorldProviderOrbit;
 import com.hbm.dim.trait.CBT_Atmosphere;
 import com.hbm.dim.trait.CBT_Atmosphere.FluidEntry;
 import com.hbm.dim.trait.CBT_Destroyed;
+import com.hbm.dim.trait.CBT_Weather;
 import com.hbm.dim.trait.CBT_War;
 import com.hbm.dim.trait.CBT_Water;
 import com.hbm.handler.ImpactWorldHandler;
@@ -41,6 +42,7 @@ import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ChunkCoordinates;
 import net.minecraft.util.MathHelper;
 import net.minecraft.util.Vec3;
@@ -96,6 +98,7 @@ public abstract class WorldProviderCelestial extends WorldProviderSurface {
 
 	@Override
 	public void updateWeather() {
+		CelestialBody body = CelestialBody.getBody(worldObj);
 		CBT_Atmosphere atmosphere = CelestialBody.getTrait(worldObj, CBT_Atmosphere.class);
 		double pressure = atmosphere != null ? atmosphere.getPressure() : 0;
 
@@ -112,15 +115,27 @@ public abstract class WorldProviderCelestial extends WorldProviderSurface {
 			}
 		}
 
-		if(hasWeatherCycle()) {
-			super.updateWeather();
+		if(!hasWeatherCycle()) {
+			worldObj.prevRainingStrength = 0.0F;
+			worldObj.rainingStrength = 0.0F;
+			worldObj.prevThunderingStrength = 0.0F;
+			worldObj.thunderingStrength = 0.0F;
 			return;
 		}
 
-		worldObj.prevRainingStrength = 0.0F;
-		worldObj.rainingStrength = 0.0F;
-		worldObj.prevThunderingStrength = 0.0F;
-		worldObj.thunderingStrength = 0.0F;
+		if(!worldObj.isRemote) {
+			CBT_Weather weather = CBT_Weather.ensureTrait(body);
+			if(weather != null && weather.updateForTick(MinecraftServer.getServer().getTickCounter(), worldObj.rand, body)) {
+				SolarSystemWorldSavedData.get(worldObj).markDirty();
+			}
+			weather = body.getTrait(CBT_Weather.class);
+			if(weather != null) {
+				worldObj.prevRainingStrength = weather.prevRainStrength;
+				worldObj.rainingStrength = weather.rainStrength;
+				worldObj.prevThunderingStrength = weather.prevThunderStrength;
+				worldObj.thunderingStrength = weather.thunderStrength;
+			}
+		}
 	}
 
 
@@ -695,9 +710,7 @@ public abstract class WorldProviderCelestial extends WorldProviderSurface {
 	}
 
 	public boolean hasWeatherCycle() {
-		CBT_Atmosphere atmosphere = CelestialBody.getTrait(worldObj, CBT_Atmosphere.class);
-		CBT_Water water = CelestialBody.getTrait(worldObj, CBT_Water.class);
-		return atmosphere != null && atmosphere.getPressure() > 0.5D && water != null && water.fluid != null;
+		return CBT_Weather.supportsWeather(CelestialBody.getBody(worldObj));
 	}
 
 	@SideOnly(Side.CLIENT)
@@ -877,7 +890,16 @@ public abstract class WorldProviderCelestial extends WorldProviderSurface {
 	// which means we can set the time of day to local morning safely here!
 	@Override
 	public void resetRainAndThunder() {
-		super.resetRainAndThunder();
+		CBT_Weather weather = CBT_Weather.ensureTrait(CelestialBody.getBody(worldObj));
+		if(weather != null) {
+			weather.forceClear(worldObj.rand, worldObj.rand.nextInt(168000) + 12000);
+			SolarSystemWorldSavedData.get(worldObj).markDirty();
+		}
+
+		worldObj.prevRainingStrength = 0.0F;
+		worldObj.rainingStrength = 0.0F;
+		worldObj.prevThunderingStrength = 0.0F;
+		worldObj.thunderingStrength = 0.0F;
 
 		if(dimensionId == 0) return;
 		if(!worldObj.getGameRules().getGameRuleBooleanValue("doDaylightCycle")) return;
