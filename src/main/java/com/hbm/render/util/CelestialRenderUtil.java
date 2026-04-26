@@ -218,8 +218,8 @@ public class CelestialRenderUtil {
 
 		if(weather != null && bodyHasWeatherCycle(body)) {
 			float rainStrength = weather.getRainStrength(partialTicks);
-			float thunderStrength = weather.getWeightedThunderStrength(partialTicks);
-			targetDarkness = MathHelper.clamp_float(rainStrength * 0.22F + thunderStrength * 0.28F, 0.0F, 0.5F);
+			float thunderStrength = weather.getThunderStrength(partialTicks);
+			targetDarkness = MathHelper.clamp_float(rainStrength * 0.45F + thunderStrength * 0.35F, 0.0F, 0.8F);
 		}
 
 		return smoothCloudStormDarkness(body, targetDarkness);

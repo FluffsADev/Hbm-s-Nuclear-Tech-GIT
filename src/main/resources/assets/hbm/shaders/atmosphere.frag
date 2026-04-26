@@ -111,21 +111,27 @@ void main() {
 		float cloudField = fbm(cloudUv);
 		float wisps = fbm(cloudUv * 1.3 + vec2(-atmosphereTime * 0.01, atmosphereTime * 0.007) + vec2(cloudField, largeSwirl));
 		float cloudPattern = mix(cloudField, wisps, 0.32);
-		float cloudMask = smoothstep(0.38, 0.64, cloudPattern);
-		float cloudCoverage = smoothstep(0.28, 0.56, cloudPattern + 0.08);
+		float cloudMask = smoothstep(0.4, 0.67, cloudPattern);
+		float cloudCoverage = smoothstep(0.31, 0.59, cloudPattern + 0.06);
 		float jet = 0.5 + 0.5 * sin((texelCoord.y + largeSwirl * 1.35) * 1.05 + atmosphereTime * 0.45);
-		float jetMask = smoothstep(0.62, 0.9, jet) * smoothstep(0.34, 0.74, wisps);
+		float jetMask = smoothstep(0.65, 0.92, jet) * smoothstep(0.38, 0.76, wisps);
 		float turbulence = noise((texelCoord + vec2(atmosphereTime * 0.16, -atmosphereTime * 0.12)) / 2.75);
-		float cloudPresence = max(max(cloudMask, cloudCoverage * 0.9), jetMask * 0.82);
+		float cloudPresence = max(max(cloudMask, cloudCoverage * 0.82), jetMask * 0.72);
+		float stormMask = smoothstep(0.24, 0.78, cloudPresence);
+		float stormShade = mix(1.0, 0.34, stormDarkness);
+		float tintedClouds = smoothstep(0.02, 0.18, tintStrength);
 
 		vec3 shadowColor = baseColor * mix(0.72, 0.55, density);
 		vec3 cloudColor = min(cloudTint * (1.18 + density * 0.18) + vec3(0.04 + density * 0.04), vec3(1.0));
-		cloudColor *= mix(1.0, 0.82, tintStrength);
-		cloudColor *= max(0.3, 1.0 - stormDarkness * 1.25);
+		cloudColor *= mix(1.0, 0.8, tintStrength);
+		cloudColor *= mix(1.0, 0.8, tintedClouds);
+		cloudColor *= mix(1.0, stormShade, 0.85);
 		vec3 airColor = mix(shadowColor, baseColor, 0.35 + turbulence * 0.3);
 		layeredColor = mix(airColor, cloudColor, cloudMask * (0.96 + density * 0.3));
 		layeredColor = mix(layeredColor, cloudColor, cloudCoverage * (0.48 + density * 0.2));
 		layeredColor = mix(layeredColor, cloudColor, jetMask * (0.5 + density * 0.24));
+		layeredColor = mix(layeredColor, layeredColor * mix(1.0, 0.9, tintedClouds), cloudPresence * 0.4);
+		layeredColor = mix(layeredColor, layeredColor * stormShade, stormMask * (0.72 + stormDarkness * 0.28));
 
 		if (lightningStrength > 0.001) {
 			float burstWindow = floor(atmosphereTime * 0.85 + patternOffset * 7.0);

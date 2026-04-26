@@ -628,6 +628,14 @@ public abstract class WorldProviderCelestial extends WorldProviderSurface {
 		return getTintedCloudColor(atmosphere, clouds);
 	}
 
+	private static boolean isNeutralCloudFluid(FluidType fluid) {
+		return fluid == Fluids.EARTHAIR
+			|| fluid == Fluids.OXYGEN
+			|| fluid == Fluids.NITROGEN
+			|| fluid == Fluids.DUNAAIR
+			|| fluid == Fluids.CARBONDIOXIDE;
+	}
+
 	private static double[] getCloudTintData(CBT_Atmosphere atmosphere) {
 		if(atmosphere == null || atmosphere.fluids.isEmpty()) {
 			return null;
@@ -647,7 +655,7 @@ public abstract class WorldProviderCelestial extends WorldProviderSurface {
 
 			totalPressure += entry.pressure;
 
-			if(entry.fluid == Fluids.EARTHAIR || entry.fluid == Fluids.OXYGEN || entry.fluid == Fluids.NITROGEN) {
+			if(isNeutralCloudFluid(entry.fluid)) {
 				continue;
 			}
 
