@@ -17,6 +17,11 @@ public class CBT_Weather extends CelestialBodyTrait {
 
 	private static final Random WEATHER_RANDOM = new Random();
 	private static final int SAVE_INTERVAL = 200;
+	private static final float LIGHTNING_CLOUD_PRESSURE = 0.5F;
+	private static final float LIGHTNING_HAZE_PRESSURE = 3.0F;
+	private static final float LIGHTNING_OPAQUE_PRESSURE = 5.0F;
+	private static final float CLOUD_LIGHTNING_ACTIVITY = 0.55F;
+	private static final float HAZE_LIGHTNING_ACTIVITY = 0.82F;
 	private static final int[][] LIGHTNING_BIOME_SAMPLES = new int[][] {
 		{0, 0},
 		{512, 0},
@@ -88,8 +93,47 @@ public class CBT_Weather extends CelestialBodyTrait {
 		}
 	}
 
-	private static int getStormDuration(Random rand) {
-		return rand.nextInt(12000) + 3600;
+	private static float getAtmospherePressure(CelestialBody body) {
+		if(body == null || body.gas != null) {
+			return 0.0F;
+		}
+
+		CBT_Atmosphere atmosphere = body.getTrait(CBT_Atmosphere.class);
+		return atmosphere != null ? Math.max(0.0F, (float) atmosphere.getPressure()) : 0.0F;
+	}
+
+	public static float getLightningSeverity(CelestialBody body) {
+		if(!supportsWeather(body)) {
+			return 0.0F;
+		}
+
+		float pressure = getAtmospherePressure(body);
+		if(pressure > LIGHTNING_HAZE_PRESSURE) {
+			float hazeMix = MathHelper.clamp_float((pressure - LIGHTNING_HAZE_PRESSURE) / (LIGHTNING_OPAQUE_PRESSURE - LIGHTNING_HAZE_PRESSURE), 0.0F, 1.0F);
+			return MathHelper.clamp_float(0.65F + hazeMix * 0.35F, 0.65F, 1.0F);
+		}
+
+		return MathHelper.clamp_float((pressure - LIGHTNING_CLOUD_PRESSURE) / (LIGHTNING_HAZE_PRESSURE - LIGHTNING_CLOUD_PRESSURE) * 0.65F, 0.0F, 0.65F);
+	}
+
+	public static float getLightningActivityFactor(CelestialBody body) {
+		if(!supportsWeather(body)) {
+			return 0.0F;
+		}
+
+		float pressure = getAtmospherePressure(body);
+		if(pressure > LIGHTNING_HAZE_PRESSURE) {
+			float hazeMix = MathHelper.clamp_float((pressure - LIGHTNING_HAZE_PRESSURE) / (LIGHTNING_OPAQUE_PRESSURE - LIGHTNING_HAZE_PRESSURE), 0.0F, 1.0F);
+			return MathHelper.clamp_float(HAZE_LIGHTNING_ACTIVITY + hazeMix * (1.0F - HAZE_LIGHTNING_ACTIVITY), HAZE_LIGHTNING_ACTIVITY, 1.0F);
+		}
+
+		float cloudMix = MathHelper.clamp_float((pressure - LIGHTNING_CLOUD_PRESSURE) / (LIGHTNING_HAZE_PRESSURE - LIGHTNING_CLOUD_PRESSURE), 0.0F, 1.0F);
+		return MathHelper.clamp_float(CLOUD_LIGHTNING_ACTIVITY + cloudMix * (HAZE_LIGHTNING_ACTIVITY - CLOUD_LIGHTNING_ACTIVITY), CLOUD_LIGHTNING_ACTIVITY, HAZE_LIGHTNING_ACTIVITY);
+	}
+
+	private static int getStormDuration(Random rand, float lightningSeverity) {
+		int baseDuration = rand.nextInt(12000) + 3600;
+		return Math.max(1200, MathHelper.floor_float(baseDuration * (0.95F + lightningSeverity * 0.45F)));
 	}
 
 	private static int getRainDuration(Random rand) {
@@ -98,6 +142,11 @@ public class CBT_Weather extends CelestialBodyTrait {
 
 	private static int getClearDuration(Random rand) {
 		return rand.nextInt(168000) + 12000;
+	}
+
+	private static int getThunderClearDuration(Random rand, float lightningSeverity) {
+		int baseDuration = getClearDuration(rand);
+		return Math.max(2400, MathHelper.floor_float(baseDuration * (1.05F - lightningSeverity * 0.45F)));
 	}
 
 	public void forceClear(Random rand, int duration) {
@@ -171,6 +220,7 @@ public class CBT_Weather extends CelestialBodyTrait {
 
 		boolean stateChanged = false;
 		WorldServer world = DimensionManager.getWorld(body.dimensionId);
+		float lightningSeverity = getLightningSeverity(body);
 		boolean lightningAllowed = sampleCanSpawnLightning(world);
 		if(canSpawnLightning != lightningAllowed) {
 			canSpawnLightning = lightningAllowed;
@@ -179,18 +229,18 @@ public class CBT_Weather extends CelestialBodyTrait {
 
 		if(!canSpawnLightning && thundering) {
 			thundering = false;
-			thunderTime = getClearDuration(rand);
+			thunderTime = getThunderClearDuration(rand, lightningSeverity);
 			stateChanged = true;
 		}
 
 		if(thunderTime <= 0) {
-			thunderTime = thundering ? getStormDuration(rand) : getClearDuration(rand);
+			thunderTime = thundering ? getStormDuration(rand, lightningSeverity) : getThunderClearDuration(rand, lightningSeverity);
 			stateChanged = true;
 		} else {
 			thunderTime--;
 			if(thunderTime <= 0) {
 				thundering = canSpawnLightning && !thundering;
-				thunderTime = thundering ? getStormDuration(rand) : getClearDuration(rand);
+				thunderTime = thundering ? getStormDuration(rand, lightningSeverity) : getThunderClearDuration(rand, lightningSeverity);
 				stateChanged = true;
 			}
 		}
@@ -211,7 +261,7 @@ public class CBT_Weather extends CelestialBodyTrait {
 				raining = !raining;
 				if(!raining) {
 					thundering = false;
-					thunderTime = getClearDuration(rand);
+					thunderTime = getThunderClearDuration(rand, lightningSeverity);
 				}
 				rainTime = raining ? getRainDuration(rand) : getClearDuration(rand);
 				stateChanged = true;

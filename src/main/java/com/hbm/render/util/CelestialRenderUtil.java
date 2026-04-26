@@ -234,7 +234,8 @@ public class CelestialRenderUtil {
 			return 0.0F;
 		}
 
-		return MathHelper.clamp_float(weather.getThunderStrength(partialTicks), 0.0F, 1.0F);
+		float lightningActivity = CBT_Weather.getLightningActivityFactor(body);
+		return MathHelper.clamp_float(weather.getThunderStrength(partialTicks) * lightningActivity, 0.0F, 1.0F);
 	}
 
 	public static void renderAtmosphereGlow2D(Tessellator tessellator, CelestialBody body, double centerX, double centerY, double size, float visibility) {
