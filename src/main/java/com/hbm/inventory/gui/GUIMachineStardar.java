@@ -1231,19 +1231,20 @@ public class GUIMachineStardar extends GuiInfoContainer {
 		}
 
 		if(!nukeShocks.isEmpty()) {
-			renderNukeImpactOverlay(bodyScreenX, bodyScreenY, drawSize, rotateBody, bodyRotationAngle, nukeShocks, dayTicks);
+			renderNukeImpactOverlay(bodyScreenX, bodyScreenY, drawSize, rotateBody, bodyRotationAngle, phase, nukeShocks, dayTicks);
 			GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
 		}
 
 		GL11.glColor4f(1F, 1F, 1F, 1F);
 	}
 
-	private void renderNukeImpactOverlay(float bodyScreenX, float bodyScreenY, float drawSize, boolean rotateBody, float bodyRotationAngle, List<CelestialNukeShockHandler.ShockStatus> nukeShocks, double currentShockTime) {
+	private void renderNukeImpactOverlay(float bodyScreenX, float bodyScreenY, float drawSize, boolean rotateBody, float bodyRotationAngle, float phase, List<CelestialNukeShockHandler.ShockStatus> nukeShocks, double currentShockTime) {
 		GL11.glEnable(GL11.GL_BLEND);
 		GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE);
 		GL11.glColor4f(1F, 1F, 1F, 1F);
 
 		nukeShader.use();
+		nukeShader.setUniform1f("phase", phase);
 		AtmosphereRenderUtil.applyNukeShockUniforms(nukeShader, nukeShocks, currentShockTime);
 		if(rotateBody) {
 			drawTexturedQuadRotating(bodyScreenX, bodyScreenY, drawSize, bodyRotationAngle);

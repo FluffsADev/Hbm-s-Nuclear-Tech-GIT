@@ -1151,7 +1151,7 @@ public class SkyProviderCelestial extends IRenderHandler {
 
 					List<CelestialNukeShockHandler.ShockStatus> flashShocks = CelestialNukeShockHandler.getClientShocks(metric.body);
 					double flashShockTime = world.getTotalWorldTime() + partialTicks;
-					renderNukeImpactOverlays(tessellator, mc, size, flashShocks, flashShockTime);
+					renderNukeImpactOverlays(tessellator, mc, size, (float) -metric.phase, flashShocks, flashShockTime);
 				}
 
 				if(renderPoint) {
@@ -1247,7 +1247,7 @@ public class SkyProviderCelestial extends IRenderHandler {
 		lightningShader.stop();
 	}
 
-	private void renderNukeImpactOverlays(Tessellator tessellator, Minecraft mc, double size, List<CelestialNukeShockHandler.ShockStatus> nukeShocks, double currentShockTime) {
+	private void renderNukeImpactOverlays(Tessellator tessellator, Minecraft mc, double size, float phase, List<CelestialNukeShockHandler.ShockStatus> nukeShocks, double currentShockTime) {
 		if(nukeShocks.isEmpty()) {
 			return;
 		}
@@ -1257,6 +1257,7 @@ public class SkyProviderCelestial extends IRenderHandler {
 		GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
 
 		nukeShader.use();
+		nukeShader.setUniform1f("phase", phase);
 		AtmosphereRenderUtil.applyNukeShockUniforms(nukeShader, nukeShocks, currentShockTime);
 		drawPlanetShaderQuad(tessellator, size);
 		nukeShader.stop();

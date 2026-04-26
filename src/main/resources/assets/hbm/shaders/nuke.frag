@@ -1,5 +1,6 @@
 #version 120
 
+uniform float phase;
 uniform int nukeShockCount;
 uniform float nukeShockTime[4];
 uniform float nukeShockCenterX[4];
@@ -10,6 +11,7 @@ const float FLASH_GRID = 16.0;
 const float FLASH_SUBGRID = FLASH_GRID * 4.0;
 const float RING_GRID = 64.0;
 const int MAX_NUKE_SHOCKS = 4;
+const float PI = 3.1415926538;
 
 float stableHash(vec2 p) {
 	return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
@@ -52,6 +54,23 @@ float getAfterglowMask(vec2 subPixelUV, float time, vec2 center, float strength)
 	return glowMask * warmRise * warmFade * getFlashCellMask(subPixelUV, center);
 }
 
+float getDaySideMask(vec2 localUV) {
+	vec2 uv = 2.25 * localUV - 1.1;
+	vec3 light = vec3(sin(phase * PI), 0.0, cos(phase * PI));
+	vec3 n = vec3(uv, sqrt(1.0 - clamp(dot(uv, uv), 0.0, 1.0)));
+	float brightness = dot(n, light);
+
+	if (abs(phase) < 0.5) {
+		if (phase < 0.0) {
+			brightness = phase * 4.0 + 2.0 - uv.x;
+		} else {
+			brightness = -phase * 4.0 + 2.0 + uv.x;
+		}
+	}
+
+	return clamp(brightness, 0.0, 1.0);
+}
+
 float getRingMask(vec2 pixelUV, float time, vec2 center, float strength) {
 	if (time < 0.0 || strength <= 0.001) {
 		return 0.0;
@@ -65,12 +84,12 @@ float getRingMask(vec2 pixelUV, float time, vec2 center, float strength) {
 	float ringReveal = smoothstep(1.5, 4.5, time);
 	float ringFade = 1.0 - smoothstep(8.0, mix(68.0, 104.0, strength), time);
 	float flashFade = getFlashFade(time, strength);
-	float ringOpacity = mix(0.6, 1.0, smoothstep(0.0, 10.0, time));
+	float ringOpacity = mix(0.3, 1.0, smoothstep(0.0, 10.0, time));
 	float distanceFromCenter = length(pixelUV - center);
 	float outerBand = smoothstep(max(ringRadius - ringWidth, 0.0), ringRadius, distanceFromCenter);
 	float innerBand = 1.0 - smoothstep(ringRadius, ringRadius + ringWidth, distanceFromCenter);
 	float ringMask = outerBand * innerBand;
-	return ringMask * ringReveal * ringFade * ringOpacity * (1.0 - flashFade * 0.9);
+	return ringMask * ringReveal * ringFade * ringOpacity * getDaySideMask(pixelUV) * (1.0 - flashFade * 0.9);
 }
 
 void main() {
