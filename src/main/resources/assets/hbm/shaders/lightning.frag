@@ -222,10 +222,13 @@ void main() {
 		float strikeHalo = 1.0 - smoothstep(strikeRadius * 0.18, strikeRadius * 1.8, strikeDistance);
 		float eveVisibility = mix(0.55, 1.0, nightVisibility);
 		float circleFlash = strikeCore * 0.5 * strikeFade;
-		float haloFlash = (1.0 - strikeCore) * strikeHalo * (0.12 + lightningStrength * 0.12) * strikeFade;
-		float giantFlash = step(0.94, atmosphereFlashSeed) * strikeFade * (0.05 + lightningStrength * 0.13);
-		lightningAlpha += (circleFlash + haloFlash) * eveVisibility * denseAtmosphereVisibility;
-		lightningAlpha += giantFlash * denseAtmosphereVisibility;
+		float haloFlash = (1.0 - strikeCore * 0.8) * strikeHalo * (0.18 + lightningStrength * 0.16) * strikeFade;
+		float atmosphereFlash = strikeFade * (0.08 + lightningStrength * 0.08);
+		float giantFlash = step(0.9, atmosphereFlashSeed) * strikeFade * (0.16 + lightningStrength * 0.18);
+		float localFlash = (circleFlash + haloFlash * 1.3) * eveVisibility * denseAtmosphereVisibility;
+		float atmosphereGlow = (atmosphereFlash + giantFlash) * denseAtmosphereVisibility;
+		lightningAlpha += atmosphereGlow;
+		lightningAlpha += localFlash;
 	}
 	if (atmosphereStyle == 2) {
 		float hazeField = fbm(uv * 2.4 + flowDrift * 0.55);
