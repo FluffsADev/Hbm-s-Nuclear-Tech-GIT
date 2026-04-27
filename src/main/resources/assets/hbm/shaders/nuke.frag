@@ -21,8 +21,13 @@ float getFlashFade(float time, float strength) {
 	return 1.0 - smoothstep(0.0, mix(4.0, 6.0, strength), time);
 }
 
-float getFlashCellMask(vec2 subPixelUV, vec2 center) {
-	vec2 subDelta = abs((subPixelUV - center) * FLASH_SUBGRID);
+float getExplosionScale(float strength) {
+	return mix(0.9, 2.3, smoothstep(0.35, 1.0, clamp(strength, 0.0, 1.0)));
+}
+
+float getFlashCellMask(vec2 subPixelUV, vec2 center, float strength) {
+	float explosionScale = getExplosionScale(strength);
+	vec2 subDelta = abs((subPixelUV - center) * FLASH_SUBGRID) / explosionScale;
 	float withinBlock = 1.0 - step(2.0, max(subDelta.x, subDelta.y));
 	float isCorner = step(1.0, subDelta.x) * step(1.0, subDelta.y);
 	return withinBlock * (1.0 - isCorner);
@@ -34,10 +39,11 @@ float getFlashMask(vec2 subPixelUV, float time, vec2 center, float strength) {
 	}
 
 	float flashFade = getFlashFade(time, strength);
+	float explosionScale = getExplosionScale(strength);
 	float distanceFromCenter = length(subPixelUV - center);
-	float flashRadius = mix(0.012, 0.018, strength);
-	float flashEdge = 0.02;
-	return (1.0 - smoothstep(flashRadius, flashRadius + flashEdge, distanceFromCenter)) * flashFade * getFlashCellMask(subPixelUV, center);
+	float flashRadius = mix(0.010, 0.014, strength) * explosionScale;
+	float flashEdge = mix(0.014, 0.022, strength);
+	return (1.0 - smoothstep(flashRadius, flashRadius + flashEdge, distanceFromCenter)) * flashFade * getFlashCellMask(subPixelUV, center, strength);
 }
 
 float getAfterglowMask(vec2 subPixelUV, float time, vec2 center, float strength) {
@@ -47,11 +53,12 @@ float getAfterglowMask(vec2 subPixelUV, float time, vec2 center, float strength)
 
 	float warmRise = smoothstep(1.0, 4.0, time);
 	float warmFade = 1.0 - smoothstep(8.0, mix(18.0, 30.0, strength), time);
+	float explosionScale = getExplosionScale(strength);
 	float distanceFromCenter = length(subPixelUV - center);
-	float glowRadius = mix(0.022, 0.038, strength);
-	float glowEdge = 0.028;
+	float glowRadius = mix(0.018, 0.026, strength) * explosionScale;
+	float glowEdge = mix(0.020, 0.032, strength);
 	float glowMask = 1.0 - smoothstep(glowRadius, glowRadius + glowEdge, distanceFromCenter);
-	return glowMask * warmRise * warmFade * getFlashCellMask(subPixelUV, center);
+	return glowMask * warmRise * warmFade * getFlashCellMask(subPixelUV, center, strength);
 }
 
 float getDaySideMask(vec2 localUV) {

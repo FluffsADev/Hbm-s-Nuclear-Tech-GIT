@@ -22,6 +22,8 @@ uniform int atmosphereStyle;
 const float PIXEL_GRID = 16.0;
 const int MAX_NUKE_SHOCKS = 4;
 const vec2 IMPACT_CENTER = vec2(0.25, 0.7);
+const float IMPACT_RECOVERY_TIME_SCALE = 1.5;
+const float NUKE_RECOVERY_TIME_SCALE = 1.5;
 
 #define PI 3.1415926538
 
@@ -71,12 +73,12 @@ vec4 getImpactField(vec2 localUV, float time) {
 	float innerBand = 1.0 - smoothstep(shockRadius, shockRadius + shockWidth, distanceFromImpact);
 	float shockBand = outerBand * innerBand * shockFade;
 
-	float wakeFade = 1.0 - smoothstep(60.0, 700.0, time);
+	float wakeFade = 1.0 - smoothstep(60.0 * IMPACT_RECOVERY_TIME_SCALE, 700.0 * IMPACT_RECOVERY_TIME_SCALE, time);
 	float wakeInner = max(shockRadius - shockWidth * 1.8 - 0.035, 0.0);
 	float wakeOuter = shockRadius + shockWidth * 0.35;
 	float wakeMask = (1.0 - smoothstep(wakeInner, wakeOuter, distanceFromImpact)) * wakeFade;
 
-	float coreFade = 1.0 - smoothstep(120.0, 760.0, time);
+	float coreFade = 1.0 - smoothstep(120.0 * IMPACT_RECOVERY_TIME_SCALE, 760.0 * IMPACT_RECOVERY_TIME_SCALE, time);
 	float coreRadius = mix(0.22, 0.1, shockProgress);
 	float coreMask = (1.0 - smoothstep(coreRadius, coreRadius + 0.08, distanceFromImpact)) * coreFade;
 
@@ -101,12 +103,12 @@ vec4 getNukeShockField(vec2 localUV, float time, vec2 center, float strength) {
 	float innerBand = 1.0 - smoothstep(shockRadius, shockRadius + shockWidth, distanceFromCenter);
 	float shockBand = outerBand * innerBand * shockFade;
 
-	float wakeFade = 1.0 - smoothstep(8.0, mix(90.0, 135.0, strength), time);
+	float wakeFade = 1.0 - smoothstep(8.0 * NUKE_RECOVERY_TIME_SCALE, mix(90.0, 135.0, strength) * NUKE_RECOVERY_TIME_SCALE, time);
 	float wakeInner = max(shockRadius - shockWidth * 1.8 - 0.018, 0.0);
 	float wakeOuter = shockRadius + shockWidth * 0.28;
 	float wakeMask = (1.0 - smoothstep(wakeInner, wakeOuter, distanceFromCenter)) * wakeFade;
 
-	float coreFade = 1.0 - smoothstep(0.0, mix(18.0, 32.0, strength), time);
+	float coreFade = 1.0 - smoothstep(0.0, mix(18.0, 32.0, strength) * NUKE_RECOVERY_TIME_SCALE, time);
 	float coreMask = (1.0 - smoothstep(coreRadius, coreRadius + 0.06, distanceFromCenter)) * coreFade;
 
 	return vec4(direction, shockBand, max(wakeMask, coreMask));
