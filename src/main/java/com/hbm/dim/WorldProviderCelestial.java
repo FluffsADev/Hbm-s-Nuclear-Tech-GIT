@@ -65,6 +65,10 @@ public abstract class WorldProviderCelestial extends WorldProviderSurface {
 	private static final Map<Integer, SolarEclipseCache> surfaceEclipseCache = new HashMap<>();
 	private static final Map<Long, SolarEclipseCache> orbitEclipseCache = new HashMap<>();
 
+	public static final float MIN_CLOUD_PRESSURE = 0.5F;
+	public static final float SECOND_CLOUD_LAYER_PRESSURE = 2.5F;
+	public static final float THIRD_CLOUD_LAYER_PRESSURE = 5.0F;
+
 	private static class SolarEclipseCache {
 		long tick = Long.MIN_VALUE;
 		float factor = 0F;
@@ -618,105 +622,21 @@ public abstract class WorldProviderCelestial extends WorldProviderSurface {
 		return colors;
 	}
 
-	// this function should be called `getCloudColor`, please slap the next MCP dev you see lmao
-	@Override
-	@SideOnly(Side.CLIENT)
-	public Vec3 drawClouds(float partialTicks) {
-		Vec3 clouds = super.drawClouds(partialTicks);
-		CBT_Atmosphere atmosphere = CelestialBody.getTrait(worldObj, CBT_Atmosphere.class);
+	public static int getCloudLayerCount(CBT_Atmosphere atmosphere) {
+		if(atmosphere == null || atmosphere.getPressure() < MIN_CLOUD_PRESSURE) {
+			return 0;
+		}
 
-		return getTintedCloudColor(atmosphere, clouds);
+		if(atmosphere.getPressure() > THIRD_CLOUD_LAYER_PRESSURE) {
+			return 3;
+		}
+
+		if(atmosphere.getPressure() > SECOND_CLOUD_LAYER_PRESSURE) {
+			return 2;
+		}
+
+		return 1;
 	}
-
-	private static boolean isNeutralCloudFluid(FluidType fluid) {
-		return fluid == Fluids.EARTHAIR
-			|| fluid == Fluids.OXYGEN
-			|| fluid == Fluids.NITROGEN
-			|| fluid == Fluids.DUNAAIR
-			|| fluid == Fluids.CARBONDIOXIDE;
-	}
-
-	private static double[] getCloudTintData(CBT_Atmosphere atmosphere) {
-		if(atmosphere == null || atmosphere.fluids.isEmpty()) {
-			return null;
-		}
-
-		double totalPressure = 0.0D;
-		double tintPressure = 0.0D;
-		double tintR = 0.0D;
-		double tintG = 0.0D;
-		double tintB = 0.0D;
-
-		for(int i = 0; i < atmosphere.fluids.size(); i++) {
-			FluidEntry entry = atmosphere.fluids.get(i);
-			if(entry == null || entry.fluid == null || entry.pressure <= 0.0D) {
-				continue;
-			}
-
-			totalPressure += entry.pressure;
-
-			if(isNeutralCloudFluid(entry.fluid)) {
-				continue;
-			}
-
-			Vec3 fluidColor = getAtmosphereFluidColor(entry.fluid);
-			tintPressure += entry.pressure;
-			tintR += fluidColor.xCoord * entry.pressure;
-			tintG += fluidColor.yCoord * entry.pressure;
-			tintB += fluidColor.zCoord * entry.pressure;
-		}
-
-		if(totalPressure <= 0.0D || tintPressure <= 0.0D) {
-			return null;
-		}
-
-		tintR /= tintPressure;
-		tintG /= tintPressure;
-		tintB /= tintPressure;
-
-		double tintPeak = Math.max(tintR, Math.max(tintG, tintB));
-		if(tintPeak <= 0.0D) {
-			return null;
-		}
-
-		double tintStrength = MathHelper.clamp_double(tintPressure / totalPressure, 0.0D, 0.65D);
-		return new double[] {
-			tintStrength,
-			MathHelper.clamp_double(tintR / tintPeak, 0.0D, 1.0D),
-			MathHelper.clamp_double(tintG / tintPeak, 0.0D, 1.0D),
-			MathHelper.clamp_double(tintB / tintPeak, 0.0D, 1.0D)
-		};
-	}
-
-	public static float getCloudTintStrength(CBT_Atmosphere atmosphere) {
-		double[] tintData = getCloudTintData(atmosphere);
-		return tintData != null ? (float) tintData[0] : 0.0F;
-	}
-
-	public static Vec3 getTintedCloudColor(CBT_Atmosphere atmosphere, Vec3 clouds) {
-		if(clouds == null) {
-			clouds = Vec3.createVectorHelper(1.0D, 1.0D, 1.0D);
-		}
-
-		double[] tintData = getCloudTintData(atmosphere);
-		if(tintData == null) {
-			return clouds;
-		}
-
-		double cloudLuma = clouds.xCoord * 0.299D + clouds.yCoord * 0.587D + clouds.zCoord * 0.114D;
-		double cloudBrightness = MathHelper.clamp_double(cloudLuma * 0.9D, 0.0D, 1.0D);
-		double tintStrength = tintData[0];
-		double cloudColorR = MathHelper.clamp_double(tintData[1] * cloudBrightness, 0.0D, 1.0D);
-		double cloudColorG = MathHelper.clamp_double(tintData[2] * cloudBrightness, 0.0D, 1.0D);
-		double cloudColorB = MathHelper.clamp_double(tintData[3] * cloudBrightness, 0.0D, 1.0D);
-
-		return Vec3.createVectorHelper(
-			MathHelper.clamp_double(clouds.xCoord + (cloudColorR - clouds.xCoord) * tintStrength, 0.0D, 1.0D),
-			MathHelper.clamp_double(clouds.yCoord + (cloudColorG - clouds.yCoord) * tintStrength, 0.0D, 1.0D),
-			MathHelper.clamp_double(clouds.zCoord + (cloudColorB - clouds.zCoord) * tintStrength, 0.0D, 1.0D)
-		);
-	}
-
 	public boolean hasWeatherCycle() {
 		return CBT_Weather.supportsWeather(CelestialBody.getBody(worldObj));
 	}
@@ -949,9 +869,23 @@ public abstract class WorldProviderCelestial extends WorldProviderSurface {
 	public float getCloudHeight() {
 		CBT_Atmosphere atmosphere = CelestialBody.getTrait(worldObj, CBT_Atmosphere.class);
 
-		if(atmosphere == null || atmosphere.getPressure() < 0.5F) return -99999;
+		if(getCloudLayerCount(atmosphere) <= 0) return -99999;
 
 		return super.getCloudHeight();
+	}
+
+	@SideOnly(Side.CLIENT)
+	public int getCloudLayerCount() {
+		return getCloudLayerCount(CelestialBody.getTrait(worldObj, CBT_Atmosphere.class));
+	}
+
+	private IRenderHandler cloudProvider;
+
+	@Override
+	@SideOnly(Side.CLIENT)
+	public IRenderHandler getCloudRenderer() {
+		if(cloudProvider == null) cloudProvider = new CloudProviderCelestial();
+		return cloudProvider;
 	}
 
 	private IRenderHandler skyProvider;

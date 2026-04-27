@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.hbm.dim.CelestialBody;
+import com.hbm.dim.CloudProviderCelestial;
 import com.hbm.dim.WorldProviderCelestial;
 import com.hbm.dim.trait.CBT_Atmosphere;
 import com.hbm.dim.trait.CBT_Atmosphere.FluidEntry;
@@ -197,7 +198,7 @@ public class AtmosphereRenderUtil {
 		}
 
 		CBT_Atmosphere atmosphere = body.getTrait(CBT_Atmosphere.class);
-		return WorldProviderCelestial.getTintedCloudColor(atmosphere, baseClouds);
+		return CloudProviderCelestial.getTintedCloudColor(atmosphere, baseClouds);
 	}
 
 	public static float getBodyCloudTintStrength(CelestialBody body) {
@@ -210,7 +211,7 @@ public class AtmosphereRenderUtil {
 		}
 
 		CBT_Atmosphere atmosphere = body.getTrait(CBT_Atmosphere.class);
-		return WorldProviderCelestial.getCloudTintStrength(atmosphere);
+		return CloudProviderCelestial.getCloudTintStrength(atmosphere);
 	}
 
 	public static boolean bodyHasWeatherCycle(CelestialBody body) {
