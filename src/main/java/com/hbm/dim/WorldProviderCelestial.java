@@ -627,11 +627,11 @@ public abstract class WorldProviderCelestial extends WorldProviderSurface {
 			return 0;
 		}
 
-		if(atmosphere.getPressure() > THIRD_CLOUD_LAYER_PRESSURE) {
+		if(atmosphere.getPressure() >= THIRD_CLOUD_LAYER_PRESSURE) {
 			return 3;
 		}
 
-		if(atmosphere.getPressure() > SECOND_CLOUD_LAYER_PRESSURE) {
+		if(atmosphere.getPressure() >= SECOND_CLOUD_LAYER_PRESSURE) {
 			return 2;
 		}
 

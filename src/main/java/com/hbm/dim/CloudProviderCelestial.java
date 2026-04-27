@@ -39,6 +39,9 @@ public class CloudProviderCelestial extends IRenderHandler {
 	private static final int FANCY_CLOUD_RADIUS = 4;
 	private static final float FANCY_UV_SCALE = 0.00390625F;
 	private static final float CLOUD_FACE_EPSILON = 9.765625E-4F;
+	private static final double LAYER_POSITION_RANGE = 16384.0D;
+	private static final float MIN_LAYER_PATTERN_SCALE = 0.88F;
+	private static final float MAX_LAYER_PATTERN_SCALE = 1.18F;
 
 	private static final float[] LAYER_HEIGHT_OFFSETS = {0.0F, 12.0F, 24.0F};
 	private static final float[] LAYER_ALPHA_MULTIPLIERS = {1.0F, 0.78F, 0.62F};
@@ -104,19 +107,23 @@ public class CloudProviderCelestial extends IRenderHandler {
 		}
 
 		double cloudTime = getCloudTime(world, mc, partialTicks);
+		double layerOffsetX = getLayerPositionOffset(world, layerIndex, 0x4F1BBCDCBFA54001L);
+		double layerOffsetZ = getLayerPositionOffset(world, layerIndex, 0x2C1B3C6D5E7F8103L);
+		float layerPatternScale = getLayerPatternScale(world, layerIndex);
+		float layerUvScale = FAST_UV_SCALE * layerPatternScale;
 		double motionX = camera.lastTickPosX + (camera.posX - camera.lastTickPosX) * partialTicks
 			+ cloudTime * CLOUD_SCROLL_SPEED * LAYER_SCROLL_MULTIPLIERS[layerIndex]
-			+ layerIndex * 37.0D;
+			+ layerOffsetX;
 		double motionZ = camera.lastTickPosZ + (camera.posZ - camera.lastTickPosZ) * partialTicks
-			+ layerIndex * 53.0D;
+			+ layerOffsetZ;
 
 		int wrapX = MathHelper.floor_double(motionX / 2048.0D);
 		int wrapZ = MathHelper.floor_double(motionZ / 2048.0D);
 		motionX -= wrapX * 2048.0D;
 		motionZ -= wrapZ * 2048.0D;
 
-		float uvOffsetX = (float) (motionX * FAST_UV_SCALE);
-		float uvOffsetZ = (float) (motionZ * FAST_UV_SCALE);
+		float uvOffsetX = (float) (motionX * layerUvScale);
+		float uvOffsetZ = (float) (motionZ * layerUvScale);
 
 		Tessellator tessellator = Tessellator.instance;
 		tessellator.startDrawingQuads();
@@ -129,10 +136,10 @@ public class CloudProviderCelestial extends IRenderHandler {
 				float maxX = minX + FAST_CLOUD_TILE_SIZE;
 				float maxZ = minZ + FAST_CLOUD_TILE_SIZE;
 
-				tessellator.addVertexWithUV(minX, layerY, maxZ, minX * FAST_UV_SCALE + uvOffsetX, maxZ * FAST_UV_SCALE + uvOffsetZ);
-				tessellator.addVertexWithUV(maxX, layerY, maxZ, maxX * FAST_UV_SCALE + uvOffsetX, maxZ * FAST_UV_SCALE + uvOffsetZ);
-				tessellator.addVertexWithUV(maxX, layerY, minZ, maxX * FAST_UV_SCALE + uvOffsetX, minZ * FAST_UV_SCALE + uvOffsetZ);
-				tessellator.addVertexWithUV(minX, layerY, minZ, minX * FAST_UV_SCALE + uvOffsetX, minZ * FAST_UV_SCALE + uvOffsetZ);
+				tessellator.addVertexWithUV(minX, layerY, maxZ, minX * layerUvScale + uvOffsetX, maxZ * layerUvScale + uvOffsetZ);
+				tessellator.addVertexWithUV(maxX, layerY, maxZ, maxX * layerUvScale + uvOffsetX, maxZ * layerUvScale + uvOffsetZ);
+				tessellator.addVertexWithUV(maxX, layerY, minZ, maxX * layerUvScale + uvOffsetX, minZ * layerUvScale + uvOffsetZ);
+				tessellator.addVertexWithUV(minX, layerY, minZ, minX * layerUvScale + uvOffsetX, minZ * layerUvScale + uvOffsetZ);
 			}
 		}
 
@@ -155,11 +162,15 @@ public class CloudProviderCelestial extends IRenderHandler {
 		OpenGlHelper.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, 1, 0);
 
 		double cloudTime = getCloudTime(world, mc, partialTicks);
+		double layerOffsetX = getLayerPositionOffset(world, layerIndex, 0x4F1BBCDCBFA54001L);
+		double layerOffsetZ = getLayerPositionOffset(world, layerIndex, 0x2C1B3C6D5E7F8103L);
+		float layerPatternScale = getLayerPatternScale(world, layerIndex);
+		float layerUvScale = FANCY_UV_SCALE * layerPatternScale;
 		double motionX = (camera.lastTickPosX + (camera.posX - camera.lastTickPosX) * partialTicks
 			+ cloudTime * CLOUD_SCROLL_SPEED * LAYER_SCROLL_MULTIPLIERS[layerIndex]
-			+ layerIndex * 37.0D) / FANCY_CLOUD_SCALE;
+			+ layerOffsetX) / FANCY_CLOUD_SCALE;
 		double motionZ = (camera.lastTickPosZ + (camera.posZ - camera.lastTickPosZ) * partialTicks
-			+ layerIndex * 53.0D) / FANCY_CLOUD_SCALE + 0.33000001311302185D;
+			+ layerOffsetZ) / FANCY_CLOUD_SCALE + 0.33000001311302185D;
 		float cameraY = (float) (camera.lastTickPosY + (camera.posY - camera.lastTickPosY) * partialTicks);
 		float relativeCloudY = cloudHeight - cameraY + CLOUD_HEIGHT_SHIFT;
 
@@ -178,8 +189,8 @@ public class CloudProviderCelestial extends IRenderHandler {
 			cloudBlue = anaglyph[2];
 		}
 
-		float cloudUBase = MathHelper.floor_double(motionX) * FANCY_UV_SCALE;
-		float cloudVBase = MathHelper.floor_double(motionZ) * FANCY_UV_SCALE;
+		float cloudUBase = MathHelper.floor_double(motionX) * layerUvScale;
+		float cloudVBase = MathHelper.floor_double(motionZ) * layerUvScale;
 		float cloudXOffset = (float) (motionX - MathHelper.floor_double(motionX));
 		float cloudZOffset = (float) (motionZ - MathHelper.floor_double(motionZ));
 
@@ -211,33 +222,33 @@ public class CloudProviderCelestial extends IRenderHandler {
 					if(relativeCloudY > -FANCY_CLOUD_DEPTH - 1.0F) {
 						tessellator.setColorRGBA_F(cloudRed * 0.7F, cloudGreen * 0.7F, cloudBlue * 0.7F, alpha);
 						tessellator.setNormal(0.0F, -1.0F, 0.0F);
-						addHorizontalFace(tessellator, cloudX, relativeCloudY, cloudZ, minCloudX, minCloudZ, cloudUBase, cloudVBase, false);
+						addHorizontalFace(tessellator, cloudX, relativeCloudY, cloudZ, minCloudX, minCloudZ, cloudUBase, cloudVBase, layerUvScale, false);
 					}
 
 					if(relativeCloudY <= FANCY_CLOUD_DEPTH + 1.0F) {
 						tessellator.setColorRGBA_F(cloudRed, cloudGreen, cloudBlue, alpha);
 						tessellator.setNormal(0.0F, 1.0F, 0.0F);
-						addHorizontalFace(tessellator, cloudX, relativeCloudY + FANCY_CLOUD_DEPTH - CLOUD_FACE_EPSILON, cloudZ, minCloudX, minCloudZ, cloudUBase, cloudVBase, true);
+						addHorizontalFace(tessellator, cloudX, relativeCloudY + FANCY_CLOUD_DEPTH - CLOUD_FACE_EPSILON, cloudZ, minCloudX, minCloudZ, cloudUBase, cloudVBase, layerUvScale, true);
 					}
 
 					tessellator.setColorRGBA_F(cloudRed * 0.9F, cloudGreen * 0.9F, cloudBlue * 0.9F, alpha);
 					if(tileX > -1) {
 						tessellator.setNormal(-1.0F, 0.0F, 0.0F);
-						addVerticalXFaces(tessellator, cloudX, relativeCloudY, cloudZ, minCloudX, minCloudZ, cloudUBase, cloudVBase, 0.0F);
+						addVerticalXFaces(tessellator, cloudX, relativeCloudY, cloudZ, minCloudX, minCloudZ, cloudUBase, cloudVBase, layerUvScale, 0.0F);
 					}
 					if(tileX <= 1) {
 						tessellator.setNormal(1.0F, 0.0F, 0.0F);
-						addVerticalXFaces(tessellator, cloudX, relativeCloudY, cloudZ, minCloudX, minCloudZ, cloudUBase, cloudVBase, 1.0F - CLOUD_FACE_EPSILON);
+						addVerticalXFaces(tessellator, cloudX, relativeCloudY, cloudZ, minCloudX, minCloudZ, cloudUBase, cloudVBase, layerUvScale, 1.0F - CLOUD_FACE_EPSILON);
 					}
 
 					tessellator.setColorRGBA_F(cloudRed * 0.8F, cloudGreen * 0.8F, cloudBlue * 0.8F, alpha);
 					if(tileZ > -1) {
 						tessellator.setNormal(0.0F, 0.0F, -1.0F);
-						addVerticalZFaces(tessellator, cloudX, relativeCloudY, cloudZ, minCloudX, minCloudZ, cloudUBase, cloudVBase, 0.0F);
+						addVerticalZFaces(tessellator, cloudX, relativeCloudY, cloudZ, minCloudX, minCloudZ, cloudUBase, cloudVBase, layerUvScale, 0.0F);
 					}
 					if(tileZ <= 1) {
 						tessellator.setNormal(0.0F, 0.0F, 1.0F);
-						addVerticalZFaces(tessellator, cloudX, relativeCloudY, cloudZ, minCloudX, minCloudZ, cloudUBase, cloudVBase, 1.0F - CLOUD_FACE_EPSILON);
+						addVerticalZFaces(tessellator, cloudX, relativeCloudY, cloudZ, minCloudX, minCloudZ, cloudUBase, cloudVBase, layerUvScale, 1.0F - CLOUD_FACE_EPSILON);
 					}
 
 					tessellator.draw();
@@ -252,46 +263,72 @@ public class CloudProviderCelestial extends IRenderHandler {
 		GL11.glPopMatrix();
 	}
 
-	private void addHorizontalFace(Tessellator tessellator, float cloudX, float cloudY, float cloudZ, float minCloudX, float minCloudZ, float uvBaseX, float uvBaseZ, boolean topFace) {
+	private void addHorizontalFace(Tessellator tessellator, float cloudX, float cloudY, float cloudZ, float minCloudX, float minCloudZ, float uvBaseX, float uvBaseZ, float uvScale, boolean topFace) {
 		float maxCloudCoord = FANCY_CLOUD_TILE_SIZE;
 		float faceMinZ = topFace ? cloudZ : cloudZ + maxCloudCoord;
 		float faceMaxZ = topFace ? cloudZ + maxCloudCoord : cloudZ;
 		float uvMinZ = topFace ? minCloudZ : minCloudZ + maxCloudCoord;
 		float uvMaxZ = topFace ? minCloudZ + maxCloudCoord : minCloudZ;
 
-		tessellator.addVertexWithUV(cloudX + 0.0F, cloudY, faceMaxZ, (minCloudX + 0.0F) * FANCY_UV_SCALE + uvBaseX, uvMaxZ * FANCY_UV_SCALE + uvBaseZ);
-		tessellator.addVertexWithUV(cloudX + maxCloudCoord, cloudY, faceMaxZ, (minCloudX + maxCloudCoord) * FANCY_UV_SCALE + uvBaseX, uvMaxZ * FANCY_UV_SCALE + uvBaseZ);
-		tessellator.addVertexWithUV(cloudX + maxCloudCoord, cloudY, faceMinZ, (minCloudX + maxCloudCoord) * FANCY_UV_SCALE + uvBaseX, uvMinZ * FANCY_UV_SCALE + uvBaseZ);
-		tessellator.addVertexWithUV(cloudX + 0.0F, cloudY, faceMinZ, (minCloudX + 0.0F) * FANCY_UV_SCALE + uvBaseX, uvMinZ * FANCY_UV_SCALE + uvBaseZ);
+		tessellator.addVertexWithUV(cloudX + 0.0F, cloudY, faceMaxZ, (minCloudX + 0.0F) * uvScale + uvBaseX, uvMaxZ * uvScale + uvBaseZ);
+		tessellator.addVertexWithUV(cloudX + maxCloudCoord, cloudY, faceMaxZ, (minCloudX + maxCloudCoord) * uvScale + uvBaseX, uvMaxZ * uvScale + uvBaseZ);
+		tessellator.addVertexWithUV(cloudX + maxCloudCoord, cloudY, faceMinZ, (minCloudX + maxCloudCoord) * uvScale + uvBaseX, uvMinZ * uvScale + uvBaseZ);
+		tessellator.addVertexWithUV(cloudX + 0.0F, cloudY, faceMinZ, (minCloudX + 0.0F) * uvScale + uvBaseX, uvMinZ * uvScale + uvBaseZ);
 	}
 
-	private void addVerticalXFaces(Tessellator tessellator, float cloudX, float cloudY, float cloudZ, float minCloudX, float minCloudZ, float uvBaseX, float uvBaseZ, float xOffset) {
+	private void addVerticalXFaces(Tessellator tessellator, float cloudX, float cloudY, float cloudZ, float minCloudX, float minCloudZ, float uvBaseX, float uvBaseZ, float uvScale, float xOffset) {
 		for(int face = 0; face < FANCY_CLOUD_TILE_SIZE; face++) {
 			float faceX = cloudX + face + xOffset;
-			float uvX = (minCloudX + face + 0.5F) * FANCY_UV_SCALE + uvBaseX;
+			float uvX = (minCloudX + face + 0.5F) * uvScale + uvBaseX;
 
-			tessellator.addVertexWithUV(faceX, cloudY + 0.0F, cloudZ + FANCY_CLOUD_TILE_SIZE, uvX, (minCloudZ + FANCY_CLOUD_TILE_SIZE) * FANCY_UV_SCALE + uvBaseZ);
-			tessellator.addVertexWithUV(faceX, cloudY + FANCY_CLOUD_DEPTH, cloudZ + FANCY_CLOUD_TILE_SIZE, uvX, (minCloudZ + FANCY_CLOUD_TILE_SIZE) * FANCY_UV_SCALE + uvBaseZ);
-			tessellator.addVertexWithUV(faceX, cloudY + FANCY_CLOUD_DEPTH, cloudZ + 0.0F, uvX, (minCloudZ + 0.0F) * FANCY_UV_SCALE + uvBaseZ);
-			tessellator.addVertexWithUV(faceX, cloudY + 0.0F, cloudZ + 0.0F, uvX, (minCloudZ + 0.0F) * FANCY_UV_SCALE + uvBaseZ);
+			tessellator.addVertexWithUV(faceX, cloudY + 0.0F, cloudZ + FANCY_CLOUD_TILE_SIZE, uvX, (minCloudZ + FANCY_CLOUD_TILE_SIZE) * uvScale + uvBaseZ);
+			tessellator.addVertexWithUV(faceX, cloudY + FANCY_CLOUD_DEPTH, cloudZ + FANCY_CLOUD_TILE_SIZE, uvX, (minCloudZ + FANCY_CLOUD_TILE_SIZE) * uvScale + uvBaseZ);
+			tessellator.addVertexWithUV(faceX, cloudY + FANCY_CLOUD_DEPTH, cloudZ + 0.0F, uvX, (minCloudZ + 0.0F) * uvScale + uvBaseZ);
+			tessellator.addVertexWithUV(faceX, cloudY + 0.0F, cloudZ + 0.0F, uvX, (minCloudZ + 0.0F) * uvScale + uvBaseZ);
 		}
 	}
 
-	private void addVerticalZFaces(Tessellator tessellator, float cloudX, float cloudY, float cloudZ, float minCloudX, float minCloudZ, float uvBaseX, float uvBaseZ, float zOffset) {
+	private void addVerticalZFaces(Tessellator tessellator, float cloudX, float cloudY, float cloudZ, float minCloudX, float minCloudZ, float uvBaseX, float uvBaseZ, float uvScale, float zOffset) {
 		for(int face = 0; face < FANCY_CLOUD_TILE_SIZE; face++) {
 			float faceZ = cloudZ + face + zOffset;
-			float uvZ = (minCloudZ + face + 0.5F) * FANCY_UV_SCALE + uvBaseZ;
+			float uvZ = (minCloudZ + face + 0.5F) * uvScale + uvBaseZ;
 
-			tessellator.addVertexWithUV(cloudX + 0.0F, cloudY + FANCY_CLOUD_DEPTH, faceZ, (minCloudX + 0.0F) * FANCY_UV_SCALE + uvBaseX, uvZ);
-			tessellator.addVertexWithUV(cloudX + FANCY_CLOUD_TILE_SIZE, cloudY + FANCY_CLOUD_DEPTH, faceZ, (minCloudX + FANCY_CLOUD_TILE_SIZE) * FANCY_UV_SCALE + uvBaseX, uvZ);
-			tessellator.addVertexWithUV(cloudX + FANCY_CLOUD_TILE_SIZE, cloudY + 0.0F, faceZ, (minCloudX + FANCY_CLOUD_TILE_SIZE) * FANCY_UV_SCALE + uvBaseX, uvZ);
-			tessellator.addVertexWithUV(cloudX + 0.0F, cloudY + 0.0F, faceZ, (minCloudX + 0.0F) * FANCY_UV_SCALE + uvBaseX, uvZ);
+			tessellator.addVertexWithUV(cloudX + 0.0F, cloudY + FANCY_CLOUD_DEPTH, faceZ, (minCloudX + 0.0F) * uvScale + uvBaseX, uvZ);
+			tessellator.addVertexWithUV(cloudX + FANCY_CLOUD_TILE_SIZE, cloudY + FANCY_CLOUD_DEPTH, faceZ, (minCloudX + FANCY_CLOUD_TILE_SIZE) * uvScale + uvBaseX, uvZ);
+			tessellator.addVertexWithUV(cloudX + FANCY_CLOUD_TILE_SIZE, cloudY + 0.0F, faceZ, (minCloudX + FANCY_CLOUD_TILE_SIZE) * uvScale + uvBaseX, uvZ);
+			tessellator.addVertexWithUV(cloudX + 0.0F, cloudY + 0.0F, faceZ, (minCloudX + 0.0F) * uvScale + uvBaseX, uvZ);
 		}
 	}
 
 	private double getCloudTime(WorldClient world, Minecraft mc, float partialTicks) {
 		int tickCounter = mc.thePlayer != null ? mc.thePlayer.ticksExisted : (int) (world.getTotalWorldTime() & Integer.MAX_VALUE);
 		return tickCounter + partialTicks;
+	}
+
+	private double getLayerPositionOffset(WorldClient world, int layerIndex, long salt) {
+		double normalized = getLayerRandom(world, layerIndex, salt);
+		return (normalized - 0.5D) * LAYER_POSITION_RANGE;
+	}
+
+	private float getLayerPatternScale(WorldClient world, int layerIndex) {
+		float normalized = (float) getLayerRandom(world, layerIndex, 0x7A6F4D3C2B190817L);
+		return MIN_LAYER_PATTERN_SCALE + (MAX_LAYER_PATTERN_SCALE - MIN_LAYER_PATTERN_SCALE) * normalized;
+	}
+
+	private double getLayerRandom(WorldClient world, int layerIndex, long salt) {
+		long seed = world.getSeed();
+		long dimension = world.provider != null ? world.provider.dimensionId : 0L;
+		long mixed = mixSeed(seed ^ (dimension * 0x9E3779B97F4A7C15L) ^ ((long) (layerIndex + 1) * 0xC2B2AE3D27D4EB4FL) ^ salt);
+		return (double) (mixed & ((1L << 53) - 1)) / (double) (1L << 53);
+	}
+
+	private long mixSeed(long value) {
+		value ^= value >>> 33;
+		value *= 0xff51afd7ed558ccdL;
+		value ^= value >>> 33;
+		value *= 0xc4ceb9fe1a85ec53L;
+		value ^= value >>> 33;
+		return value;
 	}
 
 	private static boolean isNeutralCloudFluid(FluidType fluid) {
