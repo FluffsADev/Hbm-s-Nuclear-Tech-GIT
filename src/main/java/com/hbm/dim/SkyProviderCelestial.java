@@ -1233,6 +1233,7 @@ public class SkyProviderCelestial extends IRenderHandler {
 		lightningShader.setUniform1f("cloudLightningStrength", cloudLightningStrength);
 		lightningShader.setUniform1f("atmosphereAlpha", atmosphereAlpha);
 		lightningShader.setUniform1f("atmosphereTime", atmosphereTime);
+		lightningShader.setUniform1f("eveFlashStrength", AtmosphereRenderUtil.getBodyEveFlashStrength(body, atmosphereTime));
 		lightningShader.setUniform1i("atmosphereStyle", atmosphereStyle);
 		lightningShader.setUniform1i("lightningMode", AtmosphereRenderUtil.getBodyLightningMode(body));
 		lightningShader.setUniform1f("impactTime", impactTime);

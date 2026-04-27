@@ -10,6 +10,7 @@ uniform float cloudTintStrength;
 uniform float cloudLightningStrength;
 uniform float atmosphereAlpha;
 uniform float atmosphereTime;
+uniform float eveFlashStrength;
 uniform float patternOffset;
 uniform float impactTime;
 uniform int nukeShockCount;
@@ -25,9 +26,6 @@ const int MAX_NUKE_SHOCKS = 4;
 const vec2 IMPACT_CENTER = vec2(0.25, 0.7);
 const float IMPACT_RECOVERY_TIME_SCALE = 1.5;
 const float NUKE_RECOVERY_TIME_SCALE = 1.5;
-const float EVE_STRIKE_WINDOW = 8.0;
-const float EVE_STRIKE_FADE_TIME = 5.0;
-
 #define PI 3.1415926538
 
 float hash(vec2 p) {
@@ -140,12 +138,6 @@ float getNightVisibility(vec2 movingUV) {
 	return mix(0.22, 1.0, clamp(0.85 - brightness, 0.0, 1.0));
 }
 
-float getEveStrikeFade(float eventTime) {
-	float strikeIntro = smoothstep(0.0, 0.14, eventTime);
-	float strikeFade = 1.0 - smoothstep(0.16, EVE_STRIKE_FADE_TIME, eventTime);
-	return strikeIntro * strikeFade;
-}
-
 void main() {
 	vec2 localUV = gl_TexCoord[0].xy;
 	vec2 movingUV = localUV + vec2(offset, 0.0);
@@ -206,16 +198,8 @@ void main() {
 	float lightningAlpha = 0.0;
 
 	if (lightningMode == 1) {
-		float eventIndex = floor(atmosphereTime / EVE_STRIKE_WINDOW);
-		float eventTime = mod(atmosphereTime, EVE_STRIKE_WINDOW);
-		float strikeDelay = hash(vec2(eventIndex, 41.9)) * 2.4;
-		float strikeTime = max(eventTime - strikeDelay, 0.0);
-		float strikeFade = getEveStrikeFade(strikeTime) * step(strikeDelay, eventTime);
-		float strikeChance = hash(vec2(eventIndex, 313.7));
-		float bigStrikeGate = step(0.82, strikeChance);
-		float atmosphereFlash = strikeFade * (0.05 + lightningStrength * 0.06) * bigStrikeGate;
-		float atmosphereGlow = atmosphereFlash * denseAtmosphereVisibility;
-		lightningAlpha += atmosphereGlow;
+		float atmosphereFlash = clamp(eveFlashStrength, 0.0, 1.0) * (0.05 + lightningStrength * 0.06);
+		lightningAlpha += atmosphereFlash * denseAtmosphereVisibility;
 	}
 	if (atmosphereStyle == 2) {
 		float hazeField = fbm(uv * 2.4 + flowDrift * 0.55);

@@ -29,6 +29,11 @@ public class AtmosphereRenderUtil {
 	private static final float DENSE_HAZE_PRESSURE = 3.0F;
 	private static final float CLOUD_STORM_SMOOTHING_RATE = 6.0F;
 	private static final String EVE_BODY_NAME = "eve";
+	private static final float EVE_STRIKE_WINDOW = 8.0F;
+	private static final float EVE_STRIKE_FADE_TIME = 5.0F;
+	private static final float EVE_STRIKE_DELAY_RANGE = 2.4F;
+	private static final float EVE_STRIKE_GATE_THRESHOLD = 0.82F;
+	private static final double EVE_HASH_MULTIPLIER = 43758.5453123D;
 
 	private static final Map<Integer, CloudStormFadeState> CLOUD_STORM_FADE_STATES = new HashMap<Integer, CloudStormFadeState>();
 
@@ -255,8 +260,55 @@ public class AtmosphereRenderUtil {
 		return isEveLightningBody(body) ? LIGHTNING_MODE_EVE : LIGHTNING_MODE_STANDARD;
 	}
 
+	public static float getBodyEveFlashStrength(CelestialBody body, float atmosphereTime) {
+		if(!isEveLightningBody(body)) {
+			return 0.0F;
+		}
+
+		return getEveFlashStrength(atmosphereTime);
+	}
+
 	private static boolean isEveLightningBody(CelestialBody body) {
 		return body != null && EVE_BODY_NAME.equals(body.name);
+	}
+
+	private static float getEveFlashStrength(float atmosphereTime) {
+		float eventIndex = MathHelper.floor_float(atmosphereTime / EVE_STRIKE_WINDOW);
+		float eventTime = atmosphereTime - eventIndex * EVE_STRIKE_WINDOW;
+		float strikeDelay = eveHash(eventIndex, 41.9F) * EVE_STRIKE_DELAY_RANGE;
+		if(eventTime < strikeDelay) {
+			return 0.0F;
+		}
+
+		if(eveHash(eventIndex, 313.7F) < EVE_STRIKE_GATE_THRESHOLD) {
+			return 0.0F;
+		}
+
+		return MathHelper.clamp_float(getEveStrikeFade(Math.max(eventTime - strikeDelay, 0.0F)), 0.0F, 1.0F);
+	}
+
+	private static float getEveStrikeFade(float eventTime) {
+		float strikeIntro = smoothstep(0.0F, 0.14F, eventTime);
+		float strikeFade = 1.0F - smoothstep(0.16F, EVE_STRIKE_FADE_TIME, eventTime);
+		return strikeIntro * strikeFade;
+	}
+
+	private static float eveHash(float x, float y) {
+		double value = Math.sin(x * 127.1D + y * 311.7D) * EVE_HASH_MULTIPLIER;
+		return frac(value);
+	}
+
+	private static float smoothstep(float edge0, float edge1, float value) {
+		if(edge0 == edge1) {
+			return value < edge0 ? 0.0F : 1.0F;
+		}
+
+		float t = MathHelper.clamp_float((value - edge0) / (edge1 - edge0), 0.0F, 1.0F);
+		return t * t * (3.0F - 2.0F * t);
+	}
+
+	private static float frac(double value) {
+		return (float) (value - Math.floor(value));
 	}
 
 	public static void applyNukeShockUniforms(Shader shader, List<ShockStatus> shocks, double currentTime) {
