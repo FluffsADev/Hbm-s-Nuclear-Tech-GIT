@@ -29,7 +29,6 @@ public class AtmosphereRenderUtil {
 	private static final float DENSE_HAZE_PRESSURE = 3.0F;
 	private static final float CLOUD_STORM_SMOOTHING_RATE = 6.0F;
 	private static final String EVE_BODY_NAME = "eve";
-	private static final float EVE_LIGHTNING_AMBIENT_STRENGTH = 0.4F;
 
 	private static final Map<Integer, CloudStormFadeState> CLOUD_STORM_FADE_STATES = new HashMap<Integer, CloudStormFadeState>();
 
@@ -246,9 +245,7 @@ public class AtmosphereRenderUtil {
 
 		float lightningActivity = CBT_Weather.getLightningActivityFactor(body);
 		if(isEveLightningBody(body)) {
-			float stormStrength = weather.getThunderStrength(partialTicks) * lightningActivity;
-			float ambientStrength = lightningActivity * EVE_LIGHTNING_AMBIENT_STRENGTH;
-			return MathHelper.clamp_float(Math.max(stormStrength, ambientStrength), 0.0F, 1.0F);
+			return MathHelper.clamp_float(lightningActivity, 0.0F, 1.0F);
 		}
 
 		return MathHelper.clamp_float(weather.getThunderStrength(partialTicks) * lightningActivity, 0.0F, 1.0F);

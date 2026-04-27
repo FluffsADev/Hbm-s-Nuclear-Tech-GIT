@@ -218,15 +218,16 @@ void main() {
 		vec2 strikeCenter = vec2(mix(0.18, 0.82, centerSeedX), mix(0.18, 0.82, centerSeedY));
 		float strikeRadius = mix(2.0, 4.0, radiusSeed) * 0.5 / PIXEL_GRID;
 		float strikeDistance = length(uv - strikeCenter);
-		float strikeDisc = 1.0 - smoothstep(strikeRadius * 0.24, strikeRadius, strikeDistance);
-		float strikeHalo = 1.0 - smoothstep(strikeRadius * 0.45, strikeRadius * 2.3, strikeDistance);
+		float strikeCore = 1.0 - smoothstep(0.0, strikeRadius * 0.48, strikeDistance);
+		float strikeHalo = 1.0 - smoothstep(strikeRadius * 0.18, strikeRadius * 1.8, strikeDistance);
 		float eveVisibility = mix(0.55, 1.0, nightVisibility);
-		float circleFlash = strikeDisc * 0.5 * strikeFade;
-		float haloFlash = strikeHalo * (0.18 + lightningStrength * 0.16) * strikeFade;
-		float atmosphereFlash = strikeFade * (0.06 + lightningStrength * 0.12);
-		float giantFlash = step(0.72, atmosphereFlashSeed) * strikeFade * (0.18 + lightningStrength * 0.32);
-		lightningAlpha = (max(circleFlash, haloFlash) + atmosphereFlash + giantFlash) * eveVisibility * denseAtmosphereVisibility;
-	} else if (atmosphereStyle == 2) {
+		float circleFlash = strikeCore * 0.5 * strikeFade;
+		float haloFlash = (1.0 - strikeCore) * strikeHalo * (0.12 + lightningStrength * 0.12) * strikeFade;
+		float giantFlash = step(0.94, atmosphereFlashSeed) * strikeFade * (0.05 + lightningStrength * 0.13);
+		lightningAlpha += (circleFlash + haloFlash) * eveVisibility * denseAtmosphereVisibility;
+		lightningAlpha += giantFlash * denseAtmosphereVisibility;
+	}
+	if (atmosphereStyle == 2) {
 		float hazeField = fbm(uv * 2.4 + flowDrift * 0.55);
 		float hazeSheet = fbm(uv * 4.0 + vec2(-motionTime * 0.012, motionTime * 0.01));
 		float turbulence = noise(uv * 10.0 + vec2(motionTime * 0.018, -motionTime * 0.014));
@@ -241,7 +242,7 @@ void main() {
 		float lightningPatch = hash(floor(texelCoord / 4.0) + vec2(burstWindow * 1.4, 33.6));
 		float lightningMask = smoothstep(0.34, 0.82, hazeMix + turbulence * 0.2)
 			* smoothstep(0.68, 0.94, lightningPatch + hazeField * 0.35);
-		lightningAlpha = flashPulse * lightningMask * nightVisibility * (0.62 + lightningStrength * 0.38);
+		lightningAlpha += flashPulse * lightningMask * nightVisibility * (0.62 + lightningStrength * 0.38) * denseAtmosphereVisibility;
 	} else {
 		vec2 cloudBase = (texelCoord + texelFlow) / vec2(7.5, 6.0);
 		float largeSwirl = fbm(cloudBase * 0.75);
@@ -268,10 +269,7 @@ void main() {
 		float flashPulse = burstGate * (primaryFlash + secondaryFlash * 0.65);
 		float lightningPatch = hash(floor(texelCoord / 3.0) + vec2(burstWindow * 1.9, 41.3));
 		float lightningMask = smoothstep(0.42, 0.82, cloudPresence) * smoothstep(0.7, 0.92, lightningPatch + cloudPattern * 0.4);
-		lightningAlpha = flashPulse * lightningMask * nightVisibility * (0.72 + lightningStrength * 0.28 + neutralBoost * 0.38);
-	}
-	if (lightningMode != 1) {
-		lightningAlpha *= denseAtmosphereVisibility;
+		lightningAlpha += flashPulse * lightningMask * nightVisibility * (0.72 + lightningStrength * 0.28 + neutralBoost * 0.38) * denseAtmosphereVisibility;
 	}
 	lightningAlpha *= 1.0 - nukeSuppression;
 
