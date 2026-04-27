@@ -227,7 +227,7 @@ public class CloudProviderCelestial extends IRenderHandler {
 					}
 					if(tileX <= 1) {
 						tessellator.setNormal(1.0F, 0.0F, 0.0F);
-						addVerticalXFaces(tessellator, cloudX + 1.0F - CLOUD_FACE_EPSILON, relativeCloudY, cloudZ, minCloudX, minCloudZ, cloudUBase, cloudVBase, 1.0F - CLOUD_FACE_EPSILON);
+						addVerticalXFaces(tessellator, cloudX, relativeCloudY, cloudZ, minCloudX, minCloudZ, cloudUBase, cloudVBase, 1.0F - CLOUD_FACE_EPSILON);
 					}
 
 					tessellator.setColorRGBA_F(cloudRed * 0.8F, cloudGreen * 0.8F, cloudBlue * 0.8F, alpha);
@@ -237,7 +237,7 @@ public class CloudProviderCelestial extends IRenderHandler {
 					}
 					if(tileZ <= 1) {
 						tessellator.setNormal(0.0F, 0.0F, 1.0F);
-						addVerticalZFaces(tessellator, cloudX, relativeCloudY, cloudZ + 1.0F - CLOUD_FACE_EPSILON, minCloudX, minCloudZ, cloudUBase, cloudVBase, 1.0F - CLOUD_FACE_EPSILON);
+						addVerticalZFaces(tessellator, cloudX, relativeCloudY, cloudZ, minCloudX, minCloudZ, cloudUBase, cloudVBase, 1.0F - CLOUD_FACE_EPSILON);
 					}
 
 					tessellator.draw();
