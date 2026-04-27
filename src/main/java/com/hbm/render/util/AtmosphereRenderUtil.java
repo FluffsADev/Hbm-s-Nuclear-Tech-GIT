@@ -28,6 +28,8 @@ public class AtmosphereRenderUtil {
 	private static final float CLOUDY_ATMOSPHERE_PRESSURE = 0.5F;
 	private static final float DENSE_HAZE_PRESSURE = 3.0F;
 	private static final float CLOUD_STORM_SMOOTHING_RATE = 6.0F;
+	private static final String EVE_BODY_NAME = "eve";
+	private static final float EVE_LIGHTNING_AMBIENT_STRENGTH = 0.4F;
 
 	private static final Map<Integer, CloudStormFadeState> CLOUD_STORM_FADE_STATES = new HashMap<Integer, CloudStormFadeState>();
 
@@ -35,6 +37,8 @@ public class AtmosphereRenderUtil {
 	public static final int ATMOSPHERE_STYLE_CLOUDS = 1;
 	public static final int ATMOSPHERE_STYLE_HAZE = 2;
 	public static final int ATMOSPHERE_STYLE_GAS_BANDS = 3;
+	public static final int LIGHTNING_MODE_STANDARD = 0;
+	public static final int LIGHTNING_MODE_EVE = 1;
 	private static final float DEFAULT_NUKE_SHOCK_CENTER = 0.5F;
 
 	private static final class CloudStormFadeState {
@@ -241,7 +245,21 @@ public class AtmosphereRenderUtil {
 		}
 
 		float lightningActivity = CBT_Weather.getLightningActivityFactor(body);
+		if(isEveLightningBody(body)) {
+			float stormStrength = weather.getThunderStrength(partialTicks) * lightningActivity;
+			float ambientStrength = lightningActivity * EVE_LIGHTNING_AMBIENT_STRENGTH;
+			return MathHelper.clamp_float(Math.max(stormStrength, ambientStrength), 0.0F, 1.0F);
+		}
+
 		return MathHelper.clamp_float(weather.getThunderStrength(partialTicks) * lightningActivity, 0.0F, 1.0F);
+	}
+
+	public static int getBodyLightningMode(CelestialBody body) {
+		return isEveLightningBody(body) ? LIGHTNING_MODE_EVE : LIGHTNING_MODE_STANDARD;
+	}
+
+	private static boolean isEveLightningBody(CelestialBody body) {
+		return body != null && EVE_BODY_NAME.equals(body.name);
 	}
 
 	public static void applyNukeShockUniforms(Shader shader, List<ShockStatus> shocks, double currentTime) {

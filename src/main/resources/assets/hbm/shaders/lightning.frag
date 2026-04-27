@@ -18,12 +18,15 @@ uniform float nukeShockCenterX[4];
 uniform float nukeShockCenterY[4];
 uniform float nukeShockStrength[4];
 uniform int atmosphereStyle;
+uniform int lightningMode;
 
 const float PIXEL_GRID = 16.0;
 const int MAX_NUKE_SHOCKS = 4;
 const vec2 IMPACT_CENTER = vec2(0.25, 0.7);
 const float IMPACT_RECOVERY_TIME_SCALE = 1.5;
 const float NUKE_RECOVERY_TIME_SCALE = 1.5;
+const float EVE_STRIKE_WINDOW = 8.0;
+const float EVE_STRIKE_FADE_TIME = 5.0;
 
 #define PI 3.1415926538
 
@@ -137,6 +140,12 @@ float getNightVisibility(vec2 movingUV) {
 	return mix(0.22, 1.0, clamp(0.85 - brightness, 0.0, 1.0));
 }
 
+float getEveStrikeFade(float eventTime) {
+	float strikeIntro = smoothstep(0.0, 0.14, eventTime);
+	float strikeFade = 1.0 - smoothstep(0.16, EVE_STRIKE_FADE_TIME, eventTime);
+	return strikeIntro * strikeFade;
+}
+
 void main() {
 	vec2 localUV = gl_TexCoord[0].xy;
 	vec2 movingUV = localUV + vec2(offset, 0.0);
@@ -196,7 +205,28 @@ void main() {
 	vec2 flowDrift = texelFlow / PIXEL_GRID;
 	float lightningAlpha = 0.0;
 
-	if (atmosphereStyle == 2) {
+	if (lightningMode == 1) {
+		float eventIndex = floor(atmosphereTime / EVE_STRIKE_WINDOW);
+		float eventTime = mod(atmosphereTime, EVE_STRIKE_WINDOW);
+		float strikeDelay = hash(vec2(eventIndex, 41.9)) * 2.4;
+		float strikeTime = max(eventTime - strikeDelay, 0.0);
+		float strikeFade = getEveStrikeFade(strikeTime) * step(strikeDelay, eventTime);
+		float centerSeedX = hash(vec2(eventIndex, 71.3));
+		float centerSeedY = hash(vec2(eventIndex, 113.7));
+		float radiusSeed = hash(vec2(eventIndex, 197.1));
+		float atmosphereFlashSeed = hash(vec2(eventIndex, 257.9));
+		vec2 strikeCenter = vec2(mix(0.18, 0.82, centerSeedX), mix(0.18, 0.82, centerSeedY));
+		float strikeRadius = mix(2.0, 4.0, radiusSeed) * 0.5 / PIXEL_GRID;
+		float strikeDistance = length(uv - strikeCenter);
+		float strikeDisc = 1.0 - smoothstep(strikeRadius * 0.24, strikeRadius, strikeDistance);
+		float strikeHalo = 1.0 - smoothstep(strikeRadius * 0.45, strikeRadius * 2.3, strikeDistance);
+		float eveVisibility = mix(0.55, 1.0, nightVisibility);
+		float circleFlash = strikeDisc * 0.5 * strikeFade;
+		float haloFlash = strikeHalo * (0.18 + lightningStrength * 0.16) * strikeFade;
+		float atmosphereFlash = strikeFade * (0.06 + lightningStrength * 0.12);
+		float giantFlash = step(0.72, atmosphereFlashSeed) * strikeFade * (0.18 + lightningStrength * 0.32);
+		lightningAlpha = (max(circleFlash, haloFlash) + atmosphereFlash + giantFlash) * eveVisibility * denseAtmosphereVisibility;
+	} else if (atmosphereStyle == 2) {
 		float hazeField = fbm(uv * 2.4 + flowDrift * 0.55);
 		float hazeSheet = fbm(uv * 4.0 + vec2(-motionTime * 0.012, motionTime * 0.01));
 		float turbulence = noise(uv * 10.0 + vec2(motionTime * 0.018, -motionTime * 0.014));
@@ -240,7 +270,10 @@ void main() {
 		float lightningMask = smoothstep(0.42, 0.82, cloudPresence) * smoothstep(0.7, 0.92, lightningPatch + cloudPattern * 0.4);
 		lightningAlpha = flashPulse * lightningMask * nightVisibility * (0.72 + lightningStrength * 0.28 + neutralBoost * 0.38);
 	}
+	if (lightningMode != 1) {
+		lightningAlpha *= denseAtmosphereVisibility;
+	}
 	lightningAlpha *= 1.0 - nukeSuppression;
 
-	gl_FragColor = vec4(vec3(1.0), clamp(lightningAlpha * denseAtmosphereVisibility * alphaMask * maskCoverage, 0.0, 1.0));
+	gl_FragColor = vec4(vec3(1.0), clamp(lightningAlpha * alphaMask * maskCoverage, 0.0, 1.0));
 }

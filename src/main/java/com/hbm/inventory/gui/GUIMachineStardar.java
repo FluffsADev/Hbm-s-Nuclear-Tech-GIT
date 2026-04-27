@@ -1196,6 +1196,7 @@ public class GUIMachineStardar extends GuiInfoContainer {
 			lightningShader.setUniform1f("atmosphereAlpha", atmosphereAlpha);
 			lightningShader.setUniform1f("atmosphereTime", atmosphereTime);
 			lightningShader.setUniform1i("atmosphereStyle", atmosphereStyle);
+			lightningShader.setUniform1i("lightningMode", AtmosphereRenderUtil.getBodyLightningMode(body));
 			lightningShader.setUniform1f("impactTime", impactAnimationTime);
 			AtmosphereRenderUtil.applyNukeShockUniforms(lightningShader, nukeShocks, dayTicks);
 

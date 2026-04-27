@@ -1234,6 +1234,7 @@ public class SkyProviderCelestial extends IRenderHandler {
 		lightningShader.setUniform1f("atmosphereAlpha", atmosphereAlpha);
 		lightningShader.setUniform1f("atmosphereTime", atmosphereTime);
 		lightningShader.setUniform1i("atmosphereStyle", atmosphereStyle);
+		lightningShader.setUniform1i("lightningMode", AtmosphereRenderUtil.getBodyLightningMode(body));
 		lightningShader.setUniform1f("impactTime", impactTime);
 		AtmosphereRenderUtil.applyNukeShockUniforms(lightningShader, nukeShocks, currentShockTime);
 
