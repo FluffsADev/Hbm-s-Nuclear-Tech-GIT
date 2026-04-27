@@ -211,24 +211,11 @@ void main() {
 		float strikeDelay = hash(vec2(eventIndex, 41.9)) * 2.4;
 		float strikeTime = max(eventTime - strikeDelay, 0.0);
 		float strikeFade = getEveStrikeFade(strikeTime) * step(strikeDelay, eventTime);
-		float centerSeedX = hash(vec2(eventIndex, 71.3));
-		float centerSeedY = hash(vec2(eventIndex, 113.7));
-		float radiusSeed = hash(vec2(eventIndex, 197.1));
-		float atmosphereFlashSeed = hash(vec2(eventIndex, 257.9));
-		vec2 strikeCenter = vec2(mix(0.18, 0.82, centerSeedX), mix(0.18, 0.82, centerSeedY));
-		float strikeRadius = mix(2.0, 4.0, radiusSeed) * 0.5 / PIXEL_GRID;
-		float strikeDistance = length(uv - strikeCenter);
-		float strikeCore = 1.0 - smoothstep(0.0, strikeRadius * 0.48, strikeDistance);
-		float strikeHalo = 1.0 - smoothstep(strikeRadius * 0.18, strikeRadius * 1.8, strikeDistance);
-		float eveVisibility = mix(0.55, 1.0, nightVisibility);
-		float circleFlash = strikeCore * 0.5 * strikeFade;
-		float haloFlash = (1.0 - strikeCore * 0.8) * strikeHalo * (0.18 + lightningStrength * 0.16) * strikeFade;
-		float atmosphereFlash = strikeFade * (0.08 + lightningStrength * 0.08);
-		float giantFlash = step(0.9, atmosphereFlashSeed) * strikeFade * (0.16 + lightningStrength * 0.18);
-		float localFlash = (circleFlash + haloFlash * 1.3) * eveVisibility * denseAtmosphereVisibility;
-		float atmosphereGlow = (atmosphereFlash + giantFlash) * denseAtmosphereVisibility;
+		float strikeChance = hash(vec2(eventIndex, 313.7));
+		float bigStrikeGate = step(0.82, strikeChance);
+		float atmosphereFlash = strikeFade * (0.05 + lightningStrength * 0.06) * bigStrikeGate;
+		float atmosphereGlow = atmosphereFlash * denseAtmosphereVisibility;
 		lightningAlpha += atmosphereGlow;
-		lightningAlpha += localFlash;
 	}
 	if (atmosphereStyle == 2) {
 		float hazeField = fbm(uv * 2.4 + flowDrift * 0.55);
