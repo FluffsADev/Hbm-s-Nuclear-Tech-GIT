@@ -65,10 +65,6 @@ public abstract class WorldProviderCelestial extends WorldProviderSurface {
 	private static final Map<Integer, SolarEclipseCache> surfaceEclipseCache = new HashMap<>();
 	private static final Map<Long, SolarEclipseCache> orbitEclipseCache = new HashMap<>();
 
-	public static final float MIN_CLOUD_PRESSURE = 0.5F;
-	public static final float SECOND_CLOUD_LAYER_PRESSURE = 2.5F;
-	public static final float THIRD_CLOUD_LAYER_PRESSURE = 5.0F;
-
 	private static class SolarEclipseCache {
 		long tick = Long.MIN_VALUE;
 		float factor = 0F;
@@ -623,15 +619,15 @@ public abstract class WorldProviderCelestial extends WorldProviderSurface {
 	}
 
 	public static int getCloudLayerCount(CBT_Atmosphere atmosphere) {
-		if(atmosphere == null || atmosphere.getPressure() < MIN_CLOUD_PRESSURE) {
+		if(atmosphere == null || atmosphere.getPressure() < 0.5F) {
 			return 0;
 		}
 
-		if(atmosphere.getPressure() >= THIRD_CLOUD_LAYER_PRESSURE) {
+		if(atmosphere.getPressure() >= 5.0F) {
 			return 3;
 		}
 
-		if(atmosphere.getPressure() >= SECOND_CLOUD_LAYER_PRESSURE) {
+		if(atmosphere.getPressure() >= 2.5F) {
 			return 2;
 		}
 
