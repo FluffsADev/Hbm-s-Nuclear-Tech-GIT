@@ -1,8 +1,6 @@
 package com.hbm.tileentity.machine;
 
-import com.hbm.dim.CelestialBody;
 import com.hbm.dim.WorldProviderCelestial;
-import com.hbm.dim.orbit.WorldProviderOrbit;
 import com.hbm.tileentity.TileEntityLoadedBase;
 
 import api.hbm.energymk2.IEnergyProviderMK2;
@@ -43,11 +41,7 @@ public class TileEntityMachineSolarPanel extends TileEntityLoadedBase implements
 
 	// Balanced around 100he/t on Earth
 	public long getOutput(int sun) {
-		float sunPower = worldObj.provider instanceof WorldProviderOrbit
-			? ((WorldProviderOrbit)worldObj.provider).getSunPower()
-			: CelestialBody.getBody(worldObj).getSunPower();
-		float eclipseFactor = WorldProviderCelestial.getSolarEclipseFactor(worldObj, xCoord, zCoord);
-		return MathHelper.ceiling_float_int(sun * 25 * sunPower * (1.0F - eclipseFactor));
+		return MathHelper.ceiling_float_int(sun * 25 * WorldProviderCelestial.getSunPower(worldObj.provider, xCoord, zCoord));
 	}
 
 	@Override
