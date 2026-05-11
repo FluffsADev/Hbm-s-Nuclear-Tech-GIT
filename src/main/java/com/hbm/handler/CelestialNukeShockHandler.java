@@ -21,7 +21,7 @@ import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 
 public class CelestialNukeShockHandler {
 
-	private static final long MAX_AGE = 120L;
+	private static final long MAX_AGE = 220L;
 	public static final int MAX_ACTIVE_SHOCKS = 4;
 	private static final float FLASH_GRID = 16.0F;
 
