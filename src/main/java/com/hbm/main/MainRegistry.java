@@ -704,6 +704,10 @@ public class MainRegistry {
 		MinecraftForge.EVENT_BUS.register(atmosphere);
 		FMLCommonHandler.instance().bus().register(atmosphere);
 
+		CelestialNukeShockHandler celestialNukeShockHandler = new CelestialNukeShockHandler();
+		MinecraftForge.EVENT_BUS.register(celestialNukeShockHandler);
+		FMLCommonHandler.instance().bus().register(celestialNukeShockHandler);
+
 		NeutronHandler neutronHandler = new NeutronHandler();
 		MinecraftForge.EVENT_BUS.register(neutronHandler);
 		FMLCommonHandler.instance().bus().register(neutronHandler);
