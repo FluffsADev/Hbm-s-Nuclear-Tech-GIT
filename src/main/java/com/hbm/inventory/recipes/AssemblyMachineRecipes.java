@@ -1159,7 +1159,7 @@ public class AssemblyMachineRecipes extends GenericRecipes<GenericRecipe> {
 						new OreDictStack(ANY_CONCRETE.any(), 4),
 						new OreDictStack(STAINLESS.plate(), 12),
 						new OreDictStack(ANY_PLASTIC.ingot(), 4),
-						new ComparableStack(ModItems.battery_pack, 1, EnumBatteryPack.BATTERY_REDSTONE),
+						new ComparableStack(ModItems.battery_pack, 1, EnumBatteryPack.BATTERY_LITHIUM),
 						new ComparableStack(ModItems.coil_copper, 4))
 				.inputItemsEx(
 						new OreDictStack(ANY_CONCRETE.any(), 4),
