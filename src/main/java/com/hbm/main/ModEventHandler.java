@@ -11,7 +11,6 @@ import java.util.Random;
 import java.util.UUID;
 
 import org.apache.commons.lang3.math.NumberUtils;
-import org.apache.logging.log4j.Level;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
@@ -39,12 +38,8 @@ import com.hbm.dim.trait.CBT_Lights;
 import com.hbm.dim.trait.CBT_Weather;
 import com.hbm.dim.trait.CelestialBodyTrait;
 import com.hbm.entity.missile.EntityRideableRocket;
-import com.hbm.entity.missile.EntityRideableRocket.RocketState;
 import com.hbm.entity.mob.EntityCreeperTainted;
 import com.hbm.entity.mob.EntityCyberCrab;
-import com.hbm.entity.mob.EntityUFO;
-import com.hbm.entity.mob.siege.EntitySiegeCraft;
-import com.hbm.entity.mob.siege.EntitySiegeUFO;
 import com.hbm.entity.projectile.EntityBulletBaseMK4;
 import com.hbm.entity.projectile.EntityBurningFOEQ;
 import com.hbm.entity.train.EntityRailCarBase;
@@ -500,7 +495,7 @@ public class ModEventHandler {
 							((IBomb) player.worldObj.getBlock(x, y, z)).explode(player.worldObj, x, y, z);
 
 							if(GeneralConfig.enableExtendedLogging)
-								MainRegistry.logger.log(Level.INFO, "[DET] Tried to detonate block at " + x + " / " + y + " / " + z + " by dead man's switch from " + player.getDisplayName() + "!");
+								MainRegistry.logger.info("[DET] Tried to detonate block at " + x + " / " + y + " / " + z + " by dead man's switch from " + player.getDisplayName() + "!");
 						}
 
 						player.inventory.setInventorySlotContents(i, null);
@@ -1531,14 +1526,13 @@ public class ModEventHandler {
 	public void onServerTick(TickEvent.ServerTickEvent event) {
 
 		if(event.phase == Phase.START) {
-				CBT_Weather.updateGlobalWeather();
-				for(CelestialBody body : CelestialBody.getAllBodies()) {
-					List<CelestialBodyTrait> traits = new ArrayList<>(body.getTraits().values());
-					for (CelestialBodyTrait trait : traits) {
-						trait.update(false, body);
-					
-					}
+			CBT_Weather.updateGlobalWeather();
+			for(CelestialBody body : CelestialBody.getAllBodies()) {
+				List<CelestialBodyTrait> traits = new ArrayList<>(body.getTraits().values());
+				for(CelestialBodyTrait trait : traits) {
+					trait.update(false, body);
 				}
+			}
 
 			// do other shit I guess?
 			RTTYSystem.updateBroadcastQueue();
@@ -1813,7 +1807,7 @@ public class ModEventHandler {
 				EntityItem entityitem = new EntityItem(world, x, y, z, new ItemStack(ModItems.bobmazon_hidden));
 				entityitem.delayBeforeCanPickup = 1;
 				world.spawnEntityInWorld(entityitem);
-				MainRegistry.logger.log(Level.FATAL, "THE HIDDENCAT HAS BEEN OBTAINED " + " x: " + x + " / "	+ " y: " + + y + " / "+ "z: " + + z + " by " + event.entityPlayer.getDisplayName() + "!");
+				MainRegistry.logger.fatal("THE HIDDENCAT HAS BEEN OBTAINED " + " x: " + x + " / "	+ " y: " + + y + " / "+ "z: " + + z + " by " + event.entityPlayer.getDisplayName() + "!");
 
 			}
 		}
@@ -1841,7 +1835,7 @@ public class ModEventHandler {
 		World world = event.world;
 
 		if(!world.isRemote && event.action == Action.RIGHT_CLICK_BLOCK && world.getBlock(x, y, z) == Blocks.lever && GeneralConfig.enableExtendedLogging == true) {
-			MainRegistry.logger.log(Level.INFO, "[DET] pulled lever at " + x + " / " + y + " / " + z + " by " + event.entityPlayer.getDisplayName() + "!");
+			MainRegistry.logger.info("[DET] pulled lever at " + x + " / " + y + " / " + z + " by " + event.entityPlayer.getDisplayName() + "!");
 		}
 	}
 
