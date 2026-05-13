@@ -100,7 +100,7 @@ public class PlasmaForgeRecipes extends GenericRecipes<PlasmaForgeRecipe> {
 				.inputFluids(new FluidStack(Fluids.REFORMGAS, 16_000)).setGroup(autoPlate, this));
 		this.register((PlasmaForgeRecipe) new PlasmaForgeRecipe("plsm.weldstainless").setInputEnergy(500_000).setup(125, 20_000L)
 				.outputItems(new ItemStack(ModItems.plate_welded, 1, Mats.MAT_STAINLESS.id))
-				.inputItems(new OreDictStack(OSMIRIDIUM.plateCast(), 2)).setGroup(autoPlate, this));
+				.inputItems(new OreDictStack(STAINLESS.plateCast(), 2)).setGroup(autoPlate, this));
 		
 		// Fusion
 		this.register((PlasmaForgeRecipe) new PlasmaForgeRecipe("plsm.fusionvessel").setInputEnergy(3_000_000).setup(1_200, 2_000_000).outputItems(new ItemStack(ModBlocks.fusion_torus))
