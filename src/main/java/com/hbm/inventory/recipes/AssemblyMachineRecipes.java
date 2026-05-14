@@ -1048,7 +1048,7 @@ public class AssemblyMachineRecipes extends GenericRecipes<GenericRecipe> {
 						new ComparableStack(ModItems.fluid_barrel_full, 1, Fluids.KEROSENE.getID()),
 						new ComparableStack(ModItems.thruster_small, 1),
 						new OreDictStack(BSCCO.wireDense(), 64),
-						new ComparableStack(ModItems.battery_pack, 1, EnumBatteryPack.BATTERY_QUANTUM)));
+						new ComparableStack(ModItems.battery_pack, 1, EnumBatteryPack.BATTERY_LITHIUM)));
 
 		// machines
 		this.register(new GenericRecipe("ass.magma").setup(400, 100).outputItems(new ItemStack(ModBlocks.machine_magma, 1))
