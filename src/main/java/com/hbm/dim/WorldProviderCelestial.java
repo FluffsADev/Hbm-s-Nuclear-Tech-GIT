@@ -94,7 +94,7 @@ public abstract class WorldProviderCelestial extends WorldProviderSurface {
 		// Will prevent water from existing, will be unset immediately before using a bucket if inside a pressurized room
 		isHellWorld = !worldObj.isRemote && pressure <= 0.2F && !Loader.isModLoaded(Compat.MOD_COFH);
 
-		if(worldObj.isRemote) {
+		if(worldObj.isRemote && Minecraft.getMinecraft().thePlayer != null && Minecraft.getMinecraft().thePlayer.dimension == dimensionId) {
 			ListIterator<Meteor> iterator = meteors.listIterator();
 			while(iterator.hasNext()) {
 				Meteor meteor = iterator.next();
