@@ -112,19 +112,13 @@ public class AssemblyMachineRecipes extends GenericRecipes<GenericRecipe> {
 		this.register(new GenericRecipe("ass.exgold").setup(600, 10_000).outputItems(new ItemStack(ModItems.item_expensive, 1, EnumExpensiveType.GOLD_DUST.ordinal()))
 				.inputItems(new OreDictStack(GOLD.dust(), 64), new OreDictStack(GOLD.dust(), 64)));
 
+		// expsneive space
 		this.register(new GenericRecipe("ass.exstainlessbeam").setup(600, 10_000).outputItems(new ItemStack(ModItems.item_expensive, 1, EnumExpensiveType.STAINLESS_BEAM.ordinal()))
-				.inputItems(
-						new OreDictStack(STAINLESS.plateWelded(), 16),
-						new OreDictStack(AL.plateCast(), 16),
-						new OreDictStack(TI.plateCast(), 16),
-						new OreDictStack(STEEL.bolt(), 32)));
+				.inputItems(new OreDictStack(STAINLESS.plateWelded(), 4), new OreDictStack(AL.plateCast(), 8), new OreDictStack(TI.plateCast(), 4), new OreDictStack(STEEL.bolt(), 32))
+				.inputFluids(new FluidStack(Fluids.KRYPTON, 1_000)));
 
 		this.register(new GenericRecipe("ass.exavionics").setup(600, 10_000).outputItems(new ItemStack(ModItems.item_expensive, 1, EnumExpensiveType.AVIONICS.ordinal()))
-				.inputItems(
-						new ComparableStack(ModItems.item_expensive, 4, EnumExpensiveType.CIRCUIT),
-						new ComparableStack(ModItems.circuit, 32, EnumCircuitType.CAPACITOR_LANTHANIUM),
-						new ComparableStack(ModItems.circuit, 8, EnumCircuitType.AVIONICS),
-						new ComparableStack(ModBlocks.glass_polarized, 16))
+				.inputItems(new ComparableStack(ModItems.item_expensive, 2, EnumExpensiveType.CIRCUIT), new ComparableStack(ModItems.circuit, 16, EnumCircuitType.CAPACITOR_LANTHANIUM), new ComparableStack(ModItems.circuit, 4, EnumCircuitType.AVIONICS), new ComparableStack(ModItems.part_generic, 32, EnumPartType.GLASS_POLARIZED))
 				.inputFluids(new FluidStack(Fluids.PERFLUOROMETHYL, 2_000)));
 
 		// cloth
@@ -1089,12 +1083,7 @@ public class AssemblyMachineRecipes extends GenericRecipes<GenericRecipe> {
 						new OreDictStack(AL.plateCast(), 6),
 						new OreDictStack(STAINLESS.plate(), 6),
 						new OreDictStack(CU.pipe(), 4),
-						new ComparableStack(ModItems.thermo_element, 3))
-				.inputItemsEx(
-						new ComparableStack(ModItems.item_expensive, 2, EnumExpensiveType.STAINLESS_BEAM),
-						new OreDictStack(CU.pipe(), 8),
-						new ComparableStack(ModItems.thermo_element, 4))
-				.setPools528(GenericRecipes.POOL_PREFIX_528 + "stainless"));
+						new ComparableStack(ModItems.thermo_element, 3)));
 
 		this.register(new GenericRecipe("ass.milkreformer").setup(600, 100).outputItems(new ItemStack(ModBlocks.machine_milk_reformer, 1))
 				.inputItems(
@@ -1126,47 +1115,40 @@ public class AssemblyMachineRecipes extends GenericRecipes<GenericRecipe> {
 						new OreDictStack(CA.dust(), 4),
 						new OreDictStack(LI.dust(), 12),
 						new ComparableStack(ModItems.motor, 1),
-						new ComparableStack(ModItems.blades_titanium, 1),
-						new ComparableStack(ModItems.blades_titanium, 1))
+						new ComparableStack(ModItems.turbine_titanium, 1))
 				.inputItemsEx(
-						new ComparableStack(ModItems.item_expensive, 2, EnumExpensiveType.STAINLESS_BEAM),
+						new ComparableStack(ModItems.item_expensive, 1, EnumExpensiveType.STAINLESS_BEAM),
 						new OreDictStack(CA.dust(), 8),
 						new OreDictStack(LI.dust(), 16),
 						new ComparableStack(ModItems.motor, 1),
-						new ComparableStack(ModItems.blades_titanium, 1),
-						new ComparableStack(ModItems.blades_titanium, 1))
+						new ComparableStack(ModItems.turbine_titanium, 1))
 				.setPools528(GenericRecipes.POOL_PREFIX_528 + "stainless"));
 
 		this.register(new GenericRecipe("ass.alkylation").setup(400, 100).outputItems(new ItemStack(ModBlocks.machine_alkylation))
 				.inputItems(
-						new OreDictStack(ANY_CONCRETE.any(), 12),
 						new OreDictStack(STAINLESS.plate(), 12),
 						new OreDictStack(STEEL.shell(), 6),
 						new ComparableStack(ModItems.circuit, 8, EnumCircuitType.CAPACITOR),
 						new ComparableStack(ModItems.catalyst_clay, 12),
-						new ComparableStack(ModItems.coil_tungsten, 4))
+						new ComparableStack(ModItems.coil_tungsten, 8))
 				.inputItemsEx(
-						new OreDictStack(ANY_CONCRETE.any(), 12),
-						new ComparableStack(ModItems.item_expensive, 4, EnumExpensiveType.STAINLESS_BEAM),
+						new ComparableStack(ModItems.item_expensive, 3, EnumExpensiveType.STAINLESS_BEAM),
 						new ComparableStack(ModItems.item_expensive, 4, EnumExpensiveType.STEEL_PLATING),
 						new ComparableStack(ModItems.circuit, 8, EnumCircuitType.CAPACITOR),
-						new ComparableStack(ModItems.catalyst_clay, 12))
+						new ComparableStack(ModItems.catalyst_clay, 12),
+						new ComparableStack(ModItems.coil_tungsten, 8))
 				.setPools528(GenericRecipes.POOL_PREFIX_528 + "stainless"));
 
 		this.register(new GenericRecipe("ass.cryodistil").setup(600, 100).outputItems(new ItemStack(ModBlocks.machine_cryo_distill))
 				.inputItems(
 						new OreDictStack(STEEL.plateCast(), 2),
-						new OreDictStack(ANY_CONCRETE.any(), 4),
 						new OreDictStack(STAINLESS.plate(), 12),
 						new OreDictStack(ANY_PLASTIC.ingot(), 4),
-						new ComparableStack(ModItems.battery_pack, 1, EnumBatteryPack.BATTERY_LITHIUM),
-						new ComparableStack(ModItems.coil_copper, 4))
+						new OreDictStack(NB.ingot(), 4))
 				.inputItemsEx(
-						new OreDictStack(ANY_CONCRETE.any(), 4),
-						new ComparableStack(ModItems.item_expensive, 2, EnumExpensiveType.STAINLESS_BEAM),
-						new ComparableStack(ModItems.item_expensive, 2, EnumExpensiveType.HEAVY_FRAME),
-						new ComparableStack(ModItems.battery_pack, 1, EnumBatteryPack.BATTERY_LITHIUM),
-						new ComparableStack(ModItems.coil_copper, 4))
+					new ComparableStack(ModItems.item_expensive, 2, EnumExpensiveType.HEAVY_FRAME),
+						new OreDictStack(STAINLESS.plateWelded(), 4),
+						new OreDictStack(NB.ingot(), 4))
 				.setPools528(GenericRecipes.POOL_PREFIX_528 + "stainless"));
 
 		this.register(new GenericRecipe("ass.transporterrocket").setup(200, 100).outputItems(new ItemStack(ModBlocks.transporter_rocket, 2))
@@ -1180,8 +1162,8 @@ public class AssemblyMachineRecipes extends GenericRecipes<GenericRecipe> {
 						new ComparableStack(ModItems.item_expensive, 2, EnumExpensiveType.STEEL_PLATING),
 						new OreDictStack(TI.plateWelded(), 4),
 						new ComparableStack(ModBlocks.crate_iron, 2),
-						new ComparableStack(ModItems.thruster_small, 2),
-						new ComparableStack(ModItems.item_expensive, 2, EnumExpensiveType.AVIONICS)));
+						new ComparableStack(ModItems.thruster_small, 1),
+						new ComparableStack(ModItems.item_expensive, 1, EnumExpensiveType.AVIONICS)));
 
 		this.register(new GenericRecipe("ass.gasdock").setup(200, 100).outputItems(new ItemStack(ModBlocks.gas_dock, 1))
 				.inputItems(
@@ -1202,22 +1184,33 @@ public class AssemblyMachineRecipes extends GenericRecipes<GenericRecipe> {
 						new OreDictStack(ANY_CONCRETE.any(), 16),
 						new ComparableStack(ModBlocks.steel_scaffold, 8),
 						new ComparableStack(ModItems.circuit, 4, EnumCircuitType.BASIC))
+				.inputItemsEx(
+						new ComparableStack(ModItems.motor, 4),
+						new ComparableStack(ModItems.sat_head_radar),
+						new ComparableStack(ModItems.item_expensive, 2, EnumExpensiveType.HEAVY_FRAME),
+						new ComparableStack(ModItems.item_expensive, 4, EnumExpensiveType.CIRCUIT))
 				.setPools528(GenericRecipes.POOL_PREFIX_528 + "aluminium"));
 
 		this.register(new GenericRecipe("ass.driveprocessor").setup(400, 100).outputItems(new ItemStack(ModBlocks.machine_drive_processor, 1))
 				.inputItems(
 						new OreDictStack(ANY_RUBBER.ingot(), 2),
-						new OreDictStack(CU.wireFine(), 4),
-						new OreDictStack(IRON.dust(), 3),
+						new OreDictStack(CU.wireFine(), 8),
+						new OreDictStack(STEEL.plateCast(), 2),
 						new ComparableStack(ModItems.crt_display, 2),
 						new ComparableStack(ModItems.circuit, 2, EnumCircuitType.BASIC))
+				.inputItemsEx(
+						new OreDictStack(ANY_RUBBER.ingot(), 2),
+						new ComparableStack(ModItems.item_expensive, 4, EnumExpensiveType.STEEL_PLATING),
+						new ComparableStack(ModItems.crt_display, 2),
+						new ComparableStack(ModItems.item_expensive, 1, EnumExpensiveType.CIRCUIT))
 				.setPools528(GenericRecipes.POOL_PREFIX_528 + "aluminium"));
 
 		this.register(new GenericRecipe("ass.vacuumcircuit").setup(200, 100).outputItems(new ItemStack(ModBlocks.machine_vacuum_circuit, 1))
 				.inputItems(
-						new OreDictStack(STEEL.plateWelded(), 2),
-						new OreDictStack(W.wireFine(), 4),
-						new ComparableStack(ModItems.circuit, 1, EnumCircuitType.ADVANCED)));
+						new OreDictStack(STEEL.plateWelded(), 4),
+						new OreDictStack(W.wireFine(), 16),
+						new ComparableStack(ModItems.turbine_titanium, 1),
+						new ComparableStack(ModItems.circuit, 2, EnumCircuitType.ADVANCED)));
 
 		this.register(new GenericRecipe("ass.solarpanel").setup(100, 100).outputItems(new ItemStack(ModBlocks.machine_solar, 1))
 				.inputItems(
@@ -1308,16 +1301,15 @@ public class AssemblyMachineRecipes extends GenericRecipes<GenericRecipe> {
 						new OreDictStack(AL.plateCast(), 4),
 						new OreDictStack(STAINLESS.plate(), 4),
 						new OreDictStack(ANY_HARDPLASTIC.ingot(), 2),
-						new OreDictStack(KEY_CLEARGLASS, 1),
 						new OreDictStack(QUARTZ.dust(), 4), // has a liquid crystal display
 						new ComparableStack(ModItems.circuit, 4, EnumCircuitType.MOLYCHIP),
 						new ComparableStack(ModItems.circuit, 4, EnumCircuitType.AERO))
 				.inputItemsEx(
-						new ComparableStack(ModItems.item_expensive, 2, EnumExpensiveType.STAINLESS_BEAM),
-						new OreDictStack(ANY_HARDPLASTIC.ingot(), 2),
-						new OreDictStack(KEY_CLEARGLASS, 4),
-						new OreDictStack(QUARTZ.dust(), 4),
-						new ComparableStack(ModItems.circuit, 8, EnumCircuitType.MOLYCHIP),
+						new OreDictStack(AL.plateCast(), 4),
+						new OreDictStack(STAINLESS.plateCast(), 4),
+						new ComparableStack(ModItems.item_expensive, 2, EnumExpensiveType.PLASTIC),
+						new OreDictStack(QUARTZ.dust(), 16),
+						new ComparableStack(ModItems.circuit, 16, EnumCircuitType.MOLYCHIP),
 						new ComparableStack(ModItems.item_expensive, 2, EnumExpensiveType.AVIONICS))
 				.setPools528(GenericRecipes.POOL_PREFIX_528 + "stainless"));
 
