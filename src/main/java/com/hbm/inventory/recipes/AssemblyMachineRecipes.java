@@ -1054,7 +1054,7 @@ public class AssemblyMachineRecipes extends GenericRecipes<GenericRecipe> {
 						new ComparableStack(ModItems.motor_bismuth),
 						new ComparableStack(ModItems.circuit, 8, EnumCircuitType.GASCHIP))
 				.inputItemsEx(
-						new ComparableStack(ModItems.item_expensive, 4, EnumExpensiveType.STAINLESS_BEAM),
+						new ComparableStack(ModItems.item_expensive, 6, EnumExpensiveType.STAINLESS_BEAM),
 						new OreDictStack(W.plateWelded(), 4),
 						new ComparableStack(ModItems.drill_titanium, 1),
 						new ComparableStack(ModItems.motor_bismuth, 4),
@@ -1070,7 +1070,7 @@ public class AssemblyMachineRecipes extends GenericRecipes<GenericRecipe> {
 						new ComparableStack(Blocks.dirt, 8),
 						new OreDictStack(ANY_PLASTIC.ingot(), 2))
 				.inputItemsEx(
-						new ComparableStack(ModItems.item_expensive, 1, EnumExpensiveType.STAINLESS_BEAM),
+						new ComparableStack(ModItems.item_expensive, 2, EnumExpensiveType.STAINLESS_BEAM),
 						new OreDictStack(Fluids.WATER.getDict(16_000)),
 						new OreDictStack(STEEL.pipe(), 6),
 						new OreDictStack(KEY_CLEARGLASS, 8),
@@ -1132,7 +1132,7 @@ public class AssemblyMachineRecipes extends GenericRecipes<GenericRecipe> {
 						new ComparableStack(ModItems.catalyst_clay, 12),
 						new ComparableStack(ModItems.coil_tungsten, 8))
 				.inputItemsEx(
-						new ComparableStack(ModItems.item_expensive, 3, EnumExpensiveType.STAINLESS_BEAM),
+						new ComparableStack(ModItems.item_expensive, 4, EnumExpensiveType.STAINLESS_BEAM),
 						new ComparableStack(ModItems.item_expensive, 4, EnumExpensiveType.STEEL_PLATING),
 						new ComparableStack(ModItems.circuit, 8, EnumCircuitType.CAPACITOR),
 						new ComparableStack(ModItems.catalyst_clay, 12),
@@ -1254,7 +1254,7 @@ public class AssemblyMachineRecipes extends GenericRecipes<GenericRecipe> {
 						new ComparableStack(ModItems.circuit, 4, EnumCircuitType.BASIC),
 						new OreDictStack(STAINLESS.plate(), 4))
 				.inputItemsEx(
-						new ComparableStack(ModItems.item_expensive, 4, EnumExpensiveType.STAINLESS_BEAM),
+						new ComparableStack(ModItems.item_expensive, 8, EnumExpensiveType.STAINLESS_BEAM),
 						new ComparableStack(ModItems.motor, 4),
 						new OreDictStack(KEY_CLEARGLASS, 8),
 						new OreDictStack(ANY_PLASTIC.ingot(), 8),
@@ -1270,7 +1270,7 @@ public class AssemblyMachineRecipes extends GenericRecipes<GenericRecipe> {
 						new ComparableStack(ModItems.circuit, 2, EnumCircuitType.ADVANCED),
 						new OreDictStack(STAINLESS.plate(), 4))
 				.inputItemsEx(
-						new ComparableStack(ModItems.item_expensive, 4, EnumExpensiveType.STAINLESS_BEAM),
+						new ComparableStack(ModItems.item_expensive, 8, EnumExpensiveType.STAINLESS_BEAM),
 						new ComparableStack(ModItems.motor, 4),
 						new OreDictStack(KEY_CLEARGLASS, 8),
 						new OreDictStack(ANY_PLASTIC.ingot(), 8),
