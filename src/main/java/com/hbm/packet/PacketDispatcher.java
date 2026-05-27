@@ -15,6 +15,8 @@ public class PacketDispatcher {
 	public static void registerPackets() {
 		int i = 0;
 
+		// RoR padlock
+		wrapper.registerMessage(ItemPadlockChannelPacket.Handler.class, ItemPadlockChannelPacket.class, i++, Side.SERVER);
 		//Siren packet for looped sounds
 		wrapper.registerMessage(TESirenPacket.Handler.class, TESirenPacket.class, i++, Side.CLIENT);
 		//Signals server to change ItemStacks

@@ -1,4 +1,3 @@
-
 package com.hbm.tileentity;
 
 import java.util.HashSet;
@@ -6,7 +5,6 @@ import java.util.Set;
 
 import com.hbm.blocks.BlockDummyable;
 import com.hbm.blocks.generic.BlockDoorGeneric;
-import com.hbm.handler.atmosphere.IBlockSealable;
 import com.hbm.lib.Library;
 import com.hbm.main.MainRegistry;
 import com.hbm.render.anim.HbmAnimations.Animation;
@@ -43,20 +41,22 @@ public class TileEntityDoorGeneric extends TileEntityLockableBase {
 
 	private AudioWrapper audio;
 	private AudioWrapper audio2;
-	
+
 	public Animation currentAnimation;
 
 	@Override
 	public void updateEntity() {
-		
+		// FIX: call super so TileEntityLockableBase can process radio/RoR listening
+		super.updateEntity();
+
 		if(getDoorType().onDoorUpdate() != null) {
 			getDoorType().onDoorUpdate().accept(this);
 		}
-		
+
 		if(state == STATE_OPENING) {
 			openTicks++;
 			if(openTicks >= getDoorType().timeToOpen()) openTicks = getDoorType().timeToOpen();
-			
+
 		} else if(state == STATE_CLOSING) {
 			openTicks--;
 			if(openTicks <= 0) openTicks = 0;
@@ -85,9 +85,9 @@ public class TileEntityDoorGeneric extends TileEntityLockableBase {
 						for(int k = 0; k < range[4]; k++) {
 							BlockPos add = new BlockPos(0, 0, 0);
 							switch(range[5]) {
-							case 0: add = new BlockPos(0, k, (int)Math.signum(range[3]) * j); break;
-							case 1: add = new BlockPos(k, (int)Math.signum(range[3]) * j, 0); break;
-							case 2: add = new BlockPos((int)Math.signum(range[3]) * j, k, 0); break;
+								case 0: add = new BlockPos(0, k, (int)Math.signum(range[3]) * j); break;
+								case 1: add = new BlockPos(k, (int)Math.signum(range[3]) * j, 0); break;
+								case 2: add = new BlockPos((int)Math.signum(range[3]) * j, k, 0); break;
 							}
 
 							Rotation r = Rotation.getBlockRotation(dir);
@@ -122,9 +122,9 @@ public class TileEntityDoorGeneric extends TileEntityLockableBase {
 						for(int k = 0; k < range[4]; k++) {
 							BlockPos add = new BlockPos(0, 0, 0);
 							switch(range[5]) {
-							case 0: add = new BlockPos(0, k, (int)Math.signum(range[3]) * j); break;
-							case 1: add = new BlockPos(k, (int)Math.signum(range[3]) * j, 0); break;
-							case 2: add = new BlockPos((int)Math.signum(range[3]) * j, k, 0); break;
+								case 0: add = new BlockPos(0, k, (int)Math.signum(range[3]) * j); break;
+								case 1: add = new BlockPos(k, (int)Math.signum(range[3]) * j, 0); break;
+								case 2: add = new BlockPos((int)Math.signum(range[3]) * j, k, 0); break;
 							}
 
 							Rotation r = Rotation.getBlockRotation(dir);
@@ -144,11 +144,9 @@ public class TileEntityDoorGeneric extends TileEntityLockableBase {
 			}
 			if(state == STATE_OPENING && openTicks == getDoorType().timeToOpen()) {
 				state = STATE_OPEN;
-				((IBlockSealable)blockType).updateSealedState(worldObj, xCoord, yCoord, zCoord);
 			}
 			if(state == STATE_CLOSING && openTicks == 0) {
 				state = STATE_CLOSED;
-				((IBlockSealable)blockType).updateSealedState(worldObj, xCoord, yCoord, zCoord);
 			}
 
 			this.networkPackNT(100);
@@ -166,6 +164,8 @@ public class TileEntityDoorGeneric extends TileEntityLockableBase {
 
 	@Override
 	public void serialize(ByteBuf buf) {
+		// FIX: call super so radio/lock fields are included in network sync
+		super.serialize(buf);
 		buf.writeByte(state);
 		buf.writeByte(skinIndex);
 		buf.writeBoolean(shouldUseBB);
@@ -173,6 +173,8 @@ public class TileEntityDoorGeneric extends TileEntityLockableBase {
 
 	@Override
 	public void deserialize(ByteBuf buf) {
+		// FIX: call super so radio/lock fields are read from network sync
+		super.deserialize(buf);
 		handleNewState(buf.readByte());
 		skinIndex = buf.readByte();
 		shouldUseBB = buf.readBoolean();
@@ -206,11 +208,11 @@ public class TileEntityDoorGeneric extends TileEntityLockableBase {
 			//Redstone "power locks" doors, just like minecraft iron doors
 			return false;
 		}
-		
+
 		if(this.state == STATE_CLOSED) {
 			if(!worldObj.isRemote && canAccess(player)) this.state = STATE_OPENING;
 			return true;
-			
+
 		} else if(this.state == STATE_OPEN) {
 			if(!worldObj.isRemote && canAccess(player)) this.state = STATE_CLOSING;
 			return true;
@@ -220,11 +222,11 @@ public class TileEntityDoorGeneric extends TileEntityLockableBase {
 
 	public boolean tryToggle(int passcode) {
 		if(this.isLocked() && passcode != this.lock) return false;
-		
+
 		if(this.state == STATE_CLOSED) {
 			if(!worldObj.isRemote) this.state = STATE_OPENING;
 			return true;
-			
+
 		} else if(this.state == STATE_OPEN) {
 			if(!worldObj.isRemote) this.state = STATE_CLOSING;
 			return true;
@@ -308,7 +310,7 @@ public class TileEntityDoorGeneric extends TileEntityLockableBase {
 
 
 			this.state = state;
-			
+
 			if(state == STATE_OPENING || state == STATE_CLOSING) {
 				animStartTime = System.currentTimeMillis();
 				currentAnimation = this.doorType.getSEDNAAnim(state, this.skinIndex);

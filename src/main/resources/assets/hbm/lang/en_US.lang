@@ -4059,6 +4059,8 @@ item.paa_boots.name=PaA "good ol' shoes"
 item.paa_legs.name=PaA Leg Reinforcements
 item.paa_plate.name=PaA Chest Protection Plate
 item.padlock.name=Padlock
+item.padlock_ror.name=Redstone-Over-Radio Padlock
+item.padlock_ror.desc=Placable on mechanical doors
 item.padlock_reinforced.name=Reinforced Padlock
 item.padlock_rusty.name=Rusty Padlock
 item.padlock_unbreakable.name=Unbreakable Padlock
@@ -6728,6 +6730,7 @@ tile.radio_torch_logic.desc=Placable on flat surfaces or comparator-compatible b
 tile.radio_torch_reader.name=Redstone-over-Radio Reader
 tile.radio_torch_reader.desc=Reads values from connected blocks,$then sends them over the specified frequency
 tile.radio_torch_receiver.name=Redstone-over-Radio Receiver
+
 tile.radio_torch_receiver.desc=Placable on flat surfaces or comparator-compatible blocks
 tile.radio_torch_sender.name=Redstone-over-Radio Transmitter
 tile.radio_torch_sender.desc=Placable on flat surfaces or comparator-compatible blocks$Reads redstone signals or comparator input

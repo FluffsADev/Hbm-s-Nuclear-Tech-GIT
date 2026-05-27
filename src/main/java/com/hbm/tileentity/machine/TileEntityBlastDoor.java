@@ -17,7 +17,6 @@ import net.minecraft.util.AxisAlignedBB;
 public class TileEntityBlastDoor extends TileEntityLockableBase {
 
 	public boolean isOpening = false;
-	//0: closed, 1: opening/closing, 2:open
 	public int state = 0;
 	public long sysTime;
 	private int timer = 0;
@@ -36,7 +35,8 @@ public class TileEntityBlastDoor extends TileEntityLockableBase {
 	}
 
 	@Override
-    public void updateEntity() {
+	public void updateEntity() {
+		super.updateEntity();
 
 		if(!worldObj.isRemote) {
 
@@ -51,66 +51,66 @@ public class TileEntityBlastDoor extends TileEntityLockableBase {
 				redstoned = false;
 			}
 
-	    	if(state != 1) {
-	    		timer = 0;
-	    	} else {
-	    		timer++;
+			if(state != 1) {
+				timer = 0;
+			} else {
+				timer++;
 
-    			if(isOpening) {
-    				if(timer >= 0) {
-    					removeDummy(xCoord, yCoord + 1, zCoord);
-    				}
-    				if(timer >= 20) {
-    					removeDummy(xCoord, yCoord + 2, zCoord);
-    				}
-    				if(timer >= 40) {
-    					removeDummy(xCoord, yCoord + 3, zCoord);
-    				}
-    				if(timer >= 60) {
-    					removeDummy(xCoord, yCoord + 4, zCoord);
-    				}
-    				if(timer >= 80) {
-    					removeDummy(xCoord, yCoord + 5, zCoord);
-    				}
-    			} else {
-    				if(timer >= 20) {
-    					placeDummy(xCoord, yCoord + 5, zCoord);
-    				}
-    				if(timer >= 40) {
-    					placeDummy(xCoord, yCoord + 4, zCoord);
-    				}
-    				if(timer >= 60) {
-    					placeDummy(xCoord, yCoord + 3, zCoord);
-    				}
-    				if(timer >= 80) {
-    					placeDummy(xCoord, yCoord + 2, zCoord);
-    				}
-    				if(timer >= 100) {
-    					placeDummy(xCoord, yCoord + 1, zCoord);
-    				}
-    			}
+				if(isOpening) {
+					if(timer >= 0) {
+						removeDummy(xCoord, yCoord + 1, zCoord);
+					}
+					if(timer >= 20) {
+						removeDummy(xCoord, yCoord + 2, zCoord);
+					}
+					if(timer >= 40) {
+						removeDummy(xCoord, yCoord + 3, zCoord);
+					}
+					if(timer >= 60) {
+						removeDummy(xCoord, yCoord + 4, zCoord);
+					}
+					if(timer >= 80) {
+						removeDummy(xCoord, yCoord + 5, zCoord);
+					}
+				} else {
+					if(timer >= 20) {
+						placeDummy(xCoord, yCoord + 5, zCoord);
+					}
+					if(timer >= 40) {
+						placeDummy(xCoord, yCoord + 4, zCoord);
+					}
+					if(timer >= 60) {
+						placeDummy(xCoord, yCoord + 3, zCoord);
+					}
+					if(timer >= 80) {
+						placeDummy(xCoord, yCoord + 2, zCoord);
+					}
+					if(timer >= 100) {
+						placeDummy(xCoord, yCoord + 1, zCoord);
+					}
+				}
 
-	    		if(timer >= 100) {
+				if(timer >= 100) {
 
-	    			if(isOpening)
-	    				finishOpen();
-	    			else
-	    				finishClose();
-	    		}
-	    	}
+					if(isOpening)
+						finishOpen();
+					else
+						finishClose();
+				}
+			}
 
-	    	PacketDispatcher.wrapper.sendToAllAround(new TEVaultPacket(xCoord, yCoord, zCoord, isOpening, state, 0, 0), new TargetPoint(worldObj.provider.dimensionId, xCoord, yCoord, zCoord, 250));
+			PacketDispatcher.wrapper.sendToAllAround(new TEVaultPacket(xCoord, yCoord, zCoord, isOpening, state, 0, 0), new TargetPoint(worldObj.provider.dimensionId, xCoord, yCoord, zCoord, 250));
 		}
-    }
+	}
 
 	public void open() {
 		if(state == 0) {
-	    	PacketDispatcher.wrapper.sendToAllAround(new TEVaultPacket(xCoord, yCoord, zCoord, isOpening, state, 1, 0), new TargetPoint(worldObj.provider.dimensionId, xCoord, yCoord, zCoord, 250));
+			PacketDispatcher.wrapper.sendToAllAround(new TEVaultPacket(xCoord, yCoord, zCoord, isOpening, state, 1, 0), new TargetPoint(worldObj.provider.dimensionId, xCoord, yCoord, zCoord, 250));
 			isOpening = true;
 			state = 1;
 
 			this.worldObj.playSoundEffect(this.xCoord, this.yCoord, this.zCoord, "hbm:block.reactorStart", 0.5F,
-					0.75F);
+				0.75F);
 		}
 	}
 
@@ -118,17 +118,17 @@ public class TileEntityBlastDoor extends TileEntityLockableBase {
 		state = 2;
 
 		this.worldObj.playSoundEffect(this.xCoord, this.yCoord, this.zCoord, "hbm:block.reactorStop", 0.5F,
-				1.0F);
+			1.0F);
 	}
 
 	public void close() {
 		if(state == 2) {
-	    	PacketDispatcher.wrapper.sendToAllAround(new TEVaultPacket(xCoord, yCoord, zCoord, isOpening, state, 1, 0), new TargetPoint(worldObj.provider.dimensionId, xCoord, yCoord, zCoord, 250));
+			PacketDispatcher.wrapper.sendToAllAround(new TEVaultPacket(xCoord, yCoord, zCoord, isOpening, state, 1, 0), new TargetPoint(worldObj.provider.dimensionId, xCoord, yCoord, zCoord, 250));
 			isOpening = false;
 			state = 1;
 
 			this.worldObj.playSoundEffect(this.xCoord, this.yCoord, this.zCoord, "hbm:block.reactorStart", 0.5F,
-					0.75F);
+				0.75F);
 		}
 	}
 
@@ -136,7 +136,7 @@ public class TileEntityBlastDoor extends TileEntityLockableBase {
 		state = 0;
 
 		this.worldObj.playSoundEffect(this.xCoord, this.yCoord, this.zCoord, "hbm:block.reactorStop", 0.5F,
-				1.0F);
+			1.0F);
 	}
 
 	public void openNeigh() {
