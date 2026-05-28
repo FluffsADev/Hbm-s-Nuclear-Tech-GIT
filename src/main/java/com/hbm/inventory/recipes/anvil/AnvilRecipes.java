@@ -477,16 +477,15 @@ public class AnvilRecipes extends SerializableRecipe {
 		constructionRecipes.add(new AnvilConstructionRecipe(
 				new AStack[] {
 						new OreDictStack(STEEL.shell(), 6),
-						new ComparableStack(ModItems.plate_stainless, 8),
+						new OreDictStack(STAINLESS.plate(), 8),
 						new ComparableStack(ModBlocks.concrete_smooth, 4),
 						new ComparableStack(ModBlocks.heater_heatex),
-						new ComparableStack(ModBlocks.deco_pipe_quad, 10),
 				},
 				new AnvilOutput(new ItemStack(ModBlocks.machine_atmo_tower))).setTier(2));
 		constructionRecipes.add(new AnvilConstructionRecipe(
 				new AStack[] {
 						new OreDictStack(STEEL.shell(), 4),
-						new ComparableStack(ModItems.plate_stainless, 4),
+						new OreDictStack(STAINLESS.plate(), 4),
 						new ComparableStack(ModBlocks.concrete_smooth, 4),
 						new ComparableStack(ModItems.turbine_titanium, 1),
 				},
