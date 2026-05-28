@@ -3485,6 +3485,7 @@ item.insert_polonium.name=Polonium Insert
 item.insert_steel.name=Heavy Steel Insert
 item.insert_xsapi.name=XSAPI Insert
 item.insert_yharonite.name=Yharonite Insert
+item.item_expensive.astro.name=Astronavigation Unit
 item.item_expensive.avionics.name=SAS Module
 item.item_expensive.bronze_tubes.name=Bronze Structural Elements
 item.item_expensive.circuit.name=Extensive Circuit Board

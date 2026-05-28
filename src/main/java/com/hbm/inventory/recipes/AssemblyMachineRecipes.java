@@ -113,13 +113,15 @@ public class AssemblyMachineRecipes extends GenericRecipes<GenericRecipe> {
 				.inputItems(new OreDictStack(GOLD.dust(), 64), new OreDictStack(GOLD.dust(), 64)));
 
 		// expsneive space
-		this.register(new GenericRecipe("ass.exstainlessbeam").setup(600, 10_000).outputItems(new ItemStack(ModItems.item_expensive, 1, EnumExpensiveType.STAINLESS_BEAM.ordinal()))
-				.inputItems(new OreDictStack(STAINLESS.plateWelded(), 4), new OreDictStack(AL.plateCast(), 8), new OreDictStack(TI.plateCast(), 4), new OreDictStack(STEEL.bolt(), 32))
+		this.register(new GenericRecipe("ass.exstainlessbeam").setup(600, 20_000).outputItems(new ItemStack(ModItems.item_expensive, 1, EnumExpensiveType.STAINLESS_BEAM.ordinal()))
+				.inputItems(new OreDictStack(STAINLESS.plateWelded(), 8), new OreDictStack(AL.plateCast(), 8), new OreDictStack(TI.plateCast(), 4), new OreDictStack(STEEL.bolt(), 32))
 				.inputFluids(new FluidStack(Fluids.KRYPTON, 1_000)));
-
-		this.register(new GenericRecipe("ass.exavionics").setup(600, 10_000).outputItems(new ItemStack(ModItems.item_expensive, 1, EnumExpensiveType.AVIONICS.ordinal()))
+		this.register(new GenericRecipe("ass.exavionics").setup(1_600, 25_000).outputItems(new ItemStack(ModItems.item_expensive, 1, EnumExpensiveType.AVIONICS.ordinal()))
 				.inputItems(new ComparableStack(ModItems.item_expensive, 2, EnumExpensiveType.CIRCUIT), new ComparableStack(ModItems.circuit, 16, EnumCircuitType.CAPACITOR_LANTHANIUM), new ComparableStack(ModItems.circuit, 4, EnumCircuitType.AVIONICS), new ComparableStack(ModItems.part_generic, 32, EnumPartType.GLASS_POLARIZED))
 				.inputFluids(new FluidStack(Fluids.PERFLUOROMETHYL, 2_000)));
+		this.register(new GenericRecipe("ass.exastro").setup(2_000, 100_000).outputItems(new ItemStack(ModItems.item_expensive, 1, EnumExpensiveType.ASTRO.ordinal()))
+				.inputItems(new ComparableStack(ModItems.item_expensive, 2, EnumExpensiveType.AVIONICS), new ComparableStack(ModItems.circuit, 1, EnumCircuitType.CONTROLLER_ADVANCED), new ComparableStack(ModItems.circuit, 32, EnumCircuitType.MOLYCHIP), new ComparableStack(ModItems.circuit, 16, EnumCircuitType.GASCHIP))
+				.inputFluids(new FluidStack(Fluids.XENON, 1_000)));
 
 		// cloth
 		this.register(new GenericRecipe("ass.hazcloth").setup(50, 100).outputItems(new ItemStack(ModItems.hazmat_cloth, 4))
@@ -1309,8 +1311,7 @@ public class AssemblyMachineRecipes extends GenericRecipes<GenericRecipe> {
 						new OreDictStack(STAINLESS.plateCast(), 4),
 						new ComparableStack(ModItems.item_expensive, 2, EnumExpensiveType.PLASTIC),
 						new OreDictStack(QUARTZ.dust(), 16),
-						new ComparableStack(ModItems.circuit, 16, EnumCircuitType.MOLYCHIP),
-						new ComparableStack(ModItems.item_expensive, 2, EnumExpensiveType.AVIONICS))
+						new ComparableStack(ModItems.item_expensive, 2, EnumExpensiveType.ASTRO))
 				.setPools528(GenericRecipes.POOL_PREFIX_528 + "stainless"));
 
 		// thrusters
