@@ -15,9 +15,9 @@ public class Ruin002 {
 	Block Block1 = ModBlocks.brick_concrete;
 	Block Block4 = ModBlocks.deco_steel;
 	Block Block5 = ModBlocks.steel_wall;
-	
+
 	public boolean generate_r00(World world, Random rand, int x, int y, int z) {
-		
+
 		world.setBlock(x + 0, y + 5, z + 4, Block1, 0, 3);
 		world.setBlock(x + 1, y + 5, z + 4, Block1, 0, 3);
 		world.setBlock(x + 2, y + 5, z + 4, Block1, 0, 3);
@@ -635,7 +635,7 @@ public class Ruin002 {
 		world.setBlock(x + 3, y + 9, z + 5, Blocks.cobblestone, 0, 3);
 		world.setBlock(x + 4, y + 9, z + 5, Blocks.cobblestone, 0, 3);
 		world.setBlock(x + 5, y + 9, z + 5, Blocks.cobblestone, 0, 3);
-		world.setBlock(x + 6, y + 9, z + 5, Blocks.diamond_block, 5, 3);
+		world.setBlock(x + 6, y + 9, z + 5, Blocks.wooden_door, 5, 3);
 		world.setBlock(x + 7, y + 9, z + 5, Blocks.cobblestone, 0, 3);
 		world.setBlock(x + 8, y + 9, z + 5, Blocks.cobblestone, 0, 3);
 		world.setBlock(x + 9, y + 9, z + 5, Blocks.cobblestone, 0, 3);
@@ -807,7 +807,6 @@ public class Ruin002 {
 		world.setBlock(x + 3, y + 10, z + 5, Blocks.stone_stairs, 2, 3);
 		world.setBlock(x + 4, y + 10, z + 5, Blocks.stone_slab, 3, 3);
 		world.setBlock(x + 5, y + 10, z + 5, Blocks.cobblestone, 0, 3);
-		world.setBlock(x + 6, y + 10, z + 5, Blocks.diamond_block, 8, 3);
 		world.setBlock(x + 7, y + 10, z + 5, Blocks.stone_stairs, 2, 3);
 		world.setBlock(x + 8, y + 10, z + 5, Blocks.air, 0, 3);
 		world.setBlock(x + 9, y + 10, z + 5, Blocks.stone_slab, 3, 3);
@@ -1293,7 +1292,7 @@ public class Ruin002 {
 		return true;
 
 	}
-	
+
 	public boolean generate_r02_last(World world, Random rand, int x, int y, int z) {
 
 		world.setBlock(x + 10, y + 3, z + 12, Blocks.ladder, 4, 3);

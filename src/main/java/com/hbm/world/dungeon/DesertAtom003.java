@@ -50,7 +50,7 @@ public class DesertAtom003
 	Block Block27 = ModBlocks.pole_top;
 	Block Block28 = ModBlocks.capacitor_copper;
 	Block Block29 = ModBlocks.machine_electric_furnace_off;
-	
+
 	public boolean generate_r00(World world, Random rand, int x, int y, int z)
     {
 		world.setBlock(x + 21, y + 3, z + 12, Block6, 0, 3);
@@ -1774,4 +1774,7 @@ public class DesertAtom003
 
 	}
 
+	public boolean LocationIsValidSpawn(World w, int bx, int by, int bz) {
+		return false;
+	}
 }

@@ -34,7 +34,7 @@ public class DesertAtom002
 	Block Block15 = ModBlocks.deco_titanium;
 	Block Block16 = ModBlocks.block_lead;
 	Block Block17 = ModBlocks.ore_nether_plutonium;
-	
+
 	public boolean generate_r00(World world, Random rand, int x, int y, int z)
     {
 		world.setBlock(x + 7, y + -1, z + 0, Block3, 0, 3);
@@ -1728,10 +1728,10 @@ public class DesertAtom002
 		world.setBlock(x + 10, y + 1, z + 16, Block5, 0, 3);
 		world.setBlock(x + 16, y + 1, z + 16, Library.getRandomConcrete(), 0, 3);
 		world.setBlock(x + 17, y + 1, z + 16, Library.getRandomConcrete(), 0, 3);
-		
-		
+
+
 		//world.setBlock(x + 18, y + 1, z + 16, Blocks.chest, 2, 3);
-		
+
 		/*
 		if(world.getBlock(x + 18, y + 1, z + 16) == Blocks.chest)
 		{
@@ -1744,7 +1744,7 @@ public class DesertAtom002
 		{
 			WeightedRandomChestContent.generateChestContents(rand, ItemPool.getPool(ItemPoolsLegacy.POOL_EXPENSIVE), (TileEntityCrateSteel)world.getTileEntity(x + 18, y + 1, z + 16), 12);
 		}
-		
+
 		world.setBlock(x + 19, y + 1, z + 16, Library.getRandomConcrete(), 0, 3);
 		world.setBlock(x + 20, y + 1, z + 16, Blocks.vine, 2, 3);
 		world.setBlock(x + 22, y + 1, z + 16, Blocks.stone_brick_stairs, 4, 3);
@@ -2580,5 +2580,9 @@ public class DesertAtom002
 		new DesertAtom003().generate_r00(world, rand, x, y, z);
 		return true;
 
+	}
+
+	public boolean LocationIsValidSpawn(World w, int bx, int by, int bz) {
+		return false;
 	}
 }

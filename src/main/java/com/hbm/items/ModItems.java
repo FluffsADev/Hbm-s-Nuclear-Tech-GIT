@@ -2311,8 +2311,10 @@ public class ModItems {
 
 	public static Item swarm_member;
 
-	public static void initializeItem() {
+	public static Item structureWand;
 
+	public static void initializeItem() {
+		structureWand = new ItemStructureWand().setUnlocalizedName("structureWand").setCreativeTab(MainRegistry.consumableTab).setTextureName("hbm:structureWand");
 		redstone_sword = new RedstoneSword(ToolMaterial.STONE).setUnlocalizedName("redstone_sword").setCreativeTab(CreativeTabs.tabCombat).setTextureName(RefStrings.MODID + ":redstone_sword");
 		big_sword = new BigSword(ToolMaterial.EMERALD).setUnlocalizedName("big_sword").setCreativeTab(CreativeTabs.tabCombat).setTextureName(RefStrings.MODID + ":big_sword");
 		butter_sword = new BSword(ToolMaterial.WOOD).setUnlocalizedName("butter_sword").setCreativeTab(CreativeTabs.tabCombat).setTextureName(RefStrings.MODID + ":budder_sword");
@@ -5131,6 +5133,7 @@ public class ModItems {
 		GameRegistry.registerItem(chocolate_mint_billet, chocolate_mint_billet.getUnlocalizedName());
 
 		//Dusts & Other
+		GameRegistry.registerItem(structureWand, "structureWand");
 		GameRegistry.registerItem(cinnebar, cinnebar.getUnlocalizedName());
 		GameRegistry.registerItem(nugget_mercury, nugget_mercury.getUnlocalizedName());
 		GameRegistry.registerItem(ingot_mercury, ingot_mercury.getUnlocalizedName());

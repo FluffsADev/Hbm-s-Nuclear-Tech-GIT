@@ -5137,6 +5137,7 @@ item.v1.name=V1
 item.volcanic_axe.name=Molten Axe
 item.volcanic_pickaxe.name=Molten Pickaxe
 item.wand_d.name=Debug Wand
+item.structureWand.name=Structure Gen Wand
 item.wand_k.name=Construction Wand
 item.wand_s.name=Structure Wand
 item.wand_time.name=Time Wand
