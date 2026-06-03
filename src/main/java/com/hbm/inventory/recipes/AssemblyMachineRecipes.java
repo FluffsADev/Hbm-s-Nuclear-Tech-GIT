@@ -124,7 +124,7 @@ public class AssemblyMachineRecipes extends GenericRecipes<GenericRecipe> {
 				.inputFluids(new FluidStack(Fluids.PERFLUOROMETHYL, 2_000)));
 		this.register(new GenericRecipe("ass.exastro").setup(2_000, 100_000).outputItems(new ItemStack(ModItems.item_expensive, 1, EnumExpensiveType.ASTRO.ordinal()))
 				.inputItems(new ComparableStack(ModItems.item_expensive, 2, EnumExpensiveType.AVIONICS), new ComparableStack(ModItems.circuit, 1, EnumCircuitType.CONTROLLER_ADVANCED), new ComparableStack(ModItems.circuit, 32, EnumCircuitType.MOLYCHIP), new ComparableStack(ModItems.circuit, 16, EnumCircuitType.GASCHIP))
-				.inputFluids(new FluidStack(Fluids.XENON, 1_000)));
+				.inputFluids(new FluidStack(GeneralConfig.enable528 ? Fluids.XENON : Fluids.ARGON, 1_000)));
 
 		// cloth
 		this.register(new GenericRecipe("ass.hazcloth").setup(50, 100).outputItems(new ItemStack(ModItems.hazmat_cloth, 4))
