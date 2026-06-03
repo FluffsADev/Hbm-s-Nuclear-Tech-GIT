@@ -1,5 +1,6 @@
 package com.hbm.world.gen.terrain;
 
+import java.util.Random;
 import java.util.function.Predicate;
 
 import com.hbm.blocks.ModBlocks;
@@ -21,6 +22,7 @@ public class MapGenBubble extends MapGenBaseMeta {
 	 */
 
 	private final int frequency;
+	public Random rand;
 	private int minSize = 8;
 	private int maxSize = 64;
 
@@ -47,13 +49,13 @@ public class MapGenBubble extends MapGenBaseMeta {
 	}
 
 	@Override
-	protected void func_151538_a(World world, int offsetX, int offsetZ, int chunkX, int chunkZ, Block[] blocks) {
-		
+	public void func_151538_a(World world, int offsetX, int offsetZ, int chunkX, int chunkZ, Block[] blocks) {
+
 		int effecFreq = frequency;
 		BiomeGenBase biome = world.getBiomeGenForCoords(offsetX * 16, offsetZ * 16);
 		if(biome.temperature >= 2 && biome.rainfall < 0.1) effecFreq /= 3;
 		if(effecFreq <= 0) effecFreq = 1;
-		
+
 		if(rand.nextInt(effecFreq) == effecFreq - 1 && (canSpawn == null || canSpawn.test(biome))) {
 			int xCoord = (chunkX - offsetX) * 16 + rand.nextInt(16);
 			int zCoord = (chunkZ - offsetZ) * 16 + rand.nextInt(16);
@@ -85,13 +87,13 @@ public class MapGenBubble extends MapGenBaseMeta {
 					}
 				}
 			}
-			
+
 			if(rand.nextInt(1) == 0) {
 				addSurfaceSpot(xCoord, zCoord, blocks);
 			}
 		}
 	}
-	
+
 	protected void addSurfaceSpot(int xCoord, int zCoord, Block[] blocks) {
 
 		int deadMetaCount = EnumDeadPlantType.values().length;
@@ -113,7 +115,7 @@ public class MapGenBubble extends MapGenBaseMeta {
 					if(blocks[index] != null && blocks[index].isOpaqueCube()) {
 						for(int oy = 1; oy > -3; oy--) {
 							int subIndex = index + oy;
-							
+
 							int distSq = offX * offX + offZ * offZ;
 							boolean inner = distSq < (spotWidth / 2) * (spotWidth / 2);
 
@@ -146,25 +148,25 @@ public class MapGenBubble extends MapGenBaseMeta {
 				}
 			}
 		}
-		
+
 		// and now for the hole(tm)
 		for(int i = 1; i < 6; i++) {
 			ForgeDirection dir = ForgeDirection.getOrientation(i);
 			int x = dir.offsetX - xCoord;
 			int z = dir.offsetZ - zCoord;
-			
+
 			if(x >= 0 && x < 16 && z >= 0 && z < 16) {
 				int solids = 0;
-				
+
 				for(int y = 127; y >= 0; y--) {
 					int index = (x * 16 + z) * 256 + y;
 					if(blocks[index] == null) continue;
-					
-					if(blocks[index].getMaterial().isLiquid()) break; 
-					
+
+					if(blocks[index].getMaterial().isLiquid()) break;
+
 					if(blocks[index].isOpaqueCube()) {
 						solids++;
-						
+
 						// this approach might break a little when the surface has holes and uneveness but i don't care lmao
 						if(i > 1) {
 							blocks[index] = ModBlocks.stone_cracked;
