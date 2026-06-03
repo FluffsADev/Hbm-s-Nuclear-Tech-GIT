@@ -46,6 +46,9 @@ import com.hbm.world.feature.BedrockOre;
 import com.hbm.world.feature.OreCave;
 import com.hbm.world.feature.OreLayer3D;
 import com.hbm.world.feature.SchistStratum;
+import com.hbm.world.gen.util.LogicBlockActions;
+import com.hbm.world.gen.util.LogicBlockConditions;
+import com.hbm.world.gen.util.LogicBlockInteractions;
 import com.hbm.world.generator.CellularDungeonFactory;
 import cpw.mods.fml.common.*;
 import cpw.mods.fml.common.Mod.EventHandler;
@@ -432,7 +435,7 @@ public class MainRegistry {
 
 		//progression achieves
 		achBurnerPress = new Achievement("achievement.burnerPress", "burnerPress", 0, 0, new ItemStack(ModBlocks.machine_press), null).initIndependentStat().registerStat();
-		achBlastFurnace = new Achievement("achievement.blastFurnace", "blastFurnace", 1, 3, new ItemStack(ModBlocks.machine_difurnace_off), achBurnerPress).initIndependentStat().registerStat();
+		achBlastFurnace = new Achievement("achievement.blastFurnace", "blastFurnace", 1, 3, new ItemStack(ModBlocks.machine_blast_furnace), achBurnerPress).initIndependentStat().registerStat();
 		achAssembly = new Achievement("achievement.assembly", "assembly", 3, -1, new ItemStack(ModBlocks.machine_assembly_machine), achBurnerPress).initIndependentStat().registerStat();
 		achSelenium = new Achievement("achievement.selenium", "selenium", 3, 2, ModItems.ingot_starmetal, achBurnerPress).initIndependentStat().setSpecial().registerStat();
 		achChemplant = new Achievement("achievement.chemplant", "chemplant", 6, -1, new ItemStack(ModBlocks.machine_chemical_plant), achAssembly).initIndependentStat().registerStat();
@@ -602,6 +605,10 @@ public class MainRegistry {
 		AchievementHandler.register();
 
 		MobUtil.intializeMobPools();
+
+		LogicBlockActions.initialize();
+		LogicBlockConditions.initialize();
+		LogicBlockInteractions.initialize();
 
 		proxy.registerMissileItems();
 
@@ -1688,6 +1695,18 @@ public class MainRegistry {
 		ignoreMappings.add("hbm:item.weapon_bat_nail");
 		ignoreMappings.add("hbm:item.weapon_golf_club");
 		ignoreMappings.add("hbm:item.weapon_pipe_rusty");
+		ignoreMappings.add("hbm:tile.crate_template");
+		ignoreMappings.add("hbm:tile.barrel_iron");
+		ignoreMappings.add("hbm:tile.factory_titanium_hull");
+		ignoreMappings.add("hbm:tile.factory_advanced_hull");
+		ignoreMappings.add("hbm:tile.vacuum");
+		ignoreMappings.add("hbm:tile.ladder_iron");
+		ignoreMappings.add("hbm:tile.ladder_aluminium");
+		ignoreMappings.add("hbm:tile.ladder_lead");
+		ignoreMappings.add("hbm:tile.ladder_cobalt");
+		ignoreMappings.add("hbm:tile.ladder_tungsten");
+		ignoreMappings.add("hbm:tile.geysir_water");
+		ignoreMappings.add("hbm:tile.geysir_vapor");
 		
 		/// REMAP ///
 		remapItems.put("hbm:item.gadget_explosive8", ModItems.early_explosive_lenses);
