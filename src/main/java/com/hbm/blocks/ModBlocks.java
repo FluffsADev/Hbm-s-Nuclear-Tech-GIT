@@ -3294,7 +3294,7 @@ public class ModBlocks {
 		GameRegistry.registerBlock(vinyl_log, vinyl_log.getUnlocalizedName());
 		GameRegistry.registerBlock(pet_leaves, pet_leaves.getUnlocalizedName());
 
-		GameRegistry.registerBlock(astroturf, astroturf.getUnlocalizedName());
+		register(astroturf);
 
 		//RAD
 		register(sellafield_slaked);
