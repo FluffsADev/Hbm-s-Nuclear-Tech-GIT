@@ -87,7 +87,7 @@ public class TileEntityMachineBlastFurnace extends TileEntityMachineBase impleme
 			this.speed = 0F;
 			GenericRecipe recipe = BlastFurnaceRecipesNT.INSTANCE.getRecipe(slots[1], slots[2]);
 			
-			if(!this.tilted && recipe != null && this.fuel >= FUEL_RATE && this.canOutput(recipe)) {
+			if(!this.tilted && recipe != null && this.fuel >= FUEL_RATE && this.canOutput(recipe) && this.breatheAir(1)) {
 				
 				this.speed = MathHelper.clamp_float(0.5F + this.tanks[0].getFill() * 4F / this.tanks[0].getMaxFill(), 0.5F, 3F);
 				

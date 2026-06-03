@@ -77,6 +77,13 @@ public class BlastFurnaceRecipesNT extends GenericRecipes<GenericRecipe> {
 		this.register(new GenericRecipe("blast.firebrickLimestone").setDuration(800)
 				.inputItems(new OreDictStack(LIMESTONE.ore()), new ComparableStack(Items.clay_ball, 6))
 				.outputItems(new ItemStack(ModItems.ingot_firebrick, 8)));
+
+
+		// the only place not corrupted by capitalism
+		this.register(new GenericRecipe("blast.stainless").setDuration(400)
+				.inputItems(new OreDictStack(STEEL.ingot()), new OreDictStack(NI.ingot()))
+				.outputItems(new ItemStack(ModItems.ingot_stainless, 2)));
+
 	}
 
 	@Override

@@ -39,6 +39,7 @@ public class GeneralConfig {
 	public static boolean enableServerRecipeSync = false;
 	public static boolean enableLoadScreenReplacement = true;
 	public static boolean enableMachineGravity = false;
+	public static boolean enableUnavoidableGravity = true;
 	public static int normalSoundChannels = 200;
 
 	public static boolean enableExpensiveMode = false;
@@ -135,6 +136,7 @@ public class GeneralConfig {
 				"The mod which is preferred as output when certain machines autogenerate recipes. Currently used for the shredder", new String[] {RefStrings.MODID});
 		enableLoadScreenReplacement = config.get(CATEGORY_GENERAL, "1.43_enableLoadScreenReplacement", true, "Tries to replace the vanilla load screen with the 'tip of the day' one, may clash with other mods trying to do the same.").getBoolean(true);
 		enableMachineGravity = config.get(CATEGORY_GENERAL, "1.44_enableMachineGravity", false, "Requires large large machines to have a proper foundation, or else they tilt and break. Independent from the 528 version of this config, which does the same, but only works with 528 enabled.").getBoolean(false);
+		enableUnavoidableGravity = config.get(CATEGORY_GENERAL, "1.45_enableUnavoidableGravity", true, "Requires extra large machines to have a proper foundation, for machines that have gravity by default, rather than by config (only applies to the Big-Ass Tank currently).").getBoolean(true);
 		enableExpensiveMode = config.get(CATEGORY_GENERAL, "1.99_enableExpensiveMode", false, "It does what the name implies.").getBoolean(false);
 
 		final String CATEGORY_528 = CommonConfig.CATEGORY_528;

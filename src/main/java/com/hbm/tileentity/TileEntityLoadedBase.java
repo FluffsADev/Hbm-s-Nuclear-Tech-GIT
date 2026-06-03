@@ -111,7 +111,7 @@ public class TileEntityLoadedBase extends TileEntity implements ILoadedTile, IBu
 	
 	public void checkTilt(TiltType cfg, boolean extraHeavy) {
 		boolean doesTilt = false;
-		if(cfg == TiltType.UNAVOIDABLE) doesTilt = true;
+		if(cfg == TiltType.UNAVOIDABLE && GeneralConfig.enableUnavoidableGravity) doesTilt = true;
 		if(cfg == TiltType.CONFIG && GeneralConfig.enableMachineGravity) doesTilt = true;
 		if(cfg == TiltType.CONFIG && GeneralConfig.enable528MachineGravity) doesTilt = true;
 		
