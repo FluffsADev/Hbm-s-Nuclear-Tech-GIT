@@ -6,9 +6,7 @@ import com.hbm.main.NTMSounds;
 import com.hbm.tileentity.IGUIProvider;
 import com.hbm.tileentity.machine.TileEntityLockableBase;
 import com.hbm.util.CompatExternal;
-import com.hbm.inventory.gui.GUIScreenPadlockReceiver;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
@@ -24,9 +22,9 @@ import cpw.mods.fml.relauncher.Side;
 public class ItemPadlockRadio extends ItemLock implements IGUIProvider, IItemControlReceiver {
 
 	public static final String KEY_POLLING = "p";
-	public static final String KEY_CUSTOMMAP = "m"; // boolean for customMap
-	public static final String KEY_CHANNEL = "c";   // single channel field (legacy)
-	public static final String KEY_MAP_PREFIX = "m"; // m0..m15 mapping strings
+	public static final String KEY_CUSTOMMAP = "m";
+	public static final String KEY_CHANNEL = "c";
+	public static final String KEY_MAP_PREFIX = "m";
 
 	public ItemPadlockRadio(double mod) {
 		super(mod);
@@ -36,11 +34,16 @@ public class ItemPadlockRadio extends ItemLock implements IGUIProvider, IItemCon
 	public ItemStack onItemRightClick(ItemStack stack, World world, EntityPlayer player) {
 		if (player.isSneaking()) {
 			if (world.isRemote) {
-				Minecraft.getMinecraft().displayGuiScreen(new GUIScreenPadlockReceiver(player));
+				openGUI(player);  // Call helper instead of direct Minecraft call
 			}
 			return stack;
 		}
 		return super.onItemRightClick(stack, world, player);
+	}
+
+	@SideOnly(Side.CLIENT)
+	private void openGUI(EntityPlayer player) {
+		ItemPadlockRadioClient.openPadlockGUI(player);
 	}
 
 	@Override
@@ -112,7 +115,6 @@ public class ItemPadlockRadio extends ItemLock implements IGUIProvider, IItemCon
 						return true;
 					}
 				} else if (tile.isRadioMode()) {
-
 					return true;
 				}
 			}
@@ -159,14 +161,13 @@ public class ItemPadlockRadio extends ItemLock implements IGUIProvider, IItemCon
 
 		if (!placed && player.isSneaking()) {
 			if (world.isRemote) {
-				Minecraft.getMinecraft().displayGuiScreen(new GUIScreenPadlockReceiver(player));
+				openGUI(player);
 			}
 			return true;
 		}
 
 		return placed;
 	}
-
 
 	@Override
 	public void receiveControl(ItemStack stack, NBTTagCompound data) {
@@ -216,10 +217,8 @@ public class ItemPadlockRadio extends ItemLock implements IGUIProvider, IItemCon
 
 		list.add(EnumChatFormatting.YELLOW + "Shift right-click to set frequency");
 		list.add(EnumChatFormatting.YELLOW+ "Placeable on Mechanical Doors");
-
 	}
 
-	// IGUIProvider implementations
 	@Override
 	public Container provideContainer(int ID, EntityPlayer player, World world, int x, int y, int z) {
 		return null;
@@ -228,6 +227,6 @@ public class ItemPadlockRadio extends ItemLock implements IGUIProvider, IItemCon
 	@Override
 	@SideOnly(Side.CLIENT)
 	public Object provideGUI(int ID, EntityPlayer player, World world, int x, int y, int z) {
-		return new GUIScreenPadlockReceiver(player);
+		return new com.hbm.inventory.gui.GUIScreenPadlockReceiver(player);
 	}
 }
