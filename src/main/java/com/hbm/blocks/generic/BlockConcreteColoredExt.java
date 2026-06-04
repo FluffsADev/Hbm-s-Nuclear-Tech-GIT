@@ -21,18 +21,18 @@ public class BlockConcreteColoredExt extends BlockEnumMulti implements ITooltipP
 	public BlockConcreteColoredExt(Material mat) {
 		super(mat, EnumConcreteType.class, true, true);
 	}
-	
+
 	@Override
 	@SideOnly(Side.CLIENT)
 	public IIcon getIcon(int side, int meta) {
-		
+
 		if(meta == EnumConcreteType.MACHINE_STRIPE.ordinal() && (side == 0 || side == 1)) {
 			return super.getIcon(side, EnumConcreteType.MACHINE.ordinal());
 		}
-		
+
 		return super.getIcon(side, meta);
 	}
-	
+
 	@Override
 	public boolean canCreatureSpawn(EnumCreatureType type, IBlockAccess world, int x, int y, int z) {
 		return false;
@@ -42,14 +42,19 @@ public class BlockConcreteColoredExt extends BlockEnumMulti implements ITooltipP
 	public void addInformation(ItemStack stack, EntityPlayer player, List list, boolean ext) {
 		list.add(EnumChatFormatting.RED + I18nUtil.resolveKey("tile.nospawn"));
 	}
-	
+
 	public enum EnumConcreteType {
 		MACHINE,
 		MACHINE_STRIPE,
+		DARK_ORANGE,
+		LIGHT_BROWN,
+		DARK_RED,
+		DARK_YELLOW,
 		INDIGO,
 		PURPLE,
 		PINK,
 		HAZARD,
+		HAZARD_ORANGE,
 		SAND,
 		BRONZE
 	}
